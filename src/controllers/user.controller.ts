@@ -1,11 +1,11 @@
 import config from '../config';
-import { Response, Request } from 'express';
+import { Response, Request, NextFunction } from 'express';
 import { UserServiceType } from '../services/user.service';
 import { inject, injectable } from 'inversify';
-import { controller, httpPost, httpGet } from 'inversify-express-utils';
+import { controller, httpPost, httpGet, next } from 'inversify-express-utils';
 import 'reflect-metadata';
 import { AuthorizedRequest } from '../requests/authorized.request';
-
+import * as passport from 'passport';
 /**
  * UserController
  */
@@ -18,6 +18,13 @@ export class UserController {
   constructor(
     @inject(UserServiceType) private userService: UserServiceInterface
   ) {}
+
+  // @httpGet(
+  //   '/facebook'
+  // )
+  // async getFacebook(req: Request, res: Response, next: NextFunction): Promise<void> {
+  //   passport.authenticate('facebook', { scope: ['email', 'public_profile'] });
+  // }
 
   /**
    * Create user
@@ -178,5 +185,21 @@ export class UserController {
   )
   async resendVerification(req: Request, res: Response): Promise<void> {
     res.json(await this.userService.resendVerification(req.body));
+  }
+
+  @httpGet(
+    '/auth/facebook'
+  )
+  async authFacebook(req: Request, res: Response, next: NextFunction): Promise<void> {
+    passport.authenticate('facebook', { scope: ['email', 'public_profile'] })(req, res, next);
+  }
+
+  @httpGet(
+    '/auth/facebook/callback'
+  )
+  async authFacebookCallback(req: Request, res: Response, next: NextFunction): Promise<void> {
+    passport.authenticate('facebook')(req, res, next);
+    console.log(req.user);
+    res.status(200).json({ statusCode: 200, token: 'jwt' });
   }
 }

@@ -1,12 +1,17 @@
 import * as express from 'express';
 import { Response, Request, NextFunction, Application } from 'express';
 import * as bodyParser from 'body-parser';
+import * as passport from 'passport';
 import config from './config';
 import handle from './middlewares/error.handler';
+import * as graph from 'fbgraph';
+
 const morgan = require('morgan');
 
 import { InversifyExpressServer } from 'inversify-express-utils';
 import { container } from './ioc.container';
+
+import * as passportConfig from './passport';
 
 const app: Application = express();
 
@@ -45,6 +50,19 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   return next();
 });
 
+
+// passport.use(new OpenIDStrategy({
+//   returnURL: config.app.frontendUrl + '/auth/openid/return',
+//   realm: config.app.frontendUrl,
+//   function(identifier, done) {
+//     // getConn.findOrCreate({ openId: identifier }, function(err, user) {
+//     //   
+//     // });
+//     console.log(identifier);
+//     done({}, {});
+//   }
+// }));
+
 app.post('*', (req: Request, res: Response, next: NextFunction) => {
   if (
     !req.header('Content-Type') ||
@@ -61,6 +79,26 @@ app.post('*', (req: Request, res: Response, next: NextFunction) => {
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
+app.use(passport.initialize());
+app.use(passport.session());
+app.use((req, res, next) => {
+  res.locals.user = req.user;
+  next();
+});
+
+const getFacebook = (req: Request, res: Response, next: NextFunction) => {
+  const token = req.user.tokens.find((token: any) => token.kind === 'facebook');
+  graph.setAccessToken(token.accessToken);
+  graph.get(`${req.user.facebook}?fields=id,email`, (err: Error, results: graph.FacebookUser) => {
+    if (err) { return next(err); }
+    res.render('/api/facebook', {
+      title: 'Facebook API',
+      profile: results
+    });
+  });
+};
+
+app.get('/api/facebook', passportConfig.isAuthenticated, passportConfig.isAuthorized, getFacebook);
 
 let server = new InversifyExpressServer(container, null, null, app);
 server.setErrorConfig((app) => {
