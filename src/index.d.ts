@@ -442,3 +442,7 @@ declare interface KycProviderInterface {
   callback(req, res, next);
   reinit(req, res, next);
 }
+
+declare interface LandingServiceInterface {
+  storeEmail(email: string);
+}

@@ -25,6 +25,8 @@ import { GatewayController } from './controllers/gateway.controller';
 import { EmailTemplateService, EmailTemplateServiceType } from './services/email.template.service';
 import { JumioProvider } from './providers/kyc/jumio.provider';
 import { ShuftiproProvider } from './providers/kyc/shuftipro.provider';
+import { LandingServiceType, LandingService } from './services/landing.service';
+import { GameController } from './controllers/game.controller';
 
 let container = new Container();
 
@@ -60,6 +62,7 @@ container.bind<CoinpaymentsClientInterface>(CoinpaymentsClientType).to(Coinpayme
 container.bind<PaymentsServiceInterface>(PaymentsServiceType).to(PaymentsService).inSingletonScope();
 container.bind<IPNServiceInterface>(IPNServiceType).to(IPNService).inSingletonScope();
 container.bind<EmailTemplateServiceInterface>(EmailTemplateServiceType).to(EmailTemplateService).inSingletonScope();
+container.bind<LandingServiceInterface>(LandingServiceType).to(LandingService).inSingletonScope();
 
 const auth = new Auth(container.get<AuthClientInterface>(AuthClientType));
 // middlewares
@@ -111,5 +114,6 @@ container.bind<interfaces.Controller>(TYPE.Controller).to(UserController).whenTa
 container.bind<interfaces.Controller>(TYPE.Controller).to(DashboardController).whenTargetNamed('DashboardController');
 container.bind<interfaces.Controller>(TYPE.Controller).to(KycController).whenTargetNamed('KycController');
 container.bind<interfaces.Controller>(TYPE.Controller).to(GatewayController).whenTargetNamed('GatewayController');
+container.bind<interfaces.Controller>(TYPE.Controller).to(GameController).whenTargetNamed('GameController');
 
 export { container };
