@@ -284,9 +284,6 @@ declare interface UserInfo {
   defaultVerificationMethod: string;
   firstName: string;
   lastName: string;
-  country: string;
-  dob: string;
-  phone: string;
 }
 
 interface TransactionInput {
@@ -299,6 +296,7 @@ interface TransactionInput {
 
 declare interface UserServiceInterface {
   create(userData: InputUserData): Promise<any>;
+  createActivatedUser(userData: InputUserData): Promise<any>;
   activate(activationData: ActivationUserData): Promise<ActivationResult>;
   initiateLogin(inputData: InitiateLoginInput, ip: string): Promise<InitiateLoginResult>;
   initiateChangePassword(user: any, params: InitiateChangePasswordInput): Promise<BaseInitiateResult>;

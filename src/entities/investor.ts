@@ -82,9 +82,6 @@ export class Investor {
     user.email = data.email.toLowerCase();
     user.firstName = data.firstName;
     user.lastName = data.lastName;
-    user.phone = data.phone ? data.phone : config.kyc.shuftipro.defaultPhone;
-    user.country = data.country;
-    user.dob = data.dob;
     user.agreeTos = data.agreeTos;
     user.passwordHash = data.passwordHash;
     user.isVerified = false;

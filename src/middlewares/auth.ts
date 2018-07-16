@@ -3,6 +3,7 @@ import { AuthorizedRequest } from '../requests/authorized.request';
 import { getConnection } from 'typeorm';
 import { Investor } from '../entities/investor';
 import { VerifiedToken } from '../entities/verified.token';
+import * as passport from 'passport';
 
 export class Auth {
   /**
@@ -34,16 +35,16 @@ export class Auth {
     }
 
     try {
-      // const verifyResult = await this.authClient.verifyUserToken(token);
-      // req.user = await getConnection().getMongoRepository(Investor).findOne({
-      //   email: verifyResult.login
-      // });
+      const verifyResult = await this.authClient.verifyUserToken(token);
+      req.user = await getConnection().getMongoRepository(Investor).findOne({
+        email: verifyResult.login
+      });
 
-      // if (!req.user) {
-      //   return res.status(404).json({
-      //     message: 'User is not found'
-      //   });
-      // }
+      if (!req.user) {
+        return res.status(404).json({
+          message: 'User is not found'
+        });
+      }
 
       return next();
     } catch (e) {

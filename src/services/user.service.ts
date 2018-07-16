@@ -131,6 +131,61 @@ export class UserService implements UserServiceInterface {
     return transformers.transformCreatedInvestor(investor);
   }
 
+  async createActivatedUser(userData: any): Promise<any> {
+    const email = userData.email.toLowerCase();
+    const existingUser = await getConnection().getMongoRepository(Investor).findOne({
+      email: email
+    });
+
+    if (existingUser) {
+      return {
+        accessToken: await this.getVerifiedAccessToken(existingUser)
+      };
+    }
+
+    const logger = this.logger.sub({ email }, '[create] ');
+
+    const investor = Investor.createInvestor(userData, {
+      verificationId: 'stub'
+    });
+
+    await getConnection().mongoManager.save(investor);
+
+    logger.debug('Create user in auth');
+
+    await this.authClient.createUser(transformers.transformInvestorForAuth(investor));
+
+    const accessToken = await this.getVerifiedAccessToken(investor);
+
+    const mnemonic = this.web3Client.generateMnemonic();
+    const salt = bcrypt.genSaltSync();
+    const account = this.web3Client.getAccountByMnemonicAndSalt(mnemonic, salt);
+
+    investor.addEthWallet({
+      ticker: 'ETH',
+      address: account.address,
+      balance: '0',
+      salt
+    });
+
+    await getConnection().mongoManager.save(investor);
+
+    const resultWallets: Array<NewWallet> = [
+      {
+        ticker: 'ETH',
+        address: account.address,
+        balance: '0',
+        mnemonic: mnemonic,
+        privateKey: account.privateKey
+      }
+    ];
+
+    return {
+      accessToken: accessToken,
+      wallets: resultWallets
+    };
+  }
+
   async resendVerification(userData: ResendVerificationInput): Promise<CreatedUserData> {
     const email = userData.email.toLowerCase();
     const user = await getConnection().getMongoRepository(Investor).findOne({
@@ -746,11 +801,21 @@ export class UserService implements UserServiceInterface {
       kycStatus: user.kycStatus,
       defaultVerificationMethod: user.defaultVerificationMethod,
       firstName: user.firstName,
-      lastName: user.lastName,
-      country: user.country,
-      dob: user.dob,
-      phone: user.phone
+      lastName: user.lastName
     };
+  }
+
+  async getVerifiedAccessToken(investor: Investor): Promise<string> {
+    const tokenData = await this.authClient.loginUser({
+      login: investor.email.toLowerCase(),
+      password: investor.passwordHash,
+      deviceId: 'device'
+    });
+
+    const token = VerifiedToken.createVerifiedToken(tokenData.accessToken);
+    await getConnection().getMongoRepository(VerifiedToken).save(token);
+
+    return tokenData.accessToken;
   }
 }
 

@@ -19,13 +19,6 @@ export class UserController {
     @inject(UserServiceType) private userService: UserServiceInterface
   ) {}
 
-  // @httpGet(
-  //   '/facebook'
-  // )
-  // async getFacebook(req: Request, res: Response, next: NextFunction): Promise<void> {
-  //   passport.authenticate('facebook', { scope: ['email', 'public_profile'] });
-  // }
-
   /**
    * Create user
    *
@@ -188,18 +181,30 @@ export class UserController {
   }
 
   @httpGet(
-    '/auth/facebook'
+    '/auth/facebook/token'
   )
-  async authFacebook(req: Request, res: Response, next: NextFunction): Promise<void> {
-    passport.authenticate('facebook', { scope: ['email', 'public_profile'] })(req, res, next);
-  }
-
-  @httpGet(
-    '/auth/facebook/callback'
-  )
-  async authFacebookCallback(req: Request, res: Response, next: NextFunction): Promise<void> {
-    passport.authenticate('facebook')(req, res, next);
-    console.log(req.user);
-    res.status(200).json({ statusCode: 200, token: 'jwt' });
+  async authFacebookToken(req: Request, res: Response, next: NextFunction): Promise<void> {
+    (function(userService) {
+      passport.authenticate('facebook-token', {session: false}, async function(err, user, info) {
+        if (err) {
+          if (err.oauthError) {
+            const oauthError = JSON.parse(err.oauthError.data);
+            return res.status(401).send(oauthError.error.message);
+          } else {
+            return res.send(err);
+          }
+        } else {
+          const result = await userService.createActivatedUser({
+            agreeTos: true,
+            email: user.email,
+            firstName: 'Stub',
+            lastName: 'Stub',
+            password: 'Stub',
+            passwordHash: 'Stub'
+          });
+          return res.status(200).json(result);
+        }
+      })(req, res, next);
+    })(this.userService);
   }
 }
