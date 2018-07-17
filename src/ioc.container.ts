@@ -7,24 +7,14 @@ import { AuthClientType, AuthClient } from './services/auth.client';
 import { VerificationClientType, VerificationClient } from './services/verify.client';
 import { Web3ClientInterface, Web3ClientType, Web3Client } from './services/web3.client';
 import { MailgunService } from './services/mailgun.service';
-import { EmailServiceType, Web3QueueType, KycProviderType } from './types';
+import { EmailServiceType } from './types';
 import { EmailQueueType, EmailQueueInterface, EmailQueue } from './queues/email.queue';
 import { Auth } from './middlewares/auth';
 import config from './config';
 import * as express from 'express';
 import * as validation from './middlewares/request.validation';
-import { Web3HandlerType, Web3HandlerInterface, Web3Handler } from './events/handlers/web3.handler';
-import { Web3QueueInterface, Web3Queue } from './queues/web3.queue';
-import { TransactionService, TransactionServiceInterface, TransactionServiceType } from './services/transaction.service';
-import { KycController } from './controllers/kyc.controller';
 import { MailjetService } from './services/mailjet.service';
-import { CoinpaymentsClient, CoinpaymentsClientType } from './services/coinpayments/coinpayments.client';
-import { PaymentsServiceType, PaymentsService } from './services/payments.service';
-import { IPNServiceType, IPNService } from './services/ipn.service';
-import { GatewayController } from './controllers/gateway.controller';
 import { EmailTemplateService, EmailTemplateServiceType } from './services/email.template.service';
-import { JumioProvider } from './providers/kyc/jumio.provider';
-import { ShuftiproProvider } from './providers/kyc/shuftipro.provider';
 import { LandingServiceType, LandingService } from './services/landing.service';
 import { GameController } from './controllers/game.controller';
 import { GameServiceType, GameService } from './services/game.service';
@@ -38,30 +28,13 @@ if (process.env.MAIL_DRIVER === 'mailjet') {
   container.bind<EmailServiceInterface>(EmailServiceType).to(MailgunService).inSingletonScope();
 }
 
-if (process.env.KYC_PROVIDER === 'JUMIO') {
-  container.bind<KycProviderInterface>(KycProviderType).to(JumioProvider).inSingletonScope();
-} else if (process.env.KYC_PROVIDER === 'SHUFTIPRO') {
-  container.bind<KycProviderInterface>(KycProviderType).to(ShuftiproProvider).inSingletonScope();
-}
-
 container.bind<EmailQueueInterface>(EmailQueueType).to(EmailQueue).inSingletonScope();
-
 container.bind<Web3ClientInterface>(Web3ClientType).to(Web3Client).inSingletonScope();
-container.bind<TransactionServiceInterface>(TransactionServiceType).to(TransactionService).inSingletonScope();
-container.bind<Web3QueueInterface>(Web3QueueType).toConstantValue(new Web3Queue(
-  container.get<Web3ClientInterface>(Web3ClientType)
-));
-container.bind<Web3HandlerInterface>(Web3HandlerType).toConstantValue(new Web3Handler(
-  container.get<TransactionServiceInterface>(TransactionServiceType)
-));
 
 container.bind<AuthClientInterface>(AuthClientType).toConstantValue(new AuthClient(config.auth.baseUrl));
 container.bind<VerificationClientInterface>(VerificationClientType).toConstantValue(new VerificationClient(config.verify.baseUrl));
 container.bind<UserServiceInterface>(UserServiceType).to(UserService).inSingletonScope();
 
-container.bind<CoinpaymentsClientInterface>(CoinpaymentsClientType).to(CoinpaymentsClient).inSingletonScope();
-container.bind<PaymentsServiceInterface>(PaymentsServiceType).to(PaymentsService).inSingletonScope();
-container.bind<IPNServiceInterface>(IPNServiceType).to(IPNService).inSingletonScope();
 container.bind<EmailTemplateServiceInterface>(EmailTemplateServiceType).to(EmailTemplateService).inSingletonScope();
 container.bind<LandingServiceInterface>(LandingServiceType).to(LandingService).inSingletonScope();
 container.bind<GameServiceInterface>(GameServiceType).to(GameService).inSingletonScope();
@@ -86,9 +59,6 @@ container.bind<express.RequestHandler>('VerifyLoginValidation').toConstantValue(
 container.bind<express.RequestHandler>('ChangePasswordValidation').toConstantValue(
   (req: any, res: any, next: any) => validation.changePassword(req, res, next)
 );
-container.bind<express.RequestHandler>('InviteUserValidation').toConstantValue(
-  (req: any, res: any, next: any) => validation.inviteUser(req, res, next)
-);
 container.bind<express.RequestHandler>('ResetPasswordInitiateValidation').toConstantValue(
   (req: any, res: any, next: any) => validation.resetPasswordInitiate(req, res, next)
 );
@@ -97,12 +67,6 @@ container.bind<express.RequestHandler>('ResetPasswordVerifyValidation').toConsta
 );
 container.bind<express.RequestHandler>('VerificationRequiredValidation').toConstantValue(
   (req: any, res: any, next: any) => validation.verificationRequired(req, res, next)
-);
-container.bind<express.RequestHandler>('InvestValidation').toConstantValue(
-  (req: any, res: any, next: any) => validation.invest(req, res, next)
-);
-container.bind<express.RequestHandler>('OnlyJumioIp').toConstantValue(
-  (req: any, res: any, next: any) => validation.onlyJumioIp(req, res, next)
 );
 container.bind<express.RequestHandler>('ResendVerificationValidation').toConstantValue(
   (req: any, res: any, next: any) => validation.resendVerification(req, res, next)
@@ -114,8 +78,6 @@ container.bind<express.RequestHandler>('OnlyAcceptApplicationJson').toConstantVa
 // controllers
 container.bind<interfaces.Controller>(TYPE.Controller).to(UserController).whenTargetNamed('UserController');
 container.bind<interfaces.Controller>(TYPE.Controller).to(DashboardController).whenTargetNamed('DashboardController');
-container.bind<interfaces.Controller>(TYPE.Controller).to(KycController).whenTargetNamed('KycController');
-container.bind<interfaces.Controller>(TYPE.Controller).to(GatewayController).whenTargetNamed('GatewayController');
 container.bind<interfaces.Controller>(TYPE.Controller).to(GameController).whenTargetNamed('GameController');
 
 export { container };

@@ -2,7 +2,7 @@ import config from '../config';
 import { Response, Request, NextFunction } from 'express';
 import { UserServiceType } from '../services/user.service';
 import { inject, injectable } from 'inversify';
-import { controller, httpPost, httpGet, next } from 'inversify-express-utils';
+import { controller, httpPost, httpGet } from 'inversify-express-utils';
 import 'reflect-metadata';
 import { AuthorizedRequest } from '../requests/authorized.request';
 import * as passport from 'passport';
@@ -129,15 +129,6 @@ export class UserController {
     res.json(await this.userService.verifyResetPassword(req.body));
   }
 
-  @httpPost(
-    '/invite',
-    'AuthMiddleware',
-    'InviteUserValidation'
-  )
-  async invite(req: AuthorizedRequest, res: Response): Promise<void> {
-    res.json(await this.userService.invite(req.user, req.body));
-  }
-
   @httpGet(
     '/enable2fa/initiate',
     'AuthMiddleware'
@@ -197,11 +188,7 @@ export class UserController {
           const result = await userService.createActivatedUser({
             agreeTos: true,
             email: user.email,
-            dob: '1970-01-01',
-            phone: '+111111111111',
-            country: 'ru',
-            firstName: 'Stub',
-            lastName: 'Stub',
+            name: 'Stub',
             password: 'Stub',
             passwordHash: 'Stub'
           });

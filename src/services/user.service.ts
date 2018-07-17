@@ -10,7 +10,7 @@ import {
   UserNotFound,
   InvalidPassword,
   UserNotActivated,
-  TokenNotFound, ReferralDoesNotExist, ReferralIsNotActivated, AuthenticatorError, InviteIsNotAllowed, UserActivated
+  TokenNotFound, AuthenticatorError, UserActivated
 } from '../exceptions/exceptions';
 import config from '../config';
 import { Investor } from '../entities/investor';
@@ -21,7 +21,6 @@ import { getConnection } from 'typeorm';
 import * as bcrypt from 'bcrypt-nodejs';
 import { Logger } from '../logger';
 import { EmailTemplateServiceType } from './email.template.service';
-import { KycProviderType } from '../types';
 
 export const ACTIVATE_USER_SCOPE = 'activate_user';
 export const LOGIN_USER_SCOPE = 'login_user';
@@ -52,7 +51,6 @@ export class UserService implements UserServiceInterface {
     @inject(VerificationClientType) private verificationClient: VerificationClientInterface,
     @inject(Web3ClientType) private web3Client: Web3ClientInterface,
     @inject(EmailQueueType) private emailQueue: EmailQueueInterface,
-    @inject(KycProviderType) private kycProvider: KycProviderInterface,
     @inject(EmailTemplateServiceType) private emailTemplateService: EmailTemplateServiceInterface
   ) { }
 
@@ -74,22 +72,6 @@ export class UserService implements UserServiceInterface {
 
     const logger = this.logger.sub({ email }, '[create] ');
 
-    if (userData.referral) {
-      logger.debug('Find referral');
-
-      const referral = await getConnection().getMongoRepository(Investor).findOne({
-        email: userData.referral.toLowerCase()
-      });
-
-      if (!referral) {
-        throw new ReferralDoesNotExist('Not valid referral code');
-      }
-
-      if (!referral.isVerified) {
-        throw new ReferralIsNotActivated('Not valid referral code');
-      }
-    }
-
     const encodedEmail = encodeURIComponent(email);
     const link = `${ config.app.frontendUrl }/auth/signup?type=activate&code={{{CODE}}}&verificationId={{{VERIFICATION_ID}}}&email=${ encodedEmail }`;
 
@@ -101,7 +83,7 @@ export class UserService implements UserServiceInterface {
       template: {
         fromEmail: config.email.from.general,
         subject: `Verify your email at ${config.app.companyName}`,
-        body: await this.emailTemplateService.getRenderedTemplate('init-signup', { name: `${userData.firstName} ${userData.lastName}`, link: link })
+        body: await this.emailTemplateService.getRenderedTemplate('init-signup', { name: userData.name, link: link })
       },
       generateCode: {
         length: 6,
@@ -420,21 +402,8 @@ export class UserService implements UserServiceInterface {
       salt
     });
 
-    if (user.referral) {
-      logger.debug('Find referral user', user.referral);
-
-      const referral = await getConnection().getMongoRepository(Investor).findOne({
-        email: user.referral.toLowerCase()
-      });
-
-      logger.debug('Add referral to the list');
-
-      await this.web3Client.addReferralOf(account.address, referral.ethWallet.address);
-    }
-
     logger.debug('Initialization of KYC verification');
 
-    user.kycInitResult = await this.kycProvider.init(user);
     user.isVerified = true;
     await getConnection().getMongoRepository(Investor).save(user);
 
@@ -664,49 +633,6 @@ export class UserService implements UserServiceInterface {
     return verificationResult;
   }
 
-  async invite(user: Investor, params: any): Promise<InviteResultArray> {
-    let result = [];
-
-    for (let email of params.emails as Array<string>) {
-      const user = await getConnection().getMongoRepository(Investor).findOne({ email: email.toLowerCase() });
-      if (user) {
-        throw new InviteIsNotAllowed(`{{email}} account already exists`, {
-          email: email.toLowerCase()
-        });
-      }
-    }
-
-    const logger = this.logger.sub({ email: user.email }, '[invite] ');
-
-    user.checkAndUpdateInvitees(params.emails);
-
-    logger.debug('Send invites');
-
-    for (let email of params.emails as Array<string>) {
-      logger.debug('Send invite for', email);
-
-      this.emailQueue.addJob({
-        sender: config.email.from.referral,
-        recipient: email,
-        subject: `${ user.name } thinks you will like this project…`,
-        text: await this.emailTemplateService.getRenderedTemplate('invite', {
-          name: user.name,
-          link: `${ config.app.frontendUrl }/auth/signup/${ user.referralCode }`
-        })
-      });
-
-      result.push({
-        email: email.toLowerCase(),
-        invited: true
-      });
-    }
-
-    await getConnection().getMongoRepository(Investor).save(user);
-    return {
-      emails: result
-    };
-  }
-
   private async initiate2faVerification(user: Investor, scope: string): Promise<InitiateResult> {
     this.logger.debug('[initiate2faVerification] Initiate verification', { meta: { email: user.email } });
 
@@ -798,10 +724,7 @@ export class UserService implements UserServiceInterface {
       ethAddress: user.ethWallet.address,
       email: user.email.toLowerCase(),
       name: user.name,
-      kycStatus: user.kycStatus,
-      defaultVerificationMethod: user.defaultVerificationMethod,
-      firstName: user.firstName,
-      lastName: user.lastName
+      defaultVerificationMethod: user.defaultVerificationMethod
     };
   }
 

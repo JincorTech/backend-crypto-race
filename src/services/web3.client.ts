@@ -18,37 +18,12 @@ export interface Web3ClientInterface {
 
   getAccountByMnemonicAndSalt(mnemonic: string, salt: string): any;
 
-  addAddressToWhiteList(address: string): any;
-
-  addReferralOf(address: string, referral: string): any;
-
-  isAllowed(account: string): Promise<boolean>;
-
-  getReferralOf(account: string): Promise<string>;
-
   getEthBalance(address: string): Promise<string>;
-
-  getSoldIcoTokens(addresses: Array<string>): Promise<string>;
-
-  getTokenBalanceOf(address: string): Promise<string>;
-
-  getEthCollected(addresses: Array<string>): Promise<string>;
-
-  getTokenEthPrice(): Promise<number>;
-
   sufficientBalance(input: TransactionInput): Promise<boolean>;
-
-  getContributionsCount(): Promise<number>;
 
   getCurrentGasPrice(): Promise<string>;
 
   investmentFee(): Promise<any>;
-
-  queryIcoMethod(name: string, ...args): Promise<any>;
-
-  getSoldIcoTokensFromAddress(address: string): Promise<string>;
-
-  getEthCollectedFromAddress(address: string): Promise<string>;
 
   // game
   createTrackFromBackend(id: string, betAmount: number): Promise<any>;
@@ -310,92 +285,10 @@ export class Web3Client implements Web3ClientInterface {
     return await this.raceBase.methods.getBetAmount(nameBytes32).call();
   }
 
-  addAddressToWhiteList(address: string) {
-    return new Promise(async(resolve, reject) => {
-      const account = this.web3.eth.accounts.privateKeyToAccount(config.contracts.whiteList.ownerPk);
-      const params = {
-        value: '0',
-        to: this.whiteList.options.address,
-        gas: 200000,
-        nonce: await this.web3.eth.getTransactionCount(account.address, 'pending'),
-        data: this.whiteList.methods.addInvestorToWhiteList(address).encodeABI()
-      };
-
-      account.signTransaction(params).then(transaction => {
-        this.web3.eth.sendSignedTransaction(transaction.rawTransaction)
-          .on('transactionHash', transactionHash => {
-            resolve(transactionHash);
-          })
-          .on('error', (error) => {
-            reject(error);
-          })
-          .catch((error) => {
-            reject(error);
-          });
-      });
-    });
-  }
-
-  addReferralOf(address: string, referral: string) {
-    return new Promise((resolve, reject) => {
-      const params = {
-        value: '0',
-        to: this.whiteList.options.address,
-        gas: 200000,
-        data: this.whiteList.methods.addReferralOf(address, referral).encodeABI()
-      };
-
-      this.web3.eth.accounts.signTransaction(params, config.contracts.whiteList.ownerPk).then(transaction => {
-        this.web3.eth.sendSignedTransaction(transaction.rawTransaction)
-          .on('transactionHash', transactionHash => {
-            resolve(transactionHash);
-          })
-          .on('error', (error) => {
-            reject(error);
-          })
-          .catch((error) => {
-            reject(error);
-          });
-      });
-    });
-  }
-
-  async isAllowed(address: string): Promise<boolean> {
-    return await this.whiteList.methods.isAllowed(address).call();
-  }
-
-  async getReferralOf(address: string): Promise<string> {
-    return await this.whiteList.methods.getReferralOf(address).call();
-  }
-
   async getEthBalance(address: string): Promise<string> {
     return this.web3.utils.fromWei(
       await this.web3.eth.getBalance(address)
     );
-  }
-
-  async getSoldIcoTokens(addresses: Array<string>): Promise<string> {
-    let sum = 0;
-    for (const address of addresses) {
-      sum += parseFloat(await this.getSoldIcoTokensFromAddress(address));
-    }
-    return sum.toString();
-  }
-
-  async getTokenBalanceOf(address: string): Promise<string> {
-    return this.web3.utils.fromWei(await this.token.methods.balanceOf(address).call()).toString();
-  }
-
-  async getEthCollected(addresses: Array<string>): Promise<string> {
-    let sum = 0;
-    for (const address of addresses) {
-      sum += parseFloat(await this.getEthCollectedFromAddress(address));
-    }
-    return sum.toString();
-  }
-
-  async getTokenEthPrice(): Promise<number> {
-    return (await this.ico.methods.ethUsdRate().call()) / 100;
   }
 
   sufficientBalance(input: TransactionInput): Promise<boolean> {
@@ -428,16 +321,8 @@ export class Web3Client implements Web3ClientInterface {
   }
 
   createContracts() {
-    this.whiteList = new this.web3.eth.Contract(config.contracts.whiteList.abi, config.contracts.whiteList.address);
-    this.ico = new this.web3.eth.Contract(config.contracts.ico.abi, config.contracts.ico.address);
-    this.token = new this.web3.eth.Contract(config.contracts.token.abi, config.contracts.token.address);
     this.raceBase = new this.web3.eth.Contract(config.contracts.raceBase.abi, config.contracts.raceBase.address);
     this.rate = new this.web3.eth.Contract(config.contracts.rate.abi, config.contracts.rate.address);
-  }
-
-  async getContributionsCount(): Promise<number> {
-    const contributionsEvents = await this.ico.getPastEvents('NewContribution', {fromBlock: config.web3.startBlock});
-    return contributionsEvents.length;
   }
 
   async getCurrentGasPrice(): Promise<string> {
@@ -456,22 +341,6 @@ export class Web3Client implements Web3ClientInterface {
         new BN(gas).mul(new BN(this.web3.utils.toWei(gasPrice, 'gwei'))).toString()
       )
     };
-  }
-
-  async queryIcoMethod(name: string, ...args): Promise<any> {
-    return await this.ico.methods[name](...args).call();
-  }
-
-  async getSoldIcoTokensFromAddress(address: string): Promise<string> {
-    return this.web3.utils.fromWei(
-      await this.ico.methods.tokensSold().call()
-    ).toString();
-  }
-
-  async getEthCollectedFromAddress(address: string): Promise<string> {
-    return this.web3.utils.fromWei(
-      await this.ico.methods.collected().call()
-    ).toString();
   }
 
   isHex(key: any): boolean {

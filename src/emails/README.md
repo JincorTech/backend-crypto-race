@@ -9,12 +9,6 @@ export const render = (data) => `<template>${data.fieldName}</template>`;
 ```
 
 ## Required templates
-### init-buy-tokens.
-Params:
-- data.name (String) - recipient name
-- data.ip (String) - request ip
-- data.datetime (String) - request date-time
-- {{{CODE}}} - verification code
 
 ### init-change-password
 Params:
@@ -42,11 +36,6 @@ Params:
 - data.name (String) - recipient name
 - data.link (String) - activation link
 - {{{CODE}}} - verification code
-
-### invite
-Params:
-- data.referralName (String) - referral name
-- data.link (String) - referral link
 
 
 ## Optional templates

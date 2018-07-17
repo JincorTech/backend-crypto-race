@@ -131,13 +131,8 @@ declare interface VerificationClientInterface {
 
 declare interface UserData {
   email: string;
-  firstName: string;
-  lastName: string;
-  phone: string;
-  country: string;
-  dob: string;
+  name: string;
   agreeTos: boolean;
-  referral?: string;
   passwordHash?: string;
   source?: any;
 }
@@ -167,8 +162,6 @@ declare interface CreatedUserData extends UserData {
   };
   isVerified: boolean;
   defaultVerificationMethod: string;
-  referralCode: string;
-  kycStatus: string;
 }
 
 declare interface BaseInitiateResult {
@@ -246,44 +239,11 @@ declare interface Enable2faResult {
   enabled: boolean;
 }
 
-declare interface KycInitResult {
-  timestamp: string;
-}
-
-declare interface JumioInitResult extends KycInitResult {
-  authorizationToken: string;
-  jumioIdScanReference: string;
-  clientRedirectUrl: string;
-}
-
-declare interface ShuftiproInitResult extends KycInitResult {
-  status_code?: string;
-  message: string;
-  reference?: string;
-  signature?: string;
-  error?: boolean;
-}
-
-declare interface KycScanStatus {
-  timestamp: string;
-  scanReference: string;
-  status: string;
-}
-
-declare interface JumioIdentityVerification {
-  similarity: string;
-  validity: boolean;
-  reason?: string;
-}
-
 declare interface UserInfo {
   ethAddress: string;
   email: string;
   name: string;
-  kycStatus: string;
   defaultVerificationMethod: string;
-  firstName: string;
-  lastName: string;
 }
 
 interface TransactionInput {
@@ -308,7 +268,6 @@ declare interface UserServiceInterface {
   initiateResetPassword(params: ResetPasswordInput): Promise<BaseInitiateResult>;
   verifyResetPassword(params: ResetPasswordInput): Promise<ValidationResult>;
   verifyLogin(inputData: VerifyLoginInput): Promise<VerifyLoginResult>;
-  invite(user: any, params: any): Promise<InviteResultArray>;
   getUserInfo(user: any): Promise<UserInfo>;
   resendVerification(userData: ResendVerificationInput): Promise<CreatedUserData>;
 }
@@ -431,14 +390,6 @@ declare interface PaymentGateTransactionView {
 
 declare interface EmailTemplateServiceInterface {
   getRenderedTemplate(templateName: string, data: any): Promise<string>;
-}
-
-declare interface KycProviderInterface {
-  init(user: any);
-  getInitStatus(req, res, next);
-  successUpload(req, res, next);
-  callback(req, res, next);
-  reinit(req, res, next);
 }
 
 declare interface LandingServiceInterface {

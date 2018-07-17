@@ -1,6 +1,5 @@
 import { Investor } from '../entities/investor';
 import { VerifiedToken } from '../entities/verified.token';
-import config from '../config';
 
 export function transformInvestorForAuth(investor: Investor) {
   return {
@@ -16,11 +15,6 @@ export function transformCreatedInvestor(investor: Investor): CreatedUserData {
     id: investor.id.toString(),
     email: investor.email,
     name: investor.name,
-    firstName: investor.firstName,
-    lastName: investor.lastName,
-    phone: investor.phone,
-    country: investor.country,
-    dob: investor.dob,
     agreeTos: investor.agreeTos,
     verification: {
       id: investor.verification.id.toString(),
@@ -28,9 +22,6 @@ export function transformCreatedInvestor(investor: Investor): CreatedUserData {
     },
     isVerified: investor.isVerified,
     defaultVerificationMethod: investor.defaultVerificationMethod,
-    referralCode: investor.referralCode,
-    kycStatus: investor.kycStatus,
-    referral: investor.referral,
     source: investor.source
   };
 }
@@ -46,18 +37,5 @@ export function transformVerifiedToken(token: VerifiedToken): VerifyLoginResult 
       expiredOn: token.verification.expiredOn,
       status: 200
     }
-  };
-}
-
-export function transformReqBodyToInvestInput(body: any, investor: Investor): TransactionInput {
-  const gas = body.gas ? body.gas.toString() : config.web3.defaultInvestGas;
-  const amount = body.ethAmount.toString();
-
-  return {
-    from: investor.ethWallet.address,
-    to: config.contracts.ico.address,
-    amount,
-    gas,
-    gasPrice: body.gasPrice
   };
 }

@@ -27,11 +27,7 @@ describe('Users', () => {
     it('should create user', (done) => {
       const params = {
         email: 'TesT@test.com',
-        firstName: 'ICO',
-        lastName: 'investor',
-        phone: '+45550000000',
-        country: 'us',
-        dob: '1970-01-01',
+        name: 'ICO investor',
         password: 'test12A6!@#$%^&*()_-=+|/',
         agreeTos: true,
         source: {
@@ -43,112 +39,13 @@ describe('Users', () => {
       postRequest(factory.testAppForSuccessRegistrationWithJumioProvider(), '/user').send(params).end((err, res) => {
         expect(res.status).to.equal(200);
         expect(res.body).to.have.property('id');
-        expect(res.body.firstName).to.eq('ICO');
-        expect(res.body.lastName).to.eq('investor');
+        expect(res.body.name).to.eq('ICO investor');
         expect(res.body.email).to.eq('test@test.com');
         expect(res.body.agreeTos).to.eq(true);
         expect(res.body.isVerified).to.eq(false);
-        if (config.kyc.enabled) {
-          expect(res.body.kycStatus).to.eq('not_verified');
-        } else {
-          expect(res.body.kycStatus).to.eq(config.kyc.status.default);
-        }
-
         expect(res.body.defaultVerificationMethod).to.eq('email');
         expect(res.body.verification.id).to.equal('123');
         expect(res.body.verification.method).to.equal('email');
-        expect(res.body.referralCode).to.equal('dGVzdEB0ZXN0LmNvbQ');
-        expect(res.body.source).to.deep.equal({
-          utm: 'utm',
-          gtm: 'gtm'
-        });
-        expect(res.body).to.not.have.property('passwordHash');
-        expect(res.body).to.not.have.property('password');
-        done();
-      });
-    });
-
-    it('should create user - optional phone', (done) => {
-      config.kyc.shuftipro.defaultPhone = '+400000000000';
-      const params = {
-        email: 'TesT@test.com',
-        firstName: 'ICO',
-        lastName: 'investor',
-        country: 'us',
-        dob: '1970-01-01',
-        password: 'test12A6!@#$%^&*()_-=+|/',
-        agreeTos: true,
-        source: {
-          utm: 'utm',
-          gtm: 'gtm'
-        }
-      };
-
-      postRequest(factory.testAppForSuccessRegistrationWithJumioProvider(), '/user').send(params).end((err, res) => {
-        expect(res.status).to.equal(200);
-        expect(res.body).to.have.property('id');
-        expect(res.body.firstName).to.eq('ICO');
-        expect(res.body.lastName).to.eq('investor');
-        expect(res.body.phone).to.eq('+400000000000');
-        expect(res.body.email).to.eq('test@test.com');
-        expect(res.body.agreeTos).to.eq(true);
-        expect(res.body.isVerified).to.eq(false);
-        if (config.kyc.enabled) {
-          expect(res.body.kycStatus).to.eq('not_verified');
-        } else {
-          expect(res.body.kycStatus).to.eq(config.kyc.status.default);
-        }
-
-        expect(res.body.defaultVerificationMethod).to.eq('email');
-        expect(res.body.verification.id).to.equal('123');
-        expect(res.body.verification.method).to.equal('email');
-        expect(res.body.referralCode).to.equal('dGVzdEB0ZXN0LmNvbQ');
-        expect(res.body.source).to.deep.equal({
-          utm: 'utm',
-          gtm: 'gtm'
-        });
-        expect(res.body).to.not.have.property('passwordHash');
-        expect(res.body).to.not.have.property('password');
-        done();
-      });
-    });
-
-    it('should create user with phone - optional phone', (done) => {
-      config.kyc.shuftipro.defaultPhone = '+400000000000';
-      const params = {
-        email: 'TesT@test.com',
-        firstName: 'ICO',
-        lastName: 'investor',
-        phone: '+45550000000',
-        country: 'us',
-        dob: '1970-01-01',
-        password: 'test12A6!@#$%^&*()_-=+|/',
-        agreeTos: true,
-        source: {
-          utm: 'utm',
-          gtm: 'gtm'
-        }
-      };
-
-      postRequest(factory.testAppForSuccessRegistrationWithJumioProvider(), '/user').send(params).end((err, res) => {
-        expect(res.status).to.equal(200);
-        expect(res.body).to.have.property('id');
-        expect(res.body.firstName).to.eq('ICO');
-        expect(res.body.lastName).to.eq('investor');
-        expect(res.body.phone).to.eq('+45550000000');
-        expect(res.body.email).to.eq('test@test.com');
-        expect(res.body.agreeTos).to.eq(true);
-        expect(res.body.isVerified).to.eq(false);
-        if (config.kyc.enabled) {
-          expect(res.body.kycStatus).to.eq('not_verified');
-        } else {
-          expect(res.body.kycStatus).to.eq(config.kyc.status.default);
-        }
-
-        expect(res.body.defaultVerificationMethod).to.eq('email');
-        expect(res.body.verification.id).to.equal('123');
-        expect(res.body.verification.method).to.equal('email');
-        expect(res.body.referralCode).to.equal('dGVzdEB0ZXN0LmNvbQ');
         expect(res.body.source).to.deep.equal({
           utm: 'utm',
           gtm: 'gtm'
@@ -162,98 +59,13 @@ describe('Users', () => {
     it('should not allow to create user if email already exists', (done) => {
       const params = {
         email: 'exiSTing@test.com',
-        firstName: 'ICO',
-        lastName: 'investor',
-        phone: '+45550000000',
-        country: 'us',
+        name: 'ICO investor',
         password: 'test12A6!@#$%^&*()_-=+|/',
         agreeTos: true
       };
 
       postRequest(factory.testAppForSuccessRegistrationWithJumioProvider(), '/user').send(params).end((err, res) => {
         expect(res.status).to.equal(422);
-        done();
-      });
-    });
-
-    it('should create user and assign referral', (done) => {
-      const params = {
-        email: 'tesT1@test.com',
-        firstName: 'ICO',
-        lastName: 'investor',
-        phone: '+45550000000',
-        country: 'us',
-        dob: '1970-01-01',
-        password: 'test12A6!@#$%^&*()_-=+|/',
-        referral: 'YWN0aXZhdGVkQHRlc3QuY29t',
-        agreeTos: true
-      };
-
-      postRequest(factory.testAppForSuccessRegistrationWithJumioProvider(), '/user').send(params).end((err, res) => {
-        expect(res.status).to.equal(200);
-        expect(res.body.referral).to.equal('activated@test.com');
-        expect(res.body).to.not.have.property('passwordHash');
-        expect(res.body).to.not.have.property('password');
-        done();
-      });
-    });
-
-    it('should not allow to set not existing referral', (done) => {
-      const params = {
-        email: 'test1@test.com',
-        firstName: 'ICO',
-        lastName: 'investor',
-        phone: '+45550000000',
-        country: 'us',
-        dob: '1970-01-01',
-        password: 'test12A6!@#$%^&*()_-=+|/',
-        referral: 'dGVzdEB0ZXN0LmNvbQ',
-        agreeTos: true
-      };
-
-      postRequest(factory.testAppForSuccessRegistrationWithJumioProvider(), '/user').send(params).end((err, res) => {
-        expect(res.status).to.equal(422);
-        expect(res.body.message).to.eq('Not valid referral code');
-        done();
-      });
-    });
-
-    it('should not allow to set not activated referral', (done) => {
-      const params = {
-        email: 'test1@test.com',
-        firstName: 'ICO',
-        lastName: 'investor',
-        phone: '+45550000000',
-        country: 'us',
-        dob: '1970-01-01',
-        password: 'test12A6!@#$%^&*()_-=+|/',
-        referral: 'ZXhpc3RpbmdAdGVzdC5jb20',
-        agreeTos: true
-      };
-
-      postRequest(factory.testAppForSuccessRegistrationWithJumioProvider(), '/user').send(params).end((err, res) => {
-        expect(res.status).to.equal(422);
-        expect(res.body.message).to.eq('Not valid referral code');
-        done();
-      });
-    });
-
-    it('should not allow to set random referral code', (done) => {
-      const params = {
-        email: 'test1@test.com',
-        firstName: 'ICO',
-        lastName: 'investor',
-        phone: '+45550000000',
-        country: 'us',
-        dob: '1970-01-01',
-        password: 'test12A6!@#$%^&*()_-=+|/',
-        referral: 'randomstuff',
-        agreeTos: true
-      };
-
-      postRequest(factory.testAppForSuccessRegistrationWithJumioProvider(), '/user').send(params).end((err, res) => {
-        expect(res.status).to.equal(422);
-        expect(res.body.message).to.eq('Not valid referral code');
         done();
       });
     });
@@ -261,34 +73,12 @@ describe('Users', () => {
     it('should create user when additional fields are present in request (jumio provider)', (done) => {
       const params = {
         email: 'test@test.com',
-        firstName: 'ICO',
-        lastName: 'investor',
-        phone: '+45550000000',
-        country: 'us',
-        dob: '1970-01-01',
+        name: 'ICO investor',
         password: 'test12A6!@#$%^&*()_-=+|/',
         agreeTos: true,
         additional: 'value'
       };
       postRequest(factory.testAppForSuccessRegistrationWithJumioProvider(), '/user').send(params).end((err, res) => {
-        expect(res.status).to.equal(200);
-        done();
-      });
-    });
-
-    it('should create user when additional fields are present in request (shuftipro provider)', (done) => {
-      const params = {
-        email: 'test@test.com',
-        firstName: 'ICO',
-        lastName: 'investor',
-        phone: '+45550000000',
-        country: 'us',
-        dob: '1970-01-01',
-        password: 'test12A6!@#$%^&*()_-=+|/',
-        agreeTos: true,
-        additional: 'value'
-      };
-      postRequest(factory.testAppForSuccessRegistrationWithShuftiproProvider(), '/user').send(params).end((err, res) => {
         expect(res.status).to.equal(200);
         done();
       });
@@ -343,10 +133,7 @@ describe('Users', () => {
     it('should validate email', (done) => {
       const params = {
         email: 'test.test.com',
-        firstName: 'ICO',
-        lastName: 'investor',
-        phone: '+45550000000',
-        country: 'us',
+        name: 'ICO investor',
         password: 'test12A6!@#$%^&*()_-=+|/',
         agreeTos: true
       };
@@ -359,28 +146,8 @@ describe('Users', () => {
       });
     });
 
-    it('should validate referral', (done) => {
-      const params = {
-        email: 'test@test.com',
-        firstName: 'ICO',
-        lastName: 'investor',
-        phone: '+45550000000',
-        country: 'us',
-        dob: '1970-01-01',
-        password: 'test12A6!@#$%^&*()_-=+|/',
-        agreeTos: true,
-        referral: 'test.test.com'
-      };
-
-      postRequest(app, '/user').send(params).end((err, res) => {
-        expect(res.status).to.equal(422);
-        expect(res.body.message).to.equal('Not valid referral code');
-        done();
-      });
-    });
-
     it('should require email', (done) => {
-      const params = {firstName: 'ICO', lastName: 'investor', password: 'test12A6!@#$%^&*()_-=+|/', agreeTos: true};
+      const params = {name: 'ICO investor', password: 'test12A6!@#$%^&*()_-=+|/', agreeTos: true};
 
       postRequest(app, '/user').send(params).end((err, res) => {
         expect(res.status).to.equal(422);
@@ -390,80 +157,18 @@ describe('Users', () => {
       });
     });
 
-    it('should require firstName', (done) => {
+    it('should require name', (done) => {
       const params = {email: 'test@test.com', password: 'test12A6!@#$%^&*()_-=+|/', agreeTos: true};
 
       postRequest(app, '/user').send(params).end((err, res) => {
         expect(res.status).to.equal(422);
-        expect(res.body.message).to.equal('"firstName" is required');
-        done();
-      });
-    });
-
-    it('should require lastName', (done) => {
-      const params = {email: 'test@test.com', firstName: 'ICO', password: 'test12A6!@#$%^&*()_-=+|/', agreeTos: true};
-
-      postRequest(app, '/user').send(params).end((err, res) => {
-        expect(res.status).to.equal(422);
-        expect(res.body.message).to.equal('"lastName" is required');
-        done();
-      });
-    });
-
-    it('should require country', (done) => {
-      const params = {email: 'test@test.com', firstName: 'ICO', lastName: 'investor', phone: '+45550000000', password: 'test12A6!@#$%^&*()_-=+|/', agreeTos: true};
-
-      postRequest(app, '/user').send(params).end((err, res) => {
-        expect(res.status).to.equal(422);
-        expect(res.body.message).to.equal('"country" is required');
-        done();
-      });
-    });
-
-    it('should require phone', (done) => {
-      config.kyc.shuftipro.defaultPhone = undefined;
-      const params = {email: 'test@test.com', firstName: 'ICO', lastName: 'investor', country: 'ru', password: 'test12A6!@#$%^&*()_-=+|/', agreeTos: true};
-
-      postRequest(factory.buildApp(), '/user').send(params).end((err, res) => {
-        expect(res.status).to.equal(422);
-        expect(res.body.message).to.equal('"phone" is required');
-        done();
-      });
-    });
-
-    it('should optional phone', (done) => {
-      config.kyc.shuftipro.defaultPhone = '+4400000000000';
-      const params = {email: 'test@test.com', firstName: 'ICO', lastName: 'investor', country: 'ru', password: 'test12A6!@#$%^&*()_-=+|/', agreeTos: true};
-
-      postRequest(factory.buildApp(), '/user').send(params).end((err, res) => {
-        expect(res.status).to.equal(422);
-        expect(res.body.message).to.not.equal('"phone" is required');
-        done();
-      });
-    });
-
-    it('should require valid phone number', (done) => {
-      const params = {email: 'test@test.com', firstName: 'ICO', lastName: 'investor', country: 'ru', phone: '45550000000', password: 'test12A6!@#$%^&*()_-=+|/', agreeTos: true};
-
-      postRequest(app, '/user').send(params).end((err, res) => {
-        expect(res.status).to.equal(422);
-        expect(res.body.message).to.equal('"phone" must be a valid phone number (+1234567890)');
-        done();
-      });
-    });
-
-    it('should require dob', (done) => {
-      const params = {email: 'test@test.com', firstName: 'ICO', lastName: 'investor', country: 'ru', phone: '+45550000000', password: 'test12A6!@#$%^&*()_-=+|/', agreeTos: true};
-
-      postRequest(app, '/user').send(params).end((err, res) => {
-        expect(res.status).to.equal(422);
-        expect(res.body.message).to.equal('"dob" is required');
+        expect(res.body.message).to.equal('"name" is required');
         done();
       });
     });
 
     it('should require password', (done) => {
-      const params = {email: 'test@test.com', firstName: 'ICO', lastName: 'investor', phone: '+45550000000', country: 'ru', dob: '1960-01-01', agreeTos: true};
+      const params = {email: 'test@test.com', name: 'ICO investor', agreeTos: true};
 
       postRequest(app, '/user').send(params).end((err, res) => {
         expect(res.status).to.equal(422);
@@ -474,7 +179,7 @@ describe('Users', () => {
     });
 
     it('should require valid password', (done) => {
-      const params = {email: 'test@test.com', firstName: 'ICO', lastName: 'investor', phone: '+45550000000', country: 'ru', dob: '1960-01-01', password: 'qwerty'};
+      const params = {email: 'test@test.com', name: 'ICO investor', password: 'qwerty'};
 
       postRequest(app, '/user').send(params).end((err, res) => {
         expect(res.status).to.equal(422);
@@ -485,7 +190,7 @@ describe('Users', () => {
     });
 
     it('should require agreeTos to be true', (done) => {
-      const params = {email: 'test@test.com', firstName: 'ICO', lastName: 'investor', phone: '+45550000000', country: 'ru', dob: '1960-01-01', password: 'test12A6!@#$%^&*()_-=+|/'};
+      const params = {email: 'test@test.com', name: 'ICO investor', password: 'test12A6!@#$%^&*()_-=+|/'};
 
       postRequest(app, '/user').send(params).end((err, res) => {
         expect(res.status).to.equal(422);
@@ -498,11 +203,7 @@ describe('Users', () => {
     it('should require agreeTos to be true', (done) => {
       const params = {
         email: 'test@test.com',
-        firstName: 'ICO',
-        lastName: 'investor',
-        phone: '+45550000000',
-        country: 'us',
-        dob: '1960-01-01',
+        name: 'ICO investor',
         password: 'test12A6!@#$%^&*()_-=+|/',
         agreeTos: false
       };
@@ -699,14 +400,8 @@ describe('Users', () => {
         expect(res.body).to.deep.equal({
           ethAddress: '0x54c0B824d575c60F3B80ba1ea3A0cCb5EE3F56eA',
           email: 'activated@test.com',
-          name: 'ICO Investor',
-          kycStatus: 'not_verified',
-          defaultVerificationMethod: 'email',
-          firstName: 'ICO',
-          lastName: 'Investor',
-          dob: '1970-01-01',
-          country: 'RU',
-          phone: '+70000000000'
+          name: 'ICO investor',
+          defaultVerificationMethod: 'email'
         });
         done();
       });
@@ -884,112 +579,6 @@ describe('Users', () => {
         .end((err, res) => {
           expect(res.status).to.equal(422);
           expect(res.body.message).to.equal('"password" is required');
-          done();
-        });
-    });
-  });
-
-  describe('POST /user/invite', () => {
-    it('should invite users', (done) => {
-      const token = 'verified_token';
-      const params = {
-        emails: [
-          'ortgMA@gmail.com'
-        ]
-      };
-
-      postRequest(factory.testAppForInvite(), '/user/invite')
-        .set('Authorization', `Bearer ${ token }`)
-        .send(params)
-        .end((err, res) => {
-          expect(res.status).to.equal(200);
-
-          expect(res.body).to.deep.equal({
-            emails: [
-              {
-                email: 'ortgma@gmail.com',
-                invited: true
-              }
-            ]
-          });
-          done();
-        });
-    });
-
-    it('should validate emails', (done) => {
-      const token = 'verified_token';
-      const params = {
-        emails: [
-          'inviTe1@test.com',
-          'inviTe2.test.com',
-          'inviTe3@test.com'
-        ]
-      };
-
-      postRequest(factory.testAppForChangePassword(), '/user/invite')
-        .set('Authorization', `Bearer ${ token }`)
-        .send(params)
-        .end((err, res) => {
-          expect(res.status).to.equal(422);
-          expect(res.body.message).to.equal('"1" must be a valid email');
-          done();
-        });
-    });
-
-    it('should not allow to invite more than 5 emails at once', (done) => {
-      const token = 'verified_token';
-      const params = {
-        emails: [
-          'inviTe1@test.com',
-          'inviTe2@test.com',
-          'inviTe3@test.com',
-          'inviTe4@test.com',
-          'inviTe5@test.com',
-          'inviTe6@test.com'
-        ]
-      };
-
-      postRequest(factory.testAppForChangePassword(), '/user/invite')
-        .set('Authorization', `Bearer ${ token }`)
-        .send(params)
-        .end((err, res) => {
-          expect(res.status).to.equal(422);
-          expect(res.body.message).to.equal('"emails" must contain less than or equal to 5 items');
-          done();
-        });
-    });
-
-    it('should not allow to invite less than 1 email', (done) => {
-      const token = 'verified_token';
-      const params = {
-        emails: []
-      };
-
-      postRequest(factory.testAppForChangePassword(), '/user/invite')
-        .set('Authorization', `Bearer ${ token }`)
-        .send(params)
-        .end((err, res) => {
-          expect(res.status).to.equal(422);
-          expect(res.body.message).to.equal('"emails" must contain at least 1 items');
-          done();
-        });
-    });
-
-    it('should not allow to invite already existing users', (done) => {
-      const token = 'verified_token';
-      const params = {
-        emails: [
-          'inviTed@test.com',
-          'exisTing@test.com'
-        ]
-      };
-
-      postRequest(factory.testAppForChangePassword(), '/user/invite')
-        .set('Authorization', `Bearer ${ token }`)
-        .send(params)
-        .end((err, res) => {
-          expect(res.status).to.equal(422);
-          expect(res.body.message).to.equal('existing@test.com account already exists');
           done();
         });
     });

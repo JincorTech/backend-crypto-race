@@ -30,10 +30,6 @@ const {
   MONGO_AUTH_SOURCE,
   MONGO_REPLICA_SET,
   SC_ABI_FOLDER,
-  ICO_SC_ADDRESS,
-  ICO_OLD_SC_ADDRESSES,
-  WHITELIST_SC_ADDRESS,
-  TOKEN_ADDRESS,
   RACE_BASE_ADDRESS,
   RATE_ADDRESS,
   RACE_OWNER_PK,
@@ -46,34 +42,14 @@ const {
   MAILJET_API_SECRET,
   WEB3_RESTORE_START_BLOCK,
   WEB3_BLOCK_OFFSET,
-  WL_OWNER_PK,
-  KYC_PROVIDER,
-  KYC_ENABLED,
-  KYC_JUMIO_TOKEN,
-  KYC_JUMIO_SECRET,
-  KYC_JUMIO_BASE_URL,
-  KYC_JUMIO_TOKEN_LIFETIME,
-  KYC_STATUS_DEFAULT,
-  COINPAYMENTS_API_KEY,
-  COINPAYMENTS_API_SECRET,
-  COINPAYMENTS_API_CURRENCY1,
-  COINPAYMENTS_API_MERCHANT_ID,
-  COINPAYMENTS_API_MERCHANT_SECRET,
   COMPANY_NAME,
   EMAIL_FROM,
   EMAIL_REFERRAL,
   EMAIL_TEMPLATE_FOLDER,
-  TOKEN_PRICE_USD,
-  KYC_SHUFTIPRO_CLIENT_ID,
-  KYC_SHUFTIPRO_SECRET_KEY,
-  KYC_SHUFTIPRO_CALLBACK_URL,
-  KYC_SHUFTIPRO_REDIRECT_URL,
   TEST_FUND_PK,
   DEFAULT_INVEST_GAS,
   PURCHASE_GAS_LIMIT,
-  ICO_END_TIMESTAMP,
-  KYC_SHUFTIPRO_ALLOW_RECREATE_SESSION,
-  KYC_SHUFTIPRO_DEFAULT_PHONE
+  ICO_END_TIMESTAMP
 } = process.env;
 
 export default {
@@ -146,23 +122,6 @@ export default {
     }
   },
   contracts: {
-    // old ropsten whitelist: 0x94c4b2ee76ff421cdae95a9affeea7c80d4334e8
-    whiteList: {
-      address: WHITELIST_SC_ADDRESS,
-      abi: JSON.parse(fs.readFileSync(SC_ABI_FOLDER + '/whitelist-sc-abi.json').toString()),
-      ownerPk: WL_OWNER_PK
-    },
-    // old ropsten ico: 0xfd7345eaa260ec6259223ca996abac70a7cc8ac3
-    ico: {
-      address: ICO_SC_ADDRESS,
-      oldAddresses: ICO_OLD_SC_ADDRESSES ? ICO_OLD_SC_ADDRESSES.split(',') : [],
-      abi: JSON.parse(fs.readFileSync(SC_ABI_FOLDER + '/ico-sc-abi.json').toString())
-    },
-    token: {
-      priceUsd: parseFloat(TOKEN_PRICE_USD),
-      address: TOKEN_ADDRESS,
-      abi: JSON.parse(fs.readFileSync(SC_ABI_FOLDER + '/token-sc-abi.json').toString())
-    },
     raceBase: {
       address: RACE_BASE_ADDRESS,
       abi: JSON.parse(fs.readFileSync(SC_ABI_FOLDER + '/race-base-abi.json').toString()),
@@ -190,40 +149,10 @@ export default {
       ORM_SUBSCRIBER_DIR
     ]
   },
-  kyc: {
-    enabled: (KYC_ENABLED == 'true'), // 60 days - Jumio max allowed value
-    status: {
-      default: KYC_STATUS_DEFAULT
-    },
-    jumio: {
-      apiToken: KYC_JUMIO_TOKEN,
-      apiSecret: KYC_JUMIO_SECRET,
-      baseUrl: KYC_JUMIO_BASE_URL,
-      defaultTokenLifetime: parseInt(KYC_JUMIO_TOKEN_LIFETIME, 10) || 5184000 // 60 days - Jumio max allowed value
-    },
-    shuftipro: {
-      clientId: KYC_SHUFTIPRO_CLIENT_ID,
-      secretKey: KYC_SHUFTIPRO_SECRET_KEY,
-      baseUrl: 'https://api.shuftipro.com',
-      callbackUrl: KYC_SHUFTIPRO_CALLBACK_URL,
-      redirectUrl: KYC_SHUFTIPRO_REDIRECT_URL,
-      allowRecreateSession: (KYC_SHUFTIPRO_ALLOW_RECREATE_SESSION === 'true') || false,
-      defaultPhone: KYC_SHUFTIPRO_DEFAULT_PHONE
-    },
-    provider: KYC_PROVIDER || 'JUMIO'
-  },
   rpc: {
     type: RPC_TYPE,
     address: RPC_ADDRESS,
     reconnectTimeout: 5000 // in milliseconds
-  },
-  coinPayments: {
-    key: COINPAYMENTS_API_KEY || 'api_key',
-    secret: COINPAYMENTS_API_SECRET || 'api_secret',
-    currency1: COINPAYMENTS_API_CURRENCY1 || 'ETH',
-    merchantId: COINPAYMENTS_API_MERCHANT_ID || 'api_merchant_id',
-    merchantSecret: COINPAYMENTS_API_MERCHANT_SECRET || 'api_merchant_secret',
-    incomingPaymentsFee: 0.005
   },
   test_fund: {
     private_key: TEST_FUND_PK
