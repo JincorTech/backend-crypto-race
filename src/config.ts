@@ -34,6 +34,9 @@ const {
   ICO_OLD_SC_ADDRESSES,
   WHITELIST_SC_ADDRESS,
   TOKEN_ADDRESS,
+  RACE_BASE_ADDRESS,
+  RATE_ADDRESS,
+  RACE_OWNER_PK,
   RPC_TYPE,
   RPC_ADDRESS,
   ACCESS_LOG,
@@ -159,6 +162,15 @@ export default {
       priceUsd: parseFloat(TOKEN_PRICE_USD),
       address: TOKEN_ADDRESS,
       abi: JSON.parse(fs.readFileSync(SC_ABI_FOLDER + '/token-sc-abi.json').toString())
+    },
+    raceBase: {
+      address: RACE_BASE_ADDRESS,
+      abi: JSON.parse(fs.readFileSync(SC_ABI_FOLDER + '/race-base-abi.json').toString()),
+      ownerPk: RACE_OWNER_PK
+    },
+    rate: {
+      address: RATE_ADDRESS,
+      abi: JSON.parse(fs.readFileSync(SC_ABI_FOLDER + '/rate-abi.json').toString())
     }
   },
   typeOrm: {

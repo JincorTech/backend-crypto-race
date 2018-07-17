@@ -50,6 +50,15 @@ export interface Web3ClientInterface {
 
   getEthCollectedFromAddress(address: string): Promise<string>;
 
+  // game
+  createTrackFromBackend(id: string, betAmount: number): Promise<any>;
+
+  createTrackFromUserAccount(account: any, id: string, betAmount: number): Promise<any>;
+
+  joinToTrack(account: any, id: string): Promise<any>;
+
+  getBetAmount(id: string): Promise<string>;
+
   isHex(key: any): boolean;
 }
 
@@ -62,6 +71,8 @@ export class Web3Client implements Web3ClientInterface {
   ico: any;
   token: any;
   web3: any;
+  raceBase: any;
+  rate: any;
 
   constructor() {
     switch (config.rpc.type) {
@@ -170,6 +181,94 @@ export class Web3Client implements Web3ClientInterface {
 
     // get private key
     return '0x' + wallet.getPrivateKey().toString('hex');
+  }
+
+  createTrackFromBackend(id: string, betAmount: number): Promise<any> {
+    const nameBates32 = this.web3.utils.toHex(this.web3.utils.sha3(id));
+
+    return new Promise(async(resolve, reject) => {
+      const account = this.web3.eth.accounts.privateKeyToAccount(config.contracts.raceBase.ownerPk);
+      const params = {
+        value: '0',
+        to: this.raceBase.options.address,
+        gas: 200000,
+        nonce: await this.web3.eth.getTransactionCount(account.address, 'pending'),
+        data: this.raceBase.methods.createTrackFromBack(nameBates32, betAmount).encodeABI()
+      };
+
+      account.signTransaction(params).then(transaction => {
+        this.web3.eth.sendSignedTransaction(transaction.rawTransaction)
+          .on('transactionHash', transactionHash => {
+            resolve(transactionHash);
+          })
+          .on('error', (error) => {
+            reject(error);
+          })
+          .catch((error) => {
+            reject(error);
+          });
+      });
+    });
+  }
+
+  createTrackFromUserAccount(account: any, id: string, betAmount: number): Promise<any> {
+    const nameBates32 = this.web3.utils.toHex(this.web3.utils.sha3(id));
+
+    return new Promise(async(resolve, reject) => {
+      const params = {
+        value: betAmount,
+        to: this.raceBase.options.address,
+        gas: 2000000,
+        nonce: await this.web3.eth.getTransactionCount(account.address, 'pending'),
+        data: this.raceBase.methods.createTrack(nameBates32).encodeABI()
+      };
+
+      account.signTransaction(params).then(transaction => {
+        this.web3.eth.sendSignedTransaction(transaction.rawTransaction)
+          .on('transactionHash', transactionHash => {
+            resolve(transactionHash);
+          })
+          .on('error', (error) => {
+            reject(error);
+          })
+          .catch((error) => {
+            reject(error);
+          });
+      });
+    });
+  }
+
+  async joinToTrack(account: any, id: string): Promise<any> {
+    const nameBytes32 = this.web3.utils.toHex(this.web3.utils.sha3(id));
+
+    return new Promise(async(resolve, reject) => {
+      const params = {
+        value: await this.getBetAmount(id),
+        to: this.raceBase.options.address,
+        gas: 2000000,
+        nonce: await this.web3.eth.getTransactionCount(account.address, 'pending'),
+        data: this.raceBase.methods.joinToTrack(nameBytes32).encodeABI()
+      };
+
+      account.signTransaction(params).then(transaction => {
+        this.web3.eth.sendSignedTransaction(transaction.rawTransaction)
+          .on('transactionHash', transactionHash => {
+            console.log(transactionHash);
+            resolve(transactionHash);
+          })
+          .on('error', (error) => {
+            reject(error);
+          })
+          .catch((error) => {
+            reject(error);
+          });
+      });
+    });
+  }
+
+  async getBetAmount(id: string): Promise<string> {
+    const nameBytes32 = this.web3.utils.toHex(this.web3.utils.sha3(id));
+    return await this.raceBase.methods.getBetAmount(nameBytes32).call();
   }
 
   addAddressToWhiteList(address: string) {
@@ -293,6 +392,8 @@ export class Web3Client implements Web3ClientInterface {
     this.whiteList = new this.web3.eth.Contract(config.contracts.whiteList.abi, config.contracts.whiteList.address);
     this.ico = new this.web3.eth.Contract(config.contracts.ico.abi, config.contracts.ico.address);
     this.token = new this.web3.eth.Contract(config.contracts.token.abi, config.contracts.token.address);
+    this.raceBase = new this.web3.eth.Contract(config.contracts.raceBase.abi, config.contracts.raceBase.address);
+    this.rate = new this.web3.eth.Contract(config.contracts.rate.abi, config.contracts.rate.address);
   }
 
   async getContributionsCount(): Promise<number> {

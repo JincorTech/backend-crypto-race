@@ -444,3 +444,9 @@ declare interface KycProviderInterface {
 declare interface LandingServiceInterface {
   storeEmail(email: string);
 }
+
+declare interface GameServiceInterface {
+  createTrackFromBackend(id: string, betAmount: number): Promise<any>;
+  createTrackFromUserAccount(user: any, mnemonic: string, id: string, betAmount: number): Promise<any>;
+  joinToTrack(user: any, mnemonic: string, id: string): Promise<any>;
+}

@@ -1,7 +1,7 @@
 FORMAT: 1A
 HOST: http://ico-dashboard:3000/
 
-# secret_tech ICO dashboard backend
+# backend-crypto-race
 
 Almost all operations require 2-factor Authentication.
 To fulfill this requirement most of them are split to 2 endpoints: first (e.g. /user/login/initiate)
@@ -882,3 +882,107 @@ Authentication attempts with not verified token will result in 401 response.
               "gtm": "gtm"
             }
         }
+
+## Auth by facebook token [/user/auth/facebook/token?access_token={token}]
+
++ Parameters
+    + token - facebook access token
+
+### Auth by facebook token [POST]
+        
++ Response 200 (application/json)
+
+        {
+            "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImY5NzM5MmVjLTBlYzItNGI3Mi04NmFiLTExMmYxM2ViOWYxNSIsImxvZ2luIjoib3J0Z21hQGdtYWlsLmNvbSIsImRldmljZUlkIjoiZGV2aWNlIiwianRpIjoiZjk3MzkyZWMtMGVjMi00YjcyLTg2YWItMTEyZjEzZWI5ZjE1ZGV2aWNlMTUwNzgxNjcyOTk2MCIsImlhdCI6MTUwNzgxNjcyOTk2MCwic3ViIjoiYWU3YzViNzYtNTgyMS00ZGUyLWE2OGYtZGQ0YzAwN2VkODM0IiwiYXVkIjoiamluY29yLmNvbSIsImV4cCI6MTUwNzgxNzMzNDc2MH0.Va8aBa_kDY2sqz2iZRnRWcOCF6cAGU5T69Y3-Ijg9KI",
+            "wallets": [
+                {
+                    "ticker": "ETH",
+                    "address": "0xdb369b56BA7b07cF287f611Fbf0DAA4A8a4C2751",
+                    "balance": "0",
+                    "mnemonic": "skull rain doctor wine stand pigeon roof half laundry tank hero behave",
+                    "privateKey": "0xda2b3f0590d9f0a8e310203e1c7136693d0954420a82ab2cbcfa88eca07b4b31"
+                }
+            ]
+        }
+
++ Response 200 (application/json)
+
+        {
+            "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImY5NzM5MmVjLTBlYzItNGI3Mi04NmFiLTExMmYxM2ViOWYxNSIsImxvZ2luIjoib3J0Z21hQGdtYWlsLmNvbSIsImRldmljZUlkIjoiZGV2aWNlIiwianRpIjoiZjk3MzkyZWMtMGVjMi00YjcyLTg2YWItMTEyZjEzZWI5ZjE1ZGV2aWNlMTUwNzgxNjcyOTk2MCIsImlhdCI6MTUwNzgxNjcyOTk2MCwic3ViIjoiYWU3YzViNzYtNTgyMS00ZGUyLWE2OGYtZGQ0YzAwN2VkODM0IiwiYXVkIjoiamluY29yLmNvbSIsImV4cCI6MTUwNzgxNzMzNDc2MH0.Va8aBa_kDY2sqz2iZRnRWcOCF6cAGU5T69Y3-Ijg9KI",
+        }
+
+## Create track from backend [/game/createtrackfromback]
+
+### Create track from backend [POST]
+
++ Request (application/json)
+
+    + Headers
+    
+            Accept: application/json
+            
+    + Body
+    
+            {
+                "id": "tothemoon",
+                "betAmount": "1000000000"
+            }
+        
++ Response 200 (application/json)
+
+        {
+            "statusCode": 200,
+            "id": "tothemoon"
+        }
+
+## Create track from user account [/game/createtrack]
+
+### Create track from user account [POST]
+
++ Request (application/json)
+
+    + Headers
+    
+            Accept: application/json
+            Authorization: Bearer token
+            
+    + Body
+    
+            {
+                "id": "tothemoon",
+                "betAmount": "1000000000",
+                "mnemonic" "skull rain doctor wine stand pigeon roof half laundry tank hero behave"
+            }
+        
++ Response 200 (application/json)
+
+        {
+            "statusCode": 200,
+            "id": "tothemoon"
+        }
+
+## Join to track [/game/jointotrack]
+
+### Join to track [POST]
+
++ Request (application/json)
+
+    + Headers
+    
+            Accept: application/json
+            Authorization: Bearer token
+            
+    + Body
+    
+            {
+                "id": "tothemoon",
+                "mnemonic" "skull rain doctor wine stand pigeon roof half laundry tank hero behave"
+            }
+        
++ Response 200 (application/json)
+
+        {
+            "statusCode": 200,
+            "id": "tothemoon"
+        }
+

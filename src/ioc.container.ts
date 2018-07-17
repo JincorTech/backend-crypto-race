@@ -27,6 +27,7 @@ import { JumioProvider } from './providers/kyc/jumio.provider';
 import { ShuftiproProvider } from './providers/kyc/shuftipro.provider';
 import { LandingServiceType, LandingService } from './services/landing.service';
 import { GameController } from './controllers/game.controller';
+import { GameServiceType, GameService } from './services/game.service';
 
 let container = new Container();
 
@@ -63,6 +64,7 @@ container.bind<PaymentsServiceInterface>(PaymentsServiceType).to(PaymentsService
 container.bind<IPNServiceInterface>(IPNServiceType).to(IPNService).inSingletonScope();
 container.bind<EmailTemplateServiceInterface>(EmailTemplateServiceType).to(EmailTemplateService).inSingletonScope();
 container.bind<LandingServiceInterface>(LandingServiceType).to(LandingService).inSingletonScope();
+container.bind<GameServiceInterface>(GameServiceType).to(GameService).inSingletonScope();
 
 const auth = new Auth(container.get<AuthClientInterface>(AuthClientType));
 // middlewares
