@@ -59,6 +59,8 @@ export interface Web3ClientInterface {
 
   getBetAmount(id: string): Promise<string>;
 
+  setPortfolio(account: any, id: string, portfolio: any): Promise<any>;
+
   isHex(key: any): boolean;
 }
 
@@ -249,6 +251,43 @@ export class Web3Client implements Web3ClientInterface {
         nonce: await this.web3.eth.getTransactionCount(account.address, 'pending'),
         data: this.raceBase.methods.joinToTrack(nameBytes32).encodeABI()
       };
+
+      account.signTransaction(params).then(transaction => {
+        this.web3.eth.sendSignedTransaction(transaction.rawTransaction)
+          .on('transactionHash', transactionHash => {
+            console.log(transactionHash);
+            resolve(transactionHash);
+          })
+          .on('error', (error) => {
+            reject(error);
+          })
+          .catch((error) => {
+            reject(error);
+          });
+      });
+    });
+  }
+
+  async setPortfolio(account: any, id: string, portfolio: any): Promise<any> {
+    const nameBytes32 = this.web3.utils.toHex(this.web3.utils.sha3(id));
+    const names = new Array<string>();
+    const amounts = new Array<string>();
+
+    for (let i = 0; i < portfolio.length; i++) {
+      names.push(this.web3.utils.toHex(portfolio[i].name));
+      amounts.push(this.web3.utils.toBN(portfolio[i].amount));
+    }
+
+    return new Promise(async(resolve, reject) => {
+      const params = {
+        value: '0',
+        to: this.raceBase.options.address,
+        gas: 2000000,
+        nonce: await this.web3.eth.getTransactionCount(account.address, 'pending'),
+        data: this.raceBase.methods.setPortfolio(nameBytes32, names, amounts).encodeABI()
+      };
+
+      console.log(params);
 
       account.signTransaction(params).then(transaction => {
         this.web3.eth.sendSignedTransaction(transaction.rawTransaction)

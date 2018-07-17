@@ -61,7 +61,20 @@ export class GameController {
       await this.gameService.joinToTrack(req.user, req.body.mnemonic, req.body.id);
       res.status(200).json({ statusCode: 200 });
     } catch (error) {
-      console.log('error');
+      console.log(error);
+      res.send(error);
+    }
+  }
+
+  @httpPost(
+    '/setportfolio',
+    'AuthMiddleware'
+  )
+  async setPortfolio(req: AuthorizedRequest, res: Response): Promise<void> {
+    try {
+      await this.gameService.setPortfolio(req.user, req.body.mnemonic, req.body.id, req.body.portfolio);
+      res.status(200).json({ statusCode: 200 });
+    } catch (error) {
       res.send(error);
     }
   }

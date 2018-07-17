@@ -986,3 +986,27 @@ Authentication attempts with not verified token will result in 401 response.
             "id": "tothemoon"
         }
 
+## Set portfolio [/game/setportfolio]
+
+### Set portfolio [POST]
+
++ Request (application/json)
+
+    + Headers
+    
+            Accept: application/json
+            Authorization: Bearer token
+            
+    + Body
+    
+            {
+                "id": "tothemoon",
+                "portfolio": [{"name": "btc", "amount": 10}, {"name": "eth", "amount": 90}],
+                "mnemonic" "skull rain doctor wine stand pigeon roof half laundry tank hero behave"
+            }
+        
++ Response 200 (application/json)
+
+        {
+            "statusCode": 200
+        }

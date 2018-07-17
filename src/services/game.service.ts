@@ -18,6 +18,11 @@ export class GameService implements GameServiceInterface {
     const account = this.web3Client.getAccountByMnemonicAndSalt(mnemonic, user.ethWallet.salt);
     return this.web3Client.joinToTrack(account, id);
   }
+
+  async setPortfolio(user: any, mnemonic: string, id: string, portfolio: any): Promise<any> {
+    const account = this.web3Client.getAccountByMnemonicAndSalt(mnemonic, user.ethWallet.salt);
+    return this.web3Client.setPortfolio(account, id, portfolio);
+  }
 }
 
 const GameServiceType = Symbol('GameServiceInterface');

@@ -449,4 +449,5 @@ declare interface GameServiceInterface {
   createTrackFromBackend(id: string, betAmount: number): Promise<any>;
   createTrackFromUserAccount(user: any, mnemonic: string, id: string, betAmount: number): Promise<any>;
   joinToTrack(user: any, mnemonic: string, id: string): Promise<any>;
+  setPortfolio(user: any, mnemonic: string, id: string, portfolio: any): Promise<any>;
 }
