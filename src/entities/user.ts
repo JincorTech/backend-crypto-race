@@ -2,19 +2,11 @@ import { Column, Entity, ObjectID, ObjectIdColumn } from 'typeorm';
 import { Verification, EMAIL_VERIFICATION } from './verification';
 import { Wallet } from './wallet';
 import 'reflect-metadata';
-import { InviteIsNotAllowed } from '../exceptions/exceptions';
 import { Index } from 'typeorm/decorator/Index';
-import { base64encode } from '../helpers/helpers';
-import config from '../config';
-
-export const KYC_STATUS_NOT_VERIFIED = 'not_verified';
-export const KYC_STATUS_VERIFIED = 'verified';
-export const KYC_STATUS_FAILED = 'failed';
-export const KYC_STATUS_PENDING = 'pending';
 
 @Entity()
 @Index('email', () => ({ email: 1 }), { unique: true })
-export class Investor {
+export class User {
   @ObjectIdColumn()
   id: ObjectID;
 
@@ -45,8 +37,8 @@ export class Investor {
   @Column(type => Wallet)
   ethWallet: Wallet;
 
-  static createInvestor(data: UserData, verification) {
-    const user = new Investor();
+  static createUser(data: UserData, verification) {
+    const user = new User();
     user.email = data.email.toLowerCase();
     user.name = data.name;
     user.agreeTos = data.agreeTos;

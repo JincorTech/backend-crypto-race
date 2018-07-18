@@ -1,6 +1,6 @@
 import { Request } from 'express';
-import { Investor } from '../entities/investor';
+import { User } from '../entities/user';
 
 export interface AuthorizedRequest extends Request {
-  user?: Investor;
+  user?: User;
 }

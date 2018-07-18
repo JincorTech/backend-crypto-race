@@ -17,12 +17,6 @@ export default function handle(err: ErrorWithFields, req: Request, res: Response
   });
 
   switch (err.constructor) {
-    case Err.KycFailedError:
-      // no break
-    case Err.KycAlreadyVerifiedError:
-      // no break
-    case Err.KycPendingError:
-      // no break
     case Err.InsufficientEthBalance:
       // no break
     case Err.AuthenticatorError:
@@ -44,15 +38,9 @@ export default function handle(err: ErrorWithFields, req: Request, res: Response
       // no break
     case Err.NotCorrectVerificationCode:
       // no break
-    case Err.ReferralDoesNotExist:
-      // no break
-    case Err.InviteIsNotAllowed:
-      // no break
     case Err.MaxVerificationsAttemptsReached:
       // no break
     case Err.IncorrectMnemonic:
-      // no break
-    case Err.ReferralIsNotActivated:
       status = 422;
       break;
     default:

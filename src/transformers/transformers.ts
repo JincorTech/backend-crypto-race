@@ -1,28 +1,28 @@
-import { Investor } from '../entities/investor';
+import { User } from '../entities/user';
 import { VerifiedToken } from '../entities/verified.token';
 
-export function transformInvestorForAuth(investor: Investor) {
+export function transformUserForAuth(user: User) {
   return {
-    email: investor.email,
-    login: investor.email,
-    password: investor.passwordHash,
-    sub: investor.verification.id
+    email: user.email,
+    login: user.email,
+    password: user.passwordHash,
+    sub: user.verification.id
   };
 }
 
-export function transformCreatedInvestor(investor: Investor): CreatedUserData {
+export function transformCreatedUser(user: User): CreatedUserData {
   return {
-    id: investor.id.toString(),
-    email: investor.email,
-    name: investor.name,
-    agreeTos: investor.agreeTos,
+    id: user.id.toString(),
+    email: user.email,
+    name: user.name,
+    agreeTos: user.agreeTos,
     verification: {
-      id: investor.verification.id.toString(),
-      method: investor.verification.method
+      id: user.verification.id.toString(),
+      method: user.verification.method
     },
-    isVerified: investor.isVerified,
-    defaultVerificationMethod: investor.defaultVerificationMethod,
-    source: investor.source
+    isVerified: user.isVerified,
+    defaultVerificationMethod: user.defaultVerificationMethod,
+    source: user.source
   };
 }
 

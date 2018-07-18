@@ -1,8 +1,8 @@
 import * as chai from 'chai';
 const { expect } = chai;
-import { Investor } from '../../entities/investor';
+import { User } from '../../entities/user';
 
-describe('Investor Entity', () => {
+describe('User Entity', () => {
   beforeEach(() => {
     const userData = {
       email: 'invitor@test.com',
@@ -14,6 +14,6 @@ describe('Investor Entity', () => {
       verificationId: '123'
     };
 
-    this.investor = Investor.createInvestor(userData, verification);
+    this.user = User.createUser(userData, verification);
   });
 });

@@ -13,7 +13,7 @@ import {
   TokenNotFound, AuthenticatorError, UserActivated
 } from '../exceptions/exceptions';
 import config from '../config';
-import { Investor } from '../entities/investor';
+import { User } from '../entities/user';
 import { VerifiedToken } from '../entities/verified.token';
 import { AUTHENTICATOR_VERIFICATION, EMAIL_VERIFICATION, Verification } from '../entities/verification';
 import * as transformers from '../transformers/transformers';
@@ -62,7 +62,7 @@ export class UserService implements UserServiceInterface {
    */
   async create(userData: InputUserData): Promise<CreatedUserData> {
     const email = userData.email.toLowerCase();
-    const existingUser = await getConnection().getMongoRepository(Investor).findOne({
+    const existingUser = await getConnection().getMongoRepository(User).findOne({
       email: email
     });
 
@@ -100,22 +100,22 @@ export class UserService implements UserServiceInterface {
     });
 
     userData.passwordHash = bcrypt.hashSync(userData.password);
-    const investor = Investor.createInvestor(userData, {
+    const user = User.createUser(userData, {
       verificationId: verification.verificationId
     });
 
-    await getConnection().mongoManager.save(investor);
+    await getConnection().mongoManager.save(user);
 
     logger.debug('Create user in auth');
 
-    await this.authClient.createUser(transformers.transformInvestorForAuth(investor));
+    await this.authClient.createUser(transformers.transformUserForAuth(user));
 
-    return transformers.transformCreatedInvestor(investor);
+    return transformers.transformCreatedUser(user);
   }
 
   async createActivatedUser(userData: any): Promise<any> {
     const email = userData.email.toLowerCase();
-    const existingUser = await getConnection().getMongoRepository(Investor).findOne({
+    const existingUser = await getConnection().getMongoRepository(User).findOne({
       email: email
     });
 
@@ -127,30 +127,30 @@ export class UserService implements UserServiceInterface {
 
     const logger = this.logger.sub({ email }, '[create] ');
 
-    const investor = Investor.createInvestor(userData, {
+    const user = User.createUser(userData, {
       verificationId: 'stub'
     });
 
-    await getConnection().mongoManager.save(investor);
+    await getConnection().mongoManager.save(user);
 
     logger.debug('Create user in auth');
 
-    await this.authClient.createUser(transformers.transformInvestorForAuth(investor));
+    await this.authClient.createUser(transformers.transformUserForAuth(user));
 
-    const accessToken = await this.getVerifiedAccessToken(investor);
+    const accessToken = await this.getVerifiedAccessToken(user);
 
     const mnemonic = this.web3Client.generateMnemonic();
     const salt = bcrypt.genSaltSync();
     const account = this.web3Client.getAccountByMnemonicAndSalt(mnemonic, salt);
 
-    investor.addEthWallet({
+    user.addEthWallet({
       ticker: 'ETH',
       address: account.address,
       balance: '0',
       salt
     });
 
-    await getConnection().mongoManager.save(investor);
+    await getConnection().mongoManager.save(user);
 
     const resultWallets: Array<NewWallet> = [
       {
@@ -170,7 +170,7 @@ export class UserService implements UserServiceInterface {
 
   async resendVerification(userData: ResendVerificationInput): Promise<CreatedUserData> {
     const email = userData.email.toLowerCase();
-    const user = await getConnection().getMongoRepository(Investor).findOne({
+    const user = await getConnection().getMongoRepository(User).findOne({
       email: email
     });
 
@@ -207,9 +207,9 @@ export class UserService implements UserServiceInterface {
     });
 
     user.verification = Verification.createVerification(verification);
-    await getConnection().getMongoRepository(Investor).save(user);
+    await getConnection().getMongoRepository(User).save(user);
 
-    return transformers.transformCreatedInvestor(user);
+    return transformers.transformCreatedUser(user);
   }
 
   /**
@@ -220,7 +220,7 @@ export class UserService implements UserServiceInterface {
    * @return promise
    */
   async initiateLogin(loginData: InitiateLoginInput, ip: string): Promise<InitiateLoginResult> {
-    const user = await getConnection().getMongoRepository(Investor).findOne({
+    const user = await getConnection().getMongoRepository(User).findOne({
       email: loginData.email.toLowerCase()
     });
 
@@ -314,7 +314,7 @@ export class UserService implements UserServiceInterface {
 
     const verifyAuthResult = await this.authClient.verifyUserToken(inputData.accessToken);
 
-    const user = await getConnection().getMongoRepository(Investor).findOne({
+    const user = await getConnection().getMongoRepository(User).findOne({
       email: verifyAuthResult.login.toLowerCase()
     });
 
@@ -361,7 +361,7 @@ export class UserService implements UserServiceInterface {
   }
 
   async activate(activationData: ActivationUserData): Promise<ActivationResult> {
-    const user = await getConnection().getMongoRepository(Investor).findOne({
+    const user = await getConnection().getMongoRepository(User).findOne({
       email: activationData.email.toLowerCase()
     });
 
@@ -405,7 +405,7 @@ export class UserService implements UserServiceInterface {
     logger.debug('Initialization of KYC verification');
 
     user.isVerified = true;
-    await getConnection().getMongoRepository(Investor).save(user);
+    await getConnection().getMongoRepository(User).save(user);
 
     logger.debug('Login user by auth');
 
@@ -459,7 +459,7 @@ export class UserService implements UserServiceInterface {
     };
   }
 
-  async initiateChangePassword(user: Investor, params: any): Promise<BaseInitiateResult> {
+  async initiateChangePassword(user: User, params: any): Promise<BaseInitiateResult> {
     if (!bcrypt.compareSync(params.oldPassword, user.passwordHash)) {
       throw new InvalidPassword('Invalid password');
     }
@@ -494,7 +494,7 @@ export class UserService implements UserServiceInterface {
     };
   }
 
-  async verifyChangePassword(user: Investor, params: any): Promise<AccessTokenResponse> {
+  async verifyChangePassword(user: User, params: any): Promise<AccessTokenResponse> {
     if (!bcrypt.compareSync(params.oldPassword, user.passwordHash)) {
       throw new InvalidPassword('Invalid password');
     }
@@ -510,7 +510,7 @@ export class UserService implements UserServiceInterface {
     await this.verificationClient.checkVerificationPayloadAndCode(params.verification, user.email, payload);
 
     user.passwordHash = bcrypt.hashSync(params.newPassword);
-    await getConnection().getMongoRepository(Investor).save(user);
+    await getConnection().getMongoRepository(User).save(user);
 
     logger.debug('Send notification');
 
@@ -548,7 +548,7 @@ export class UserService implements UserServiceInterface {
   }
 
   async initiateResetPassword(params: ResetPasswordInput): Promise<BaseInitiateResult> {
-    const user = await getConnection().getMongoRepository(Investor).findOne({
+    const user = await getConnection().getMongoRepository(User).findOne({
       email: params.email.toLowerCase()
     });
 
@@ -587,7 +587,7 @@ export class UserService implements UserServiceInterface {
   }
 
   async verifyResetPassword(params: ResetPasswordInput): Promise<ValidationResult> {
-    const user = await getConnection().getMongoRepository(Investor).findOne({
+    const user = await getConnection().getMongoRepository(User).findOne({
       email: params.email.toLowerCase()
     });
 
@@ -606,7 +606,7 @@ export class UserService implements UserServiceInterface {
     const verificationResult = await this.verificationClient.checkVerificationPayloadAndCode(params.verification, params.email.toLowerCase(), payload);
 
     user.passwordHash = bcrypt.hashSync(params.password);
-    await getConnection().getMongoRepository(Investor).save(user);
+    await getConnection().getMongoRepository(User).save(user);
 
     logger.debug('Recreate user in auth');
 
@@ -633,7 +633,7 @@ export class UserService implements UserServiceInterface {
     return verificationResult;
   }
 
-  private async initiate2faVerification(user: Investor, scope: string): Promise<InitiateResult> {
+  private async initiate2faVerification(user: User, scope: string): Promise<InitiateResult> {
     this.logger.debug('[initiate2faVerification] Initiate verification', { meta: { email: user.email } });
 
     return await this.verificationClient.initiateVerification(
@@ -651,7 +651,7 @@ export class UserService implements UserServiceInterface {
     );
   }
 
-  async initiateEnable2fa(user: Investor): Promise<BaseInitiateResult> {
+  async initiateEnable2fa(user: User): Promise<BaseInitiateResult> {
     if (user.defaultVerificationMethod === AUTHENTICATOR_VERIFICATION) {
       throw new AuthenticatorError('Authenticator is enabled already');
     }
@@ -661,7 +661,7 @@ export class UserService implements UserServiceInterface {
     };
   }
 
-  async verifyEnable2fa(user: Investor, params: VerificationInput): Promise<Enable2faResult> {
+  async verifyEnable2fa(user: User, params: VerificationInput): Promise<Enable2faResult> {
     if (user.defaultVerificationMethod === AUTHENTICATOR_VERIFICATION) {
       throw new AuthenticatorError('Authenticator is enabled already');
     }
@@ -678,14 +678,14 @@ export class UserService implements UserServiceInterface {
 
     user.defaultVerificationMethod = AUTHENTICATOR_VERIFICATION;
 
-    await getConnection().getMongoRepository(Investor).save(user);
+    await getConnection().getMongoRepository(User).save(user);
 
     return {
       enabled: true
     };
   }
 
-  async initiateDisable2fa(user: Investor): Promise<BaseInitiateResult> {
+  async initiateDisable2fa(user: User): Promise<BaseInitiateResult> {
     if (user.defaultVerificationMethod !== AUTHENTICATOR_VERIFICATION) {
       throw new AuthenticatorError('Authenticator is disabled already');
     }
@@ -695,7 +695,7 @@ export class UserService implements UserServiceInterface {
     };
   }
 
-  async verifyDisable2fa(user: Investor, params: VerificationInput): Promise<Enable2faResult> {
+  async verifyDisable2fa(user: User, params: VerificationInput): Promise<Enable2faResult> {
     if (user.defaultVerificationMethod !== AUTHENTICATOR_VERIFICATION) {
       throw new AuthenticatorError('Authenticator is disabled already');
     }
@@ -712,14 +712,14 @@ export class UserService implements UserServiceInterface {
 
     user.defaultVerificationMethod = EMAIL_VERIFICATION;
 
-    await getConnection().getMongoRepository(Investor).save(user);
+    await getConnection().getMongoRepository(User).save(user);
 
     return {
       enabled: false
     };
   }
 
-  async getUserInfo(user: Investor): Promise<UserInfo> {
+  async getUserInfo(user: User): Promise<UserInfo> {
     return {
       ethAddress: user.ethWallet.address,
       email: user.email.toLowerCase(),
@@ -728,10 +728,10 @@ export class UserService implements UserServiceInterface {
     };
   }
 
-  async getVerifiedAccessToken(investor: Investor): Promise<string> {
+  async getVerifiedAccessToken(user: User): Promise<string> {
     const tokenData = await this.authClient.loginUser({
-      login: investor.email.toLowerCase(),
-      password: investor.passwordHash,
+      login: user.email.toLowerCase(),
+      password: user.passwordHash,
       deviceId: 'device'
     });
 

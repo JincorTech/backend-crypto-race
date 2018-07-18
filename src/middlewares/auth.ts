@@ -1,7 +1,7 @@
 import { Response, NextFunction } from 'express';
 import { AuthorizedRequest } from '../requests/authorized.request';
 import { getConnection } from 'typeorm';
-import { Investor } from '../entities/investor';
+import { User } from '../entities/user';
 import { VerifiedToken } from '../entities/verified.token';
 import * as passport from 'passport';
 
@@ -36,7 +36,7 @@ export class Auth {
 
     try {
       const verifyResult = await this.authClient.verifyUserToken(token);
-      req.user = await getConnection().getMongoRepository(Investor).findOne({
+      req.user = await getConnection().getMongoRepository(User).findOne({
         email: verifyResult.login
       });
 
