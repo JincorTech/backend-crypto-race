@@ -5,7 +5,6 @@ import * as passport from 'passport';
 import * as FacebookTokenStrategy from 'passport-facebook-token';
 import config from './config';
 import handle from './middlewares/error.handler';
-import * as graph from 'fbgraph';
 
 const morgan = require('morgan');
 
@@ -82,7 +81,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(passport.initialize());
 
 let server = new InversifyExpressServer(container, null, null, app);
-server.setErrorConfig((app) => { 
+server.setErrorConfig((app) => {
   // 404 handler
   app.use((req: Request, res: Response, next: NextFunction) => {
     res.status(404).send({

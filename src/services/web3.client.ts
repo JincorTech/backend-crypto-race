@@ -230,7 +230,6 @@ export class Web3Client implements Web3ClientInterface {
       account.signTransaction(params).then(transaction => {
         this.web3.eth.sendSignedTransaction(transaction.rawTransaction)
           .on('transactionHash', transactionHash => {
-            console.log(transactionHash);
             resolve(transactionHash);
           })
           .on('error', (error) => {
@@ -262,12 +261,9 @@ export class Web3Client implements Web3ClientInterface {
         data: this.raceBase.methods.setPortfolio(nameBytes32, names, amounts).encodeABI()
       };
 
-      console.log(params);
-
       account.signTransaction(params).then(transaction => {
         this.web3.eth.sendSignedTransaction(transaction.rawTransaction)
           .on('transactionHash', transactionHash => {
-            console.log(transactionHash);
             resolve(transactionHash);
           })
           .on('error', (error) => {

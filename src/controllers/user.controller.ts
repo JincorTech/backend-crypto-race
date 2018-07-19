@@ -188,7 +188,7 @@ export class UserController {
           const result = await userService.createActivatedUser({
             agreeTos: true,
             email: user.email,
-            name: 'Stub',
+            name: user.name,
             password: 'Stub',
             passwordHash: 'Stub'
           });

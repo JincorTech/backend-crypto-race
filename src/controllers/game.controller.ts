@@ -61,7 +61,6 @@ export class GameController {
       await this.gameService.joinToTrack(req.user, req.body.mnemonic, req.body.id);
       res.status(200).json({ statusCode: 200 });
     } catch (error) {
-      console.log(error);
       res.send(error);
     }
   }

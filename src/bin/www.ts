@@ -1,11 +1,14 @@
 import app from '../app';
+import { container } from '../ioc.container';
 import * as http from 'http';
 import * as https from 'https';
 import * as socketio from 'socket.io';
 import * as fs from 'fs';
 import config from '../config';
 import 'reflect-metadata';
-import { createConnection, ConnectionOptions } from 'typeorm';
+import { createConnection, ConnectionOptions, getConnection } from 'typeorm';
+import { AuthClientType } from '../services/auth.client';
+import { User } from '../entities/user';
 
 /**
  * Create HTTP server.
@@ -37,14 +40,23 @@ createConnection(ormOptions).then(async connection => {
 
 const chat = io.of('/chat');
 const messages = [];
+const authClient: AuthClientInterface = container.get(AuthClientType);
 
-chat.on('connect', socket => {
+chat.use(async(socket, next) => {
+  let handshake = socket.handshake;
+  await authClient.verifyUserToken(handshake.query.token);
+  next();
+});
+
+chat.on('connect', async socket => {
+  const result = await authClient.verifyUserToken(socket.handshake.query.token);
+  const user = await getConnection().mongoManager.findOne(User, {where: {email: result.login}});
   socket.on('requestInitData', data => {
     socket.emit('responseInitData', messages);
   });
 
   socket.on('message', message => {
-    messages.push({ author: 'Player X', ts: Date.now(), message });
+    messages.push({ author: user.name, userId: user.id, ts: Date.now(), message });
     socket.emit('update', messages);
   });
 });

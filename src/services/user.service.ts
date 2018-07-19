@@ -127,9 +127,7 @@ export class UserService implements UserServiceInterface {
 
     const logger = this.logger.sub({ email }, '[create] ');
 
-    const user = User.createUser(userData, {
-      verificationId: 'stub'
-    });
+    const user = User.createUser(userData, {verificationId: 'stub'});
 
     await getConnection().mongoManager.save(user);
 
