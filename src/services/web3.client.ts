@@ -26,9 +26,9 @@ export interface Web3ClientInterface {
   investmentFee(): Promise<any>;
 
   // game
-  createTrackFromBackend(id: string, betAmount: number): Promise<any>;
+  createTrackFromBackend(id: string, betAmount: string): Promise<any>;
 
-  createTrackFromUserAccount(account: any, id: string, betAmount: number): Promise<any>;
+  createTrackFromUserAccount(account: any, id: string, betAmount: string): Promise<any>;
 
   joinToTrack(account: any, id: string): Promise<any>;
 
@@ -37,6 +37,8 @@ export interface Web3ClientInterface {
   setPortfolio(account: any, id: string, portfolio: any): Promise<any>;
 
   isHex(key: any): boolean;
+
+  toHexSha3(value: string): string;
 }
 
 /* istanbul ignore next */
@@ -160,7 +162,7 @@ export class Web3Client implements Web3ClientInterface {
     return '0x' + wallet.getPrivateKey().toString('hex');
   }
 
-  createTrackFromBackend(id: string, betAmount: number): Promise<any> {
+  createTrackFromBackend(id: string, betAmount: string): Promise<any> {
     const nameBates32 = this.web3.utils.toHex(this.web3.utils.sha3(id));
 
     return new Promise(async(resolve, reject) => {
@@ -188,7 +190,7 @@ export class Web3Client implements Web3ClientInterface {
     });
   }
 
-  createTrackFromUserAccount(account: any, id: string, betAmount: number): Promise<any> {
+  createTrackFromUserAccount(account: any, id: string, betAmount: string): Promise<any> {
     const nameBates32 = this.web3.utils.toHex(this.web3.utils.sha3(id));
 
     return new Promise(async(resolve, reject) => {
@@ -341,6 +343,10 @@ export class Web3Client implements Web3ClientInterface {
 
   isHex(key: any): boolean {
     return this.web3.utils.isHex(key);
+  }
+
+  toHexSha3(value: string): string {
+    return this.web3.utils.toHex(this.web3.utils.sha3(value));
   }
 }
 

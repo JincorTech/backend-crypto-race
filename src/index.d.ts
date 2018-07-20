@@ -397,8 +397,51 @@ declare interface LandingServiceInterface {
 }
 
 declare interface GameServiceInterface {
-  createTrackFromBackend(id: string, betAmount: number): Promise<any>;
-  createTrackFromUserAccount(user: any, mnemonic: string, id: string, betAmount: number): Promise<any>;
+  createTrackFromBackend(id: string, betAmount: string): Promise<any>;
+  createTrackFromUserAccount(user: any, mnemonic: string, id: string, betAmount: string): Promise<any>;
   joinToTrack(user: any, mnemonic: string, id: string): Promise<any>;
   setPortfolio(user: any, mnemonic: string, id: string, portfolio: any): Promise<any>;
+}
+
+declare interface Asset {
+  name: string;
+  value: number;
+}
+
+declare interface Player {
+  id: string;
+  owner: boolean;
+  position: number;
+  x: number;
+  y: number;
+  ship: Ship;
+  fuel: Array<Asset>;
+}
+
+declare interface Ship {
+  type: string;
+}
+
+declare interface InitRace {
+  raceName: string;
+  start: number;
+  end: number;
+  players: Array<Player>;
+}
+
+declare interface Strafe {
+  id: string;
+  left: boolean;
+  right: boolean;
+  position: number;
+  x: number;
+}
+
+declare interface YPosition {
+  playersYPositions: Array<PlayerYPosition>;
+}
+
+declare interface PlayerYPosition {
+  id: string;
+  y: number;
 }

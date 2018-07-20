@@ -39,10 +39,18 @@ createConnection(ormOptions).then(async connection => {
 }).catch(error => console.log('TypeORM connection error: ', error));
 
 const chat = io.of('/chat');
+const race = io.of('/race');
+
 const messages = [];
 const authClient: AuthClientInterface = container.get(AuthClientType);
 
 chat.use(async(socket, next) => {
+  let handshake = socket.handshake;
+  await authClient.verifyUserToken(handshake.query.token);
+  next();
+});
+
+race.use(async(socket, next) => {
   let handshake = socket.handshake;
   await authClient.verifyUserToken(handshake.query.token);
   next();
@@ -58,5 +66,44 @@ chat.on('connect', async socket => {
   socket.on('message', message => {
     messages.push({ author: user.name, userId: user.id, ts: Date.now(), message });
     socket.emit('update', messages);
+  });
+});
+
+// race
+const init: InitRace = {
+  raceName: 'to-the-moon',
+  start: Date.now(),
+  end: Date.now() + 300,
+  players: new Array<Player>()
+};
+
+setInterval((raceSock, raceData) => {
+  const players: Array<Player> = raceData.players;
+  const yPositions: YPosition = {playersYPositions: new Array<PlayerYPosition>()};
+  players.forEach(player => {
+    yPositions.playersYPositions.push({id: player.id, y: Math.random() * 100});
+  });
+  raceSock.emit('move', yPositions);
+}, 3000, race, init);
+
+race.on('connect', async socket => {
+  const result = await authClient.verifyUserToken(socket.handshake.query.token);
+  const user = await getConnection().mongoManager.findOne(User, {where: {email: result.login}});
+  const player: Player = {
+    id: user.id.toString(),
+    owner: true,
+    position: Math.random(),
+    ship: {type: 'nova'},
+    x: Math.random(),
+    y: Math.random(),
+    fuel: [{name: 'btc', value: 10}, {name: 'eth', value: 90}]
+  };
+  init.players.push(player);
+
+  socket.emit('init', init);
+  socket.broadcast.emit('player joined', player);
+
+  socket.on('strafe', (strafeData: Strafe) => {
+    socket.broadcast.emit('strafe', strafeData);
   });
 });
