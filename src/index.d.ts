@@ -429,7 +429,7 @@ declare interface InitRace {
   raceName: string;
   start: number;
   end: number;
-  players: Map<string, Player>;
+  players: Array<Player>;
 }
 
 declare interface Strafe {
