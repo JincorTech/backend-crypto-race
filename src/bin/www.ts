@@ -99,7 +99,8 @@ race.on('connect', async socket => {
   const player: Player = {
     id: user.id.toString(),
     email: user.email, //TODO: replace with some ID
-    position: Math.random(),
+    picture: user.picture,
+    position: Math.random() > 0.5 ? 1 : 0,
     ship: {type: 'nova'},
     x: 33.3,
     fuel: [{name: 'btc', value: 10}, {name: 'eth', value: 90}]
