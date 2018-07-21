@@ -31,6 +31,9 @@ export class User {
   @Column()
   source: any;
 
+  @Column()
+  picture: any;
+
   @Column(type => Verification)
   verification: Verification;
 
@@ -44,6 +47,7 @@ export class User {
     user.agreeTos = data.agreeTos;
     user.passwordHash = data.passwordHash;
     user.isVerified = false;
+    user.picture = data.picture;
     user.defaultVerificationMethod = EMAIL_VERIFICATION;
     user.verification = Verification.createVerification({
       verificationId: verification.verificationId,
