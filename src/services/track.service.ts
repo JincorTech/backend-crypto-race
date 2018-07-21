@@ -2,9 +2,11 @@ import { injectable, inject } from 'inversify';
 import { User } from '../entities/user';
 import { Portfolio } from '../entities/portfolio';
 import { Track } from '../entities/track';
+import { Web3ClientInterface, Web3ClientType } from './web3.client';
+import { getConnection } from 'typeorm';
 
 export interface TrackServiceInterface {
-  joinToTrack(user: User, mnemonic: string, nameTrack: string): Promise<Track>;
+  joinToTrack(user: User, mnemonic: string, nameTrack: string): Promise<boolean>;
   setPortfolio(
     user: User,
     mnemonic: string,
@@ -21,41 +23,64 @@ export interface TrackServiceInterface {
 
 @injectable()
 export class TrackService implements TrackServiceInterface {
-  createTrack(user: User, mnemonic: string, track: Track): Promise<Track> {
-    throw new Error('Method not implemented.');
+
+  constructor(@inject(Web3ClientType) private web3Client: Web3ClientInterface) {}
+
+  async createTrack(user: User, mnemonic: string, track: Track): Promise<Track> {
+    const account = this.web3Client.getAccountByMnemonicAndSalt(mnemonic, user.ethWallet.salt);
+    const hash = this.web3Client.createTrackFromUserAccount(account, track.name, track.betAmount);
+
+    await getConnection().mongoManager.save(Track, track);
+
+    return track;
   }
 
-  activeTracks(): Promise<Track[]> {
-    throw new Error('Method not implemented.');
+  async activeTracks(): Promise<Track[]> {
+    return getConnection().mongoManager.find(Track, {where: {isActive: true}});
   }
 
-  awaitingTracks(): Promise<Track[]> {
-    throw new Error('Method not implemented.');
+  async awaitingTracks(): Promise<Track[]> {
+    return getConnection().mongoManager.find(Track, {where: {isActive: false}});
   }
 
-  joinToTrack(user: User, mnemonic: string, nameTrack: string): Promise<Track> {
-    throw new Error('Method not implemented.');
+  async joinToTrack(user: User, mnemonic: string, nameTrack: string): Promise<boolean> {
+    try {
+      const account = this.web3Client.getAccountByMnemonicAndSalt(mnemonic, user.ethWallet.salt);
+      this.web3Client.joinToTrack(account, nameTrack);
+      return true;
+    } catch (error) {
+      throw(error);
+    }
   }
 
-  setPortfolio(
+  async setPortfolio(
     user: User,
     mnemonic: string,
     nameTrack: string,
     portfolio: Asset[]
   ): Promise<Portfolio> {
-    throw new Error('Method not implemented.');
+    const portfolioEntity = new Portfolio();
+    portfolioEntity.assets = portfolio;
+    portfolioEntity.track = (await getConnection().mongoManager.findOne(Track, {where: {name: nameTrack}})).id;
+    portfolioEntity.user = user.id;
+    const account = this.web3Client.getAccountByMnemonicAndSalt(mnemonic, user.ethWallet.salt);
+    this.web3Client.setPortfolio(account, nameTrack, portfolio);
+
+    await getConnection().mongoManager.save(Portfolio, portfolioEntity);
+
+    return portfolioEntity;
   }
 
-  getAllTracks(): Promise<Track[]> {
-    throw new Error('Method not implemented.');
+  async getAllTracks(): Promise<Track[]> {
+    return getConnection().mongoManager.find(Track);
   }
 
-  getTrackByName(name: string): Promise<Track> {
-    throw new Error('Method not implemented.');
+  async getTrackByName(name: string): Promise<Track> {
+    return getConnection().mongoManager.findOne(Track, {where: {name: name}});
   }
 
-  getTracksByUser(user: User): Promise<Track[]> {
-    throw new Error('Method not implemented.');
+  async getTracksByUser(user: User): Promise<Track[]> {
+    return getConnection().mongoManager.find(Track, {where: {creator: user.id}});
   }
 }
 

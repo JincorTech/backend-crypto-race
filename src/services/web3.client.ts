@@ -244,14 +244,14 @@ export class Web3Client implements Web3ClientInterface {
     });
   }
 
-  async setPortfolio(account: any, id: string, portfolio: any): Promise<any> {
+  async setPortfolio(account: any, id: string, portfolio: Array<Asset>): Promise<any> {
     const nameBytes32 = this.web3.utils.toHex(this.web3.utils.sha3(id));
     const names = new Array<string>();
     const amounts = new Array<string>();
 
     for (let i = 0; i < portfolio.length; i++) {
       names.push(this.web3.utils.toHex(portfolio[i].name));
-      amounts.push(this.web3.utils.toBN(portfolio[i].amount));
+      amounts.push(this.web3.utils.toBN(portfolio[i].value));
     }
 
     return new Promise(async(resolve, reject) => {
