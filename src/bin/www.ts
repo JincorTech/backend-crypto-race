@@ -70,7 +70,7 @@ chat.on('connect', async socket => {
 });
 
 // race
-const init: InitRace = {
+let init: InitRace = {
   raceName: 'to-the-moon',
   start: Date.now(),
   end: Date.now() + 300,
@@ -99,6 +99,8 @@ race.on('connect', async socket => {
     fuel: [{name: 'btc', value: 10}, {name: 'eth', value: 90}]
   };
   init.players.set(player.id, player);
+  init.start = Date.now();
+  init.end = Date.now() + 300;
 
   socket.emit('init', init);
   socket.broadcast.emit('player joined', player);
