@@ -416,7 +416,7 @@ declare interface Player {
   ship: Ship;
   fuel: Array<Asset>;
   email: string;
-  picture?: any;
+  picture: any;
 }
 
 declare interface Ship {
