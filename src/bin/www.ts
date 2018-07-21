@@ -74,11 +74,11 @@ let init: InitRace = {
   raceName: 'to-the-moon',
   start: Date.now(),
   end: Date.now() + 300,
-  players: new Map<string, Player>()
+  players: new Array<Player>()
 };
 
 setInterval((raceSock, raceData) => {
-  const players: Map<string, Player> = raceData.players;
+  const players: Array<Player> = raceData.players;
   const yPositions: YPosition = {playersYPositions: new Array<PlayerYPosition>()};
   players.forEach(player => {
     yPositions.playersYPositions.push({id: player.id, y: Math.random() * 100});
@@ -98,7 +98,7 @@ race.on('connect', async socket => {
     y: Math.random(),
     fuel: [{name: 'btc', value: 10}, {name: 'eth', value: 90}]
   };
-  init.players.set(player.id, player);
+  init.players.push(player);
   init.start = Date.now();
   init.end = Date.now() + 300;
 
