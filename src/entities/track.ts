@@ -41,4 +41,17 @@ export class Track {
 
   @Column()
   isActive: boolean;
+
+  @Column()
+  start: number;
+
+  @Column()
+  end: number;
+
+  @Column()
+  players: Array<ObjectID>;
+
+  constructor() {
+    this.players = new Array<ObjectID>();
+  }
 }
