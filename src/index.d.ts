@@ -413,7 +413,6 @@ declare interface Asset {
 
 declare interface Player {
   id: string;
-  owner: boolean;
   position: number;
   x: number;
   y: number;
