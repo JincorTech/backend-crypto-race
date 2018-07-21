@@ -18,6 +18,7 @@ import { EmailTemplateService, EmailTemplateServiceType } from './services/email
 import { LandingServiceType, LandingService } from './services/landing.service';
 import { GameController } from './controllers/game.controller';
 import { GameServiceType, GameService } from './services/game.service';
+import { TrackServiceInterface, TrackService, TrackServiceType } from './services/track.service';
 
 let container = new Container();
 
@@ -38,6 +39,7 @@ container.bind<UserServiceInterface>(UserServiceType).to(UserService).inSingleto
 container.bind<EmailTemplateServiceInterface>(EmailTemplateServiceType).to(EmailTemplateService).inSingletonScope();
 container.bind<LandingServiceInterface>(LandingServiceType).to(LandingService).inSingletonScope();
 container.bind<GameServiceInterface>(GameServiceType).to(GameService).inSingletonScope();
+container.bind<TrackServiceInterface>(TrackServiceType).to(TrackService).inSingletonScope();
 
 const auth = new Auth(container.get<AuthClientInterface>(AuthClientType));
 // middlewares
