@@ -185,10 +185,12 @@ export class UserController {
             return res.send(err);
           }
         } else {
+          console.log("user: ", user);
           const result = await userService.createActivatedUser({
             agreeTos: true,
             email: user.email,
             name: user.name,
+            picture: user.picture,
             password: 'Stub',
             passwordHash: 'Stub'
           });

@@ -135,6 +135,7 @@ declare interface UserData {
   agreeTos: boolean;
   passwordHash?: string;
   source?: any;
+  picture?: any;
 }
 
 declare interface InputUserData extends UserData {
@@ -412,7 +413,6 @@ declare interface Player {
   id: string;
   position: number;
   x: number;
-  y: number;
   ship: Ship;
   fuel: Array<Asset>;
   email: string;
