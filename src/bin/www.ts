@@ -100,6 +100,7 @@ race.on('connect', async socket => {
     id: user.id.toString(),
     email: user.email, //TODO: replace with some ID
     picture: user.picture,
+    name: user.name,
     position: Math.random() > 0.5 ? 1 : 0,
     ship: {type: 'nova'},
     x: 33.3,
