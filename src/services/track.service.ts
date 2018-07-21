@@ -21,6 +21,7 @@ export interface TrackServiceInterface {
   awaitingTracks(): Promise<Array<Track>>;
   createTrack(user: User, mnemonic: string, track: Track): Promise<Track>;
   getPlayers(name: string): Promise<Array<User>>;
+  startTrack(name: string): Promise<boolean>;
 }
 
 @injectable()
@@ -99,6 +100,15 @@ export class TrackService implements TrackServiceInterface {
   async getPlayers(name: string): Promise<User[]> {
     const track = await this.getTrackByName(name);
     return getConnection().mongoManager.findByIds(User, track.players);
+  }
+
+  async startTrack(name: string): Promise<boolean> {
+    const track = await this.getTrackByName(name);
+    track.isActive = true;
+
+    await this.trackRepo.save(track);
+
+    return true;
   }
 
   private async addPlayerToTrack(track: Track, player: User): Promise<boolean> {

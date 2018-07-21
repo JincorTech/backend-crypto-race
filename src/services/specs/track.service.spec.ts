@@ -207,4 +207,25 @@ describe('trackService', () => {
     const result = await trackService.getPlayers('toTheMoon');
     expect(result).to.shallowDeepEqual([user, user2]);
   });
+
+  it('should start track', async() => {
+    const user = await getConnection().mongoManager.findOne(User, {where: {email: 'activated@test.com'}});
+    const track = new Track();
+    track.betAmount = '1000';
+    track.numPlayers = 4;
+    track.status = TRACK_STATUS_PENDING;
+    track.type = TRACK_TYPE_USER;
+    track.creator = user.id;
+    track.duration = 300;
+    track.name = 'toTheMoon';
+    track.timestamp = Date.now();
+    track.hash = '123456';
+    track.isActive = false;
+    await trackService.createTrack(user, 'seed', track);
+
+    await trackService.startTrack('toTheMoon');
+    const result = await trackService.getTrackByName('toTheMoon');
+
+    expect(result.isActive).to.eq(true);
+  });
 });
