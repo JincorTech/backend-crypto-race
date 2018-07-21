@@ -415,6 +415,7 @@ declare interface Player {
   y: number;
   ship: Ship;
   fuel: Array<Asset>;
+  email: string;
 }
 
 declare interface Ship {
