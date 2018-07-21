@@ -40,6 +40,7 @@ createConnection(ormOptions).then(async connection => {
 
 const chat = io.of('/chat');
 const race = io.of('/race');
+const tracks = io.of('/tracks');
 
 const messages = [];
 const authClient: AuthClientInterface = container.get(AuthClientType);
@@ -51,6 +52,12 @@ chat.use(async(socket, next) => {
 });
 
 race.use(async(socket, next) => {
+  let handshake = socket.handshake;
+  await authClient.verifyUserToken(handshake.query.token);
+  next();
+});
+
+tracks.use(async(socket, next) => {
   let handshake = socket.handshake;
   await authClient.verifyUserToken(handshake.query.token);
   next();
@@ -94,8 +101,7 @@ race.on('connect', async socket => {
     email: user.email, //TODO: replace with some ID
     position: Math.random(),
     ship: {type: 'nova'},
-    x: Math.random(),
-    y: Math.random(),
+    x: 33.3,
     fuel: [{name: 'btc', value: 10}, {name: 'eth', value: 90}]
   };
   init.players.push(player);
@@ -108,4 +114,12 @@ race.on('connect', async socket => {
   socket.on('strafe', (strafeData: Strafe) => {
     socket.broadcast.emit('strafe', strafeData);
   });
+});
+
+tracks.on('connect', async socket => {
+  const result = await authClient.verifyUserToken(socket.handshake.query.token);
+  const user = await getConnection().mongoManager.findOne(User, {where: {email: result.login}});
+
+
+
 });
