@@ -14,7 +14,5 @@ RUN chmod 755 /usr/local/bin/custom-entrypoint.sh && \
 EXPOSE 3000
 EXPOSE 4000
 
-USER ico
-
 ENTRYPOINT ["/usr/local/bin/custom-entrypoint.sh"]
 CMD ["npm", "start"]
