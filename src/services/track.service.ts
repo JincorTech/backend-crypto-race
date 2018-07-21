@@ -16,10 +16,15 @@ export interface TrackServiceInterface {
   getTracksByUser(user: User): Promise<Array<Track>>;
   activeTracks(): Promise<Array<Track>>;
   awaitingTracks(): Promise<Array<Track>>;
+  createTrack(user: User, mnemonic: string, track: Track): Promise<Track>;
 }
 
 @injectable()
 export class TrackService implements TrackServiceInterface {
+  createTrack(user: User, mnemonic: string, track: Track): Promise<Track> {
+    throw new Error('Method not implemented.');
+  }
+
   activeTracks(): Promise<Track[]> {
     throw new Error('Method not implemented.');
   }
