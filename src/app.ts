@@ -13,13 +13,15 @@ import { container } from './ioc.container';
 
 passport.use(new FacebookTokenStrategy({
   clientID: process.env.FACEBOOK_ID,
-  clientSecret: process.env.FACEBOOK_SECRET
+  clientSecret: process.env.FACEBOOK_SECRET,
+  profileFields: ['id', 'email', 'name', 'gender', 'picture']
 }, function(accessToken, refreshToken, profile, done) {
   let user = {
     'email': profile.emails[0].value,
     'name': profile.name.givenName + ' ' + profile.name.familyName,
     'id': profile.id,
-    'token': accessToken
+    'token': accessToken,
+    'picture': profile.picture.length > 0 ? profile.picture.data.url : null
   };
   return done(null, user); // the user object we just made gets passed to the route's controller as `req.user`
 }));
