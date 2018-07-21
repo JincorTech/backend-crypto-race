@@ -1326,6 +1326,10 @@ chai-http@3.0.0:
     qs "^6.2.0"
     superagent "^2.0.0"
 
+chai-shallow-deep-equal@1.4.6:
+  version "1.4.6"
+  resolved "https://registry.yarnpkg.com/chai-shallow-deep-equal/-/chai-shallow-deep-equal-1.4.6.tgz#4184b5a13393adae34b6cef0c69b5acc82c4d834"
+
 chai@3.5.0, chai@^3.5.0:
   version "3.5.0"
   resolved "https://registry.yarnpkg.com/chai/-/chai-3.5.0.tgz#4d02637b067fe958bdbfdd3a40ec56fef7373247"

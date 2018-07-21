@@ -1,9 +1,11 @@
 import { injectable, inject } from 'inversify';
-import { controller, httpPost, httpGet } from 'inversify-express-utils';
+import { controller, httpPost, httpGet, requestParam, response } from 'inversify-express-utils';
 import { Request, Response, NextFunction } from 'express';
 import { LandingServiceType } from '../services/landing.service';
 import { GameServiceType } from '../services/game.service';
 import { AuthorizedRequest } from '../requests/authorized.request';
+import { getConnection } from 'typeorm';
+import { Track } from '../entities/track';
 
 @injectable()
 @controller(
@@ -76,5 +78,39 @@ export class GameController {
     } catch (error) {
       res.send(error);
     }
+  }
+
+  @httpPost(
+    '/track',
+    'AuthMiddleware'
+  )
+  async createTrack(req: AuthorizedRequest, res: Response): Promise<void> {
+    try {
+      const track = await this.gameService.createTrackFromUserAccount(
+        req.user,
+        req.body.mnemonic,
+        req.body.name,
+        req.body.betAmount
+      );
+
+      res.send(track);
+    } catch (error) {
+      throw(error);
+    }
+  }
+
+  @httpGet('/tracks')
+  async getAllTracks(req: Request, res: Response): Promise<void> {
+    res.send(await this.gameService.getAllTracks());
+  }
+
+  @httpGet('/track/:name')
+  async getTrackByName(@requestParam('name') name, @response() res: Response): Promise<void> {
+    res.send(await this.gameService.getTrackByName(name));
+  }
+
+  @httpGet('/tracks/my', 'AuthMiddleware')
+  async getTracksFromCurrentUser(req: AuthorizedRequest, res: Response): Promise<void> {
+    res.send(await this.gameService.getTracksByUser(req.user));
   }
 }

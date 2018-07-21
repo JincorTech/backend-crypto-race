@@ -401,6 +401,9 @@ declare interface GameServiceInterface {
   createTrackFromUserAccount(user: any, mnemonic: string, id: string, betAmount: string): Promise<any>;
   joinToTrack(user: any, mnemonic: string, id: string): Promise<any>;
   setPortfolio(user: any, mnemonic: string, id: string, portfolio: any): Promise<any>;
+  getAllTracks(): Promise<Array<any>>;
+  getTrackByName(name: string): Promise<any>;
+  getTracksByUser(user: any): Promise<any>;
 }
 
 declare interface Asset {

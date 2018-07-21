@@ -6,7 +6,7 @@
     "start": "nodemon -w ./src -e ts ./src/bin/www --exec ts-node",
     "lint": "tslint './src/**/*.ts'",
     "lintFix": "tslint --fix './src/**/*.ts'",
-    "test": "nyc mocha ./src/**/*.spec.ts --require test/prepare.ts",
+    "test": "nyc mocha --timeout 5000 ./src/**/*.spec.ts --require test/prepare.ts",
     "build": "tsc -p tsconfig.build.json --outDir dist",
     "serve": "node ./dist/bin/www.js"
   },
@@ -73,6 +73,7 @@
     "@types/winston": "2.3.8",
     "chai": "3.5.0",
     "chai-http": "3.0.0",
+    "chai-shallow-deep-equal": "1.4.6",
     "faker": "4.1.0",
     "mocha": "3.2.0",
     "mocha-prepare": "0.1.0",

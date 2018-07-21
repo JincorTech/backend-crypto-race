@@ -1,13 +1,28 @@
 import { injectable, inject } from 'inversify';
 import { Web3ClientType, Web3ClientInterface } from './web3.client';
-import { Track, TRACK_TYPE_BACKEND } from '../entities/track';
+import { Track, TRACK_TYPE_BACKEND, TRACK_STATUS_PENDING, TRACK_TYPE_USER } from '../entities/track';
 import { getConnection } from 'typeorm';
+import { User } from '../entities/user';
 
 @injectable()
 export class GameService implements GameServiceInterface {
-  createTrackFromUserAccount(user: any, mnemonic: string, id: string, betAmount: string): Promise<any> {
+  async createTrackFromUserAccount(user: any, mnemonic: string, id: string, betAmount: string): Promise<Track> {
     const account = this.web3Client.getAccountByMnemonicAndSalt(mnemonic, user.ethWallet.salt);
-    return this.web3Client.createTrackFromUserAccount(account, id, betAmount);
+    const hash = await this.web3Client.createTrackFromUserAccount(account, id, betAmount);
+
+    const track = new Track();
+    track.betAmount = betAmount;
+    track.numPlayers = 4;
+    track.status = TRACK_STATUS_PENDING;
+    track.type = TRACK_TYPE_USER;
+    track.creator = user.id;
+    track.duration = 300;
+    track.name = id;
+    track.timestamp = Date.now();
+    track.hash = '123456';
+    await getConnection().mongoManager.save(Track, track);
+
+    return track;
   }
 
   constructor(@inject(Web3ClientType) private web3Client: Web3ClientInterface) {}
@@ -33,6 +48,18 @@ export class GameService implements GameServiceInterface {
   async setPortfolio(user: any, mnemonic: string, id: string, portfolio: any): Promise<any> {
     const account = this.web3Client.getAccountByMnemonicAndSalt(mnemonic, user.ethWallet.salt);
     return this.web3Client.setPortfolio(account, id, portfolio);
+  }
+
+  async getAllTracks(): Promise<Array<Track>> {
+    return await getConnection().mongoManager.find(Track);
+  }
+
+  async getTrackByName(name: string): Promise<Track> {
+    return getConnection().mongoManager.findOne(Track, {where: {name: name}});
+  }
+
+  async getTracksByUser(user: User): Promise<Array<Track>> {
+    return getConnection().mongoManager.find(Track, {where: {creator: user.id}});
   }
 }
 
