@@ -91,7 +91,7 @@ race.on('connect', async socket => {
   const user = await getConnection().mongoManager.findOne(User, {where: {email: result.login}});
   const player: Player = {
     id: user.id.toString(),
-    email: user.email,
+    email: user.email, //TODO: replace with some ID
     position: Math.random(),
     ship: {type: 'nova'},
     x: Math.random(),
