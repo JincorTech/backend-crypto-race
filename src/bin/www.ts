@@ -103,7 +103,7 @@ race.on('connect', async socket => {
     name: user.name,
     position: Math.random() > 0.5 ? 1 : 0,
     ship: {type: 'nova'},
-    x: 33.3,
+    x: Math.random() > 0.5 ? 33.3 : 66.6,
     fuel: [{name: 'btc', value: 10}, {name: 'eth', value: 90}]
   };
   init.players.push(player);
