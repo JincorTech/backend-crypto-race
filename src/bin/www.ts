@@ -149,8 +149,8 @@ tracks.on('connect', async socket => {
   socket.emit('init', {tracks: tracks});
   socket.broadcast('init', {tracks: tracks});
   socket.on('joinTrack', (track: any) => {
-    socket.emit('init', strafeData);
-    socket.broadcast.emit('init', strafeData);
+    socket.emit('init',{} /*strafeData*/);
+    socket.broadcast.emit('init',{} /*strafeData*/);
   });
 
 });
