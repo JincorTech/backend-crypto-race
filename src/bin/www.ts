@@ -41,7 +41,6 @@ createConnection(ormOptions).then(async connection => {
 
 const chat = io.of('/chat');
 const race = io.of('/race');
-const strafe = io.of('/strafe');
 const tracks = io.of('/tracks');
 
 const messages = [];
@@ -55,7 +54,8 @@ chat.use(async(socket, next) => {
 
 race.use(async(socket, next) => {
   let handshake = socket.handshake;
-  await authClient.verifyUserToken(handshake.query.token);
+  const result = await authClient.verifyUserToken(handshake.query.token);
+  socket.handshake.email = result.login;
   next();
 });
 
@@ -78,12 +78,6 @@ chat.on('connect', async socket => {
   });
 });
 
-strafe.on('connect', async socket => {
-  socket.on('strafe', (strafeData: Strafe) => {
-    socket.emit('strafeUpdate', strafeData);
-  });
-});
-
 // race
 let init: InitRace = {
   raceName: 'to-the-moon',
@@ -102,6 +96,7 @@ setInterval((raceSock, raceData) => {
 }, 3000, race, init);
 
 race.on('connect', async socket => {
+  console.log("Email: ", socket.handshake.email);
   const result = await authClient.verifyUserToken(socket.handshake.query.token);
   const user = await getConnection().mongoManager.findOne(User, {where: {email: result.login}});
   const player: Player = {
@@ -120,9 +115,16 @@ race.on('connect', async socket => {
 
   socket.emit('init', init);
   socket.broadcast.emit('player joined', player);
+
+  socket.on('strafe', (strafeData: Strafe) => {
+    socket.emit('strafeUpdate', strafeData);
+  });
 });
 
 tracks.on('connect', async socket => {
   const result = await authClient.verifyUserToken(socket.handshake.query.token);
   const user = await getConnection().mongoManager.findOne(User, {where: {email: result.login}});
+
+
+
 });
