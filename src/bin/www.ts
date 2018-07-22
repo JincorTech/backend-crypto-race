@@ -152,7 +152,7 @@ tracks.on('connect', async socket => {
     socket.emit('init',{tracks: tracks});
     socket.broadcast.emit('init',{tracks: tracks});
       if (track.numPlayers === track.maxPlayers) {
-        socket.emit('start', { trackId: track._id.toString() });
+        socket.emit('start', { trackId: track.id.toString() });
         socket.broadcast.emit('start', { trackId: track._id.toString() });
       }
   });
