@@ -136,14 +136,8 @@ race.on('connect', async socket => {
         player.position = player.position === 1 ? 0 : 1;
         return player;
       });
-      console.log("players: ", init.players);
-
       socket.emit('positionUpdate', init.players);
       socket.broadcast.emit('positionUpdate', init.players);
-      if(init.end <= Date.now()) {
-          socket.emit('endRace', init.players);
-          socket.broadcast.emit('endRace', init.players);
-      }
   }, 15000);
 
   socket.emit('init', init);
