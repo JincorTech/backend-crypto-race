@@ -150,6 +150,7 @@ tracks.on('connect', async socket => {
   socket.broadcast.emit('init', {tracks: tracks});
   socket.on('joinTrack', async (joinData: any) =>  {
     await gameClient.joinToTrack(user, user.mnemonic, joinData.trackId);
+    console.log("Join data: ", joinData);
     // const portfolio =
     // await gameClient.setPortfolio(user, user.mnemonic, joinData.trackId);
     socket.emit('init',{  } /*strafeData*/);
