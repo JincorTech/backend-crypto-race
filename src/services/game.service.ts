@@ -14,7 +14,7 @@ export class GameService implements GameServiceInterface {
 
   constructor(@inject(Web3ClientType) private web3Client: Web3ClientInterface) {}
 
-  async createTrackFromBackend(id: string, betAmount: string): Track {
+  async createTrackFromBackend(id: string, betAmount: string): Promise<any> {
     const track = new Track();
     track.betAmount = betAmount;
     track.name = id;
