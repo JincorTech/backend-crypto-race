@@ -13,7 +13,6 @@ export class CryptoCurrencyHandler implements CryptoCurrencyHandlerInterface {
     setInterval(
       async function() {
         let rate = cryptoSocket.Exchanges['bittrex'];
-        console.log(rate);
         await getConnection().mongoManager.save(Currency, Currency.createCurrency({
           timestamp: currentTime,
           name: 'LTC',

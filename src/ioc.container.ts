@@ -19,7 +19,6 @@ import { LandingServiceType, LandingService } from './services/landing.service';
 import { GameController } from './controllers/game.controller';
 import { GameServiceType, GameService } from './services/game.service';
 import { TrackServiceInterface, TrackService, TrackServiceType } from './services/track.service';
-import { CryptoCurrencyServiceInterface, CryptoCurrencyServiceType, CryptoCurrencyService } from './services/crypto.currency.service';
 import { CryptoCurrencyHandlerInterface, CryptoCurrencyHandlerType, CryptoCurrencyHandler } from './handlers/crypto.currency.handler';
 
 let container = new Container();
@@ -43,7 +42,6 @@ container.bind<EmailTemplateServiceInterface>(EmailTemplateServiceType).to(Email
 container.bind<LandingServiceInterface>(LandingServiceType).to(LandingService).inSingletonScope();
 container.bind<GameServiceInterface>(GameServiceType).to(GameService).inSingletonScope();
 container.bind<TrackServiceInterface>(TrackServiceType).to(TrackService).inSingletonScope();
-container.bind<CryptoCurrencyServiceInterface>(CryptoCurrencyServiceType).to(CryptoCurrencyService).inSingletonScope();
 
 const auth = new Auth(container.get<AuthClientInterface>(AuthClientType));
 // middlewares
