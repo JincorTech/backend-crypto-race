@@ -109,12 +109,15 @@ race.on('connect', async socket => {
     x: Math.random() > 0.5 ? 33.3 : 66.6,
     fuel: [{name: 'btc', value: 10}, {name: 'eth', value: 90}]
   };
-  init.players.push(player);
+  const isExist = (players, newPlayer) => players.reduce((acc, player) => !player.email === newPlayer.email ? true : acc, false)
+  if (!isExist(this.players, player)) {
+    socket.emit('joined', player);
+    init.players.push(player);
+  }
   init.start = Date.now();
   init.end = Date.now() + 300;
 
   socket.emit('init', init);
-  socket.emit('joined', player);
   socket.on('moveX', (strafeData: Strafe) => {
     socket.emit('moveXupdate', strafeData);
     socket.broadcast.emit('moveXupdate', strafeData);
