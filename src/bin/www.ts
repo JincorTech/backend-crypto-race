@@ -113,6 +113,9 @@ race.on('connect', async socket => {
   init.end = Date.now() + 300;
 
   socket.emit('init', init);
+  socket.on('test', (input: string) => {
+    console.log("Gotcha: ", input);
+  });
   socket.broadcast.emit('joined', player);
 
   socket.on('strafe', (strafeData: Strafe) => {
