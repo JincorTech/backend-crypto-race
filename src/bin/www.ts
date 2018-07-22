@@ -130,7 +130,7 @@ race.on('connect', async socket => {
   }
 
   setInterval(function() {
-      init.players = init.players.map(function(player) {
+      init.players = init.players.map(function(player: Player) {
         player.position = player.position === 1 ? 0 : 1;
       });
       console.log("players: ", init.players);
