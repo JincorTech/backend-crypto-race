@@ -438,7 +438,6 @@ declare interface Strafe {
   id: string;
   left: boolean;
   right: boolean;
-  position: number;
   x: number;
 }
 
