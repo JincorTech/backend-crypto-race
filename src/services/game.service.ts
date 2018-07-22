@@ -24,7 +24,7 @@ export class GameService implements GameServiceInterface {
     track.hash = this.web3Client.toHexSha3(id);
     track.timestamp = Date.now();
     track.status = TRACK_STATUS_AWAITING;
-    await getConnection().mongoManager().save(Track, track);
+    await getConnection().mongoManager.save(Track, track);
     return track;
   }
 
@@ -41,7 +41,7 @@ export class GameService implements GameServiceInterface {
     if(track.numPlayers === track.maxPlayers) {
       track.status = TRACK_STATUS_STARTING;
     }
-    return this.web3Client.joinToTrack(account, id);
+    // return this.web3Client.joinToTrack(account, id);
     return getConnection().mongoManager.save(Track, track);
   }
 
