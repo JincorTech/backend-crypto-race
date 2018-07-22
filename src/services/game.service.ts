@@ -34,7 +34,7 @@ export class GameService implements GameServiceInterface {
     if (track.status !== TRACK_STATUS_AWAITING) {
         return false;
     }
-    if (track.maxPlayers > track.numPlayers + 1) {
+    if (track.maxPlayers < track.numPlayers + 1) {
         return false;
     }
     track.numPlayers += 1;
