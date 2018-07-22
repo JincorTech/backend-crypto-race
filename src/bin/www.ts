@@ -55,7 +55,7 @@ chat.use(async(socket, next) => {
 race.use(async(socket, next) => {
   let handshake = socket.handshake;
   const result = await authClient.verifyUserToken(handshake.query.token);
-  socket.handshake.email = result.login;
+  socket.handshake.query.email = result.login;
   next();
 });
 
@@ -96,7 +96,7 @@ setInterval((raceSock, raceData) => {
 }, 3000, race, init);
 
 race.on('connect', async socket => {
-  console.log("Email: ", socket.handshake.email);
+  console.log("Email: ", socket.handshake.query.email);
   const result = await authClient.verifyUserToken(socket.handshake.query.token);
   const user = await getConnection().mongoManager.findOne(User, {where: {email: result.login}});
   const player: Player = {
