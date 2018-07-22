@@ -48,7 +48,8 @@ const authClient: AuthClientInterface = container.get(AuthClientType);
 
 chat.use(async(socket, next) => {
   let handshake = socket.handshake;
-  await authClient.verifyUserToken(handshake.query.token);
+  const result = await authClient.verifyUserToken(handshake.query.token);
+  socket.handshake.query.email = result.login;
   next();
 });
 
@@ -61,13 +62,13 @@ race.use(async(socket, next) => {
 
 tracks.use(async(socket, next) => {
   let handshake = socket.handshake;
-  await authClient.verifyUserToken(handshake.query.token);
+  const result = await authClient.verifyUserToken(handshake.query.token);
+  socket.handshake.query.email = result.login;
   next();
 });
 
 chat.on('connect', async socket => {
-  const result = await authClient.verifyUserToken(socket.handshake.query.token);
-  const user = await getConnection().mongoManager.findOne(User, {where: {email: result.login}});
+  const user = await getConnection().mongoManager.findOne(User, {where: {email: socket.handshake.query.email}});
   socket.on('requestInitData', data => {
     socket.emit('responseInitData', messages);
   });
@@ -96,9 +97,7 @@ setInterval((raceSock, raceData) => {
 }, 3000, race, init);
 
 race.on('connect', async socket => {
-  console.log("Email: ", socket.handshake.query.email);
-  const result = await authClient.verifyUserToken(socket.handshake.query.token);
-  const user = await getConnection().mongoManager.findOne(User, {where: {email: result.login}});
+  const user = await getConnection().mongoManager.findOne(User, {where: {email: socket.handshake.query.email}});
   const player: Player = {
     id: user.id.toString(),
     email: user.email, //TODO: replace with some ID
@@ -122,8 +121,7 @@ race.on('connect', async socket => {
 });
 
 tracks.on('connect', async socket => {
-  const result = await authClient.verifyUserToken(socket.handshake.query.token);
-  const user = await getConnection().mongoManager.findOne(User, {where: {email: result.login}});
+  const user = await getConnection().mongoManager.findOne(User, {where: {email: socket.handshake.query.email }});
 
 
 
