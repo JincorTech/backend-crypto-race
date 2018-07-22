@@ -115,6 +115,8 @@ race.on('connect', async socket => {
     x: Math.random() > 0.5 ? 33.3 : 66.6,
     fuel: [{name: 'btc', value: 10}, {name: 'eth', value: 90}]
   };
+  init.start = Date.now();
+  init.end = Date.now() + 300;
   const isExist = (players: Array<Player>, newPlayer: Player) => {
     const rdc = (acc, player) => {
       if (player.email === newPlayer.email) return true;
@@ -138,6 +140,10 @@ race.on('connect', async socket => {
 
       socket.emit('positionUpdate', init.players);
       socket.broadcast.emit('positionUpdate', init.players);
+      if(init.end <= Date.now()) {
+          socket.emit('endRace', init.players);
+          socket.broadcast.emit('endRace', init.players);
+      }
   }, 15000);
 
   socket.emit('init', init);
