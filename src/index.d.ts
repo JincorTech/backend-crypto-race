@@ -439,6 +439,7 @@ declare interface Strafe {
   left: boolean;
   right: boolean;
   x: number;
+  email: string;
 }
 
 declare interface YPosition {
