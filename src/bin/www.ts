@@ -138,7 +138,7 @@ race.on('connect', async socket => {
       });
       socket.emit('positionUpdate', init.players);
       socket.broadcast.emit('positionUpdate', init.players);
-  }, 15000);
+  }, 40000);
 
   socket.emit('init', init);
   socket.on('moveX', (strafeData: Strafe) => {
