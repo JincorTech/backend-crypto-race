@@ -32,15 +32,16 @@ export class GameService implements GameServiceInterface {
     const account = this.web3Client.getAccountByMnemonicAndSalt(mnemonic, user.ethWallet.salt);
     const track = await getConnection().mongoManager.getRepository(Track).findOneById(new ObjectID(id));
     if (track.status !== TRACK_STATUS_AWAITING) {
-
+        return false;
     }
     if (track.maxPlayers > track.numPlayers + 1) {
-
+        return false;
     }
     track.numPlayers += 1;
     if(track.numPlayers === track.maxPlayers) {
       track.status = TRACK_STATUS_STARTING;
     }
+    track.players.push(user.id);
     // return this.web3Client.joinToTrack(account, id);
     return getConnection().mongoManager.save(Track, track);
   }
