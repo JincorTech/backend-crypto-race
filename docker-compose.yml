@@ -26,8 +26,8 @@ services:
       REDIS_PORT: 6379
       FORCE_HTTPS: disabled
       JWT_KEY: "uZrJ!xe*xN?!;oU.u*;QOSM+|=4C?WH?6eWPcK/6AkIXIVGQguSA*r"
-      THROTTLER_WHITE_LIST: "127.0.0.1,10.100.0.2,10.100.0.6"
-      TENANT_WHITE_LIST: "127.0.0.1,10.100.0.2,10.100.0.6"
+      THROTTLER_WHITE_LIST: "*"
+      TENANT_WHITE_LIST: "*"
     ports:
       - "3000"
       - "4000"
@@ -46,7 +46,7 @@ services:
     image: jincort/backend-verify:dev-62b3a0d
     environment:
       REDIS_URL: 'redis://redis:6379'
-      THROTTLER_WHITE_LIST: "127.0.0.1,10.100.0.2,10.100.0.6"
+      THROTTLER_WHITE_LIST: "*"
     links:
       - auth
       - redis
