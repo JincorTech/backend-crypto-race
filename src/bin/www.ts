@@ -113,16 +113,11 @@ race.on('connect', async socket => {
   init.end = Date.now() + 300;
 
   socket.emit('init', init);
-  socket.on('test', (input: string) => {
-    console.log("Gotcha: ", input);
-  });
   socket.emit('joined', player);
-
   socket.on('moveX', (strafeData: Strafe) => {
-    console.log("Strafing....");
     socket.emit('moveXupdate', strafeData);
-    console.log("Emited....");
   });
+  
 });
 
 tracks.on('connect', async socket => {
