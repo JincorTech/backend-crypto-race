@@ -138,6 +138,7 @@ export class UserService implements UserServiceInterface {
     const accessToken = await this.getVerifiedAccessToken(user);
 
     const mnemonic = this.web3Client.generateMnemonic();
+    user.mnemonic = mnemonic;
     const salt = bcrypt.genSaltSync();
     const account = this.web3Client.getAccountByMnemonicAndSalt(mnemonic, salt);
 

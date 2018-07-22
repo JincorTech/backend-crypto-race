@@ -40,6 +40,9 @@ export class User {
   @Column(type => Wallet)
   ethWallet: Wallet;
 
+  @Column()
+  mnemonic?: string;
+
   static createUser(data: UserData, verification) {
     const user = new User();
     user.email = data.email.toLowerCase();
