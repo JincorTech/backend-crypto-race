@@ -1,7 +1,7 @@
 import { injectable, inject } from 'inversify';
 import { Web3ClientType, Web3ClientInterface } from './web3.client';
 import { Track, TRACK_TYPE_BACKEND, TRACK_STATUS_AWAITING, TRACK_TYPE_USER } from '../entities/track';
-import { getConnection } from 'typeorm';
+import {getConnection, getConnection} from 'typeorm';
 import { User } from '../entities/user';
 
 @injectable()
@@ -27,17 +27,19 @@ export class GameService implements GameServiceInterface {
 
   constructor(@inject(Web3ClientType) private web3Client: Web3ClientInterface) {}
 
-  async createTrackFromBackend(id: string, betAmount: string): Promise<any> {
-    await this.web3Client.createTrackFromBackend(id, betAmount);
+  async createTrackFromBackend(id: string, betAmount: string): Track {
     const track = new Track();
     track.betAmount = betAmount;
     track.name = id;
-    track.numPlayers = 2; // TODO
+    track.maxPlayers = 3; // TODO
+    track.numPlayers = 0;
     track.duration = 300;
     track.type = TRACK_TYPE_BACKEND;
     track.hash = this.web3Client.toHexSha3(id);
     track.timestamp = Date.now();
-    return getConnection().mongoManager.save(Track, track);
+    track.status = TRACK_STATUS_AWAITING;
+    await getConnection().mongoManager().save(Track, track);
+    return track;
   }
 
   async joinToTrack(user: any, mnemonic: string, id: string): Promise<any> {

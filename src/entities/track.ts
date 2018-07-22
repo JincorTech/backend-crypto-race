@@ -36,6 +36,9 @@ export class Track {
   betAmount: string;
 
   @Column()
+  type: string;
+
+  @Column()
   creator?: ObjectID;
 
   @Column()
