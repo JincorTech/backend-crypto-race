@@ -34,6 +34,7 @@
     "inversify-express-utils": "4.0.0",
     "joi": "13.4.0",
     "jsonwebtoken": "^7.2.1",
+    "jwt-decode": "2.2.0",
     "lru-cache": "4.1.1",
     "mailcomposer": "4.0.2",
     "mailgun-js": "0.13.1",
