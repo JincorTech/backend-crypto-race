@@ -8,7 +8,10 @@ import config from '../config';
 import 'reflect-metadata';
 import { createConnection, ConnectionOptions, getConnection } from 'typeorm';
 import { AuthClientType } from '../services/auth.client';
+import { GameServiceType } from '../services/game.service';
 import { User } from '../entities/user';
+import { Track } from '../entities/track';
+import {ancestorWhere} from "tslint";
 // import { jwt_decode } from 'jwt-decode';
 
 /**
@@ -45,6 +48,7 @@ const tracks = io.of('/tracks');
 
 const messages = [];
 const authClient: AuthClientInterface = container.get(AuthClientType);
+const gameClient: GameServiceInterface = container.get(GameServiceType);
 
 chat.use(async(socket, next) => {
   let handshake = socket.handshake;
@@ -135,7 +139,17 @@ race.on('connect', async socket => {
 
 tracks.on('connect', async socket => {
   const user = await getConnection().mongoManager.findOne(User, {where: {email: socket.handshake.query.email }});
-
-
+  const tracks = await getConnection().mongoManager.find(Track, {take: 1000});
+  if (tracks.length === 0) {
+    tracks.push(await gameClient.createTrackFromBackend('ToTheMoon', '10000'));
+    tracks.push(await gameClient.createTrackFromBackend('ToTheMoon', '100'));
+    tracks.push(await gameClient.createTrackFromBackend('ToTheMoon', '0'));
+  }
+  socket.emit('init', {tracks: tracks});
+  socket.broadcast('init', {tracks: tracks});
+  socket.on('joinTrack', (track: any) => {
+    socket.emit('init', strafeData);
+    socket.broadcast.emit('init', strafeData);
+  });
 
 });

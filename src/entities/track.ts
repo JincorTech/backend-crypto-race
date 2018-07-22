@@ -3,9 +3,11 @@ import { Entity, ObjectIdColumn, ObjectID, Column } from 'typeorm';
 export const TRACK_TYPE_USER = 'user';
 export const TRACK_TYPE_BACKEND = 'backend';
 
-export const TRACK_STATUS_PENDING = 'pending';
-export const TRACK_STATUS_SUCCESS = 'success';
-export const TRACK_STATUS_FAILED = 'failed';
+export const TRACK_STATUS_AWAITING = 'awaiting';
+export const TRACK_STATUS_STARTING = 'starting';
+export const TRACK_STATUS_ACTIVE = 'active';
+export const TRACK_STATUS_FINISHED = 'finished';
+export const TRACK_STATUS_CANCELLED = 'cancelled';
 
 @Entity()
 export class Track {
@@ -26,6 +28,9 @@ export class Track {
 
   @Column()
   numPlayers: number;
+
+  @Column()
+  maxPlayers: number;
 
   @Column()
   betAmount: string;

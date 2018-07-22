@@ -17,11 +17,13 @@ export class GameService implements GameServiceInterface {
     const track = new Track();
     track.betAmount = betAmount;
     track.name = id;
-    track.numPlayers = 2; // TODO
+    track.maxPlayers = 2; // TODO
+    track.numPlayers = 0;
     track.duration = 300;
     track.type = TRACK_TYPE_BACKEND;
     track.hash = this.web3Client.toHexSha3(id);
     track.timestamp = Date.now();
+    track.status = TRACK_STATUS_AWAITING;
     return getConnection().mongoManager.save(Track, track);
   }
 
