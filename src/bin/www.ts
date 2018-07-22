@@ -80,7 +80,7 @@ chat.on('connect', async socket => {
 
 strafe.on('connect', async socket => {
   socket.on('strafe', (strafeData: Strafe) => {
-    socket.broadcast.emit('strafeUpdate', strafeData);
+    socket.emit('strafeUpdate', strafeData);
   });
 });
 
