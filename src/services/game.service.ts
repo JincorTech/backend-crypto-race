@@ -1,6 +1,6 @@
 import { injectable, inject } from 'inversify';
 import { Web3ClientType, Web3ClientInterface } from './web3.client';
-import { Track, TRACK_TYPE_BACKEND, TRACK_STATUS_AWAITING } from '../entities/track';
+import { Track, TRACK_TYPE_BACKEND, TRACK_STATUS_AWAITING, TRACK_STATUS_STARTING } from '../entities/track';
 import {getConnection} from 'typeorm';
 import { ObjectID } from 'mongodb';
 
@@ -29,11 +29,20 @@ export class GameService implements GameServiceInterface {
   }
 
   async joinToTrack(user: any, mnemonic: string, id: string): Promise<any> {
-    console.log('id: ', id);
     const account = this.web3Client.getAccountByMnemonicAndSalt(mnemonic, user.ethWallet.salt);
     const track = await getConnection().mongoManager.getRepository(Track).findOneById(new ObjectID(id));
-    console.log("Track is: ", track);
-    // return this.web3Client.joinToTrack(account, id);
+    if (track.status !== TRACK_STATUS_AWAITING) {
+
+    }
+    if (track.maxPlayer > track.numPlayers + 1) {
+
+    }
+    track.numPlayers += 1;
+    if(track.numPlayers === track.maxPlayers) {
+      track.status = TRACK_STATUS_STARTING;
+    }
+    return this.web3Client.joinToTrack(account, id);
+    return getConnection().mongoManager.save(Track, track);
   }
 
   async setPortfolio(user: any, mnemonic: string, id: string, portfolio: any): Promise<any> {
