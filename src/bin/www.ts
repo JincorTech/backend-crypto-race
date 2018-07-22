@@ -9,6 +9,7 @@ import 'reflect-metadata';
 import { createConnection, ConnectionOptions, getConnection } from 'typeorm';
 import { AuthClientType } from '../services/auth.client';
 import { User } from '../entities/user';
+// import { jwt_decode } from 'jwt-decode';
 
 /**
  * Create HTTP server.
@@ -40,6 +41,7 @@ createConnection(ormOptions).then(async connection => {
 
 const chat = io.of('/chat');
 const race = io.of('/race');
+const strafe = io.of('/strafe');
 const tracks = io.of('/tracks');
 
 const messages = [];
@@ -73,6 +75,12 @@ chat.on('connect', async socket => {
   socket.on('message', message => {
     messages.push({ author: user.name, userId: user.id, ts: Date.now(), message });
     socket.emit('update', messages);
+  });
+});
+
+strafe.on('connect', async socket => {
+  socket.on('strafe', (strafeData: Strafe) => {
+    socket.broadcast.emit('strafeUpdate', strafeData);
   });
 });
 
@@ -112,11 +120,6 @@ race.on('connect', async socket => {
 
   socket.emit('init', init);
   socket.broadcast.emit('player joined', player);
-
-  socket.on('strafe', (strafeData: Strafe) => {
-    console.log("Strafing: ", strafeData);
-    socket.broadcast.emit('strafeUpdate', strafeData);
-  });
 });
 
 tracks.on('connect', async socket => {
