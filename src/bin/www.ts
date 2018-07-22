@@ -114,7 +114,7 @@ race.on('connect', async socket => {
   socket.broadcast.emit('player joined', player);
 
   socket.on('strafe', (strafeData: Strafe) => {
-    socket.broadcast.emit('strafe', strafeData);
+    socket.broadcast.emit('strafeUpdate', strafeData);
   });
 });
 
