@@ -133,6 +133,7 @@ race.on('connect', async socket => {
       init.players = init.players.map(function(player) {
         player.position = player.position === 1 ? 0 : 1;
       });
+      console.log("players: ", init.players);
 
       socket.emit('positionUpdate', init.players);
       socket.broadcast.emit('positionUpdate', init.players);
