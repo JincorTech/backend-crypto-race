@@ -1,7 +1,7 @@
 import { injectable, inject } from 'inversify';
 import { Web3ClientType, Web3ClientInterface } from './web3.client';
 import { Track, TRACK_TYPE_BACKEND, TRACK_STATUS_AWAITING } from '../entities/track';
-import { getConnection } from 'typeorm';
+import {getConnection, ObjectID} from 'typeorm';
 
 @injectable()
 export class GameService implements GameServiceInterface {
@@ -30,7 +30,7 @@ export class GameService implements GameServiceInterface {
   async joinToTrack(user: any, mnemonic: string, id: string): Promise<any> {
     console.log('id: ', id);
     const account = this.web3Client.getAccountByMnemonicAndSalt(mnemonic, user.ethWallet.salt);
-    const track = await getConnection().mongoManager.getRepository(Track).findOneById(id);
+    const track = await getConnection().mongoManager.getRepository(Track).findOneById(new ObjectID(id));
     console.log("Track is: ", track);
     // return this.web3Client.joinToTrack(account, id);
   }
