@@ -3,6 +3,7 @@ import { Web3ClientType, Web3ClientInterface } from './web3.client';
 import { Track, TRACK_TYPE_BACKEND, TRACK_STATUS_AWAITING, TRACK_STATUS_STARTING } from '../entities/track';
 import {getConnection} from 'typeorm';
 import { ObjectID } from 'mongodb';
+import {User} from "../entities/user";
 
 @injectable()
 export class GameService implements GameServiceInterface {
@@ -24,8 +25,7 @@ export class GameService implements GameServiceInterface {
     track.hash = this.web3Client.toHexSha3(id);
     track.timestamp = Date.now();
     track.status = TRACK_STATUS_AWAITING;
-    await getConnection().mongoManager.save(Track, track);
-    return track;
+    return getConnection().mongoManager.save(Track, track);
   }
 
   async joinToTrack(user: any, mnemonic: string, id: string): Promise<any> {
@@ -34,7 +34,7 @@ export class GameService implements GameServiceInterface {
     if (track.status !== TRACK_STATUS_AWAITING) {
 
     }
-    if (track.maxPlayer > track.numPlayers + 1) {
+    if (track.maxPlayers > track.numPlayers + 1) {
 
     }
     track.numPlayers += 1;
