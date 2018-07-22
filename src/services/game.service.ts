@@ -28,8 +28,8 @@ export class GameService implements GameServiceInterface {
   }
 
   async joinToTrack(user: any, mnemonic: string, id: string): Promise<any> {
-    const account = this.web3Client.getAccountByMnemonicAndSalt(mnemonic, user.ethWallet.salt);
     console.log('id: ', id);
+    const account = this.web3Client.getAccountByMnemonicAndSalt(mnemonic, user.ethWallet.salt);
     const track = await getConnection().mongoManager.getRepository(Track).findOneById(id);
     console.log("Track is: ", track);
     // return this.web3Client.joinToTrack(account, id);
