@@ -1,6 +1,6 @@
 import { injectable, inject } from 'inversify';
 import { Web3ClientType, Web3ClientInterface } from './web3.client';
-import { Track, TRACK_TYPE_BACKEND, TRACK_STATUS_PENDING, TRACK_TYPE_USER } from '../entities/track';
+import { Track, TRACK_TYPE_BACKEND, TRACK_STATUS_AWAITING, TRACK_TYPE_USER } from '../entities/track';
 import { getConnection } from 'typeorm';
 import { User } from '../entities/user';
 
@@ -13,7 +13,7 @@ export class GameService implements GameServiceInterface {
     const track = new Track();
     track.betAmount = betAmount;
     track.numPlayers = 4;
-    track.status = TRACK_STATUS_PENDING;
+    track.status = TRACK_STATUS_AWAITING;
     track.type = TRACK_TYPE_USER;
     track.creator = user.id;
     track.duration = 300;

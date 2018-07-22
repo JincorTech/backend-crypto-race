@@ -19,6 +19,8 @@ import { LandingServiceType, LandingService } from './services/landing.service';
 import { GameController } from './controllers/game.controller';
 import { GameServiceType, GameService } from './services/game.service';
 import { TrackServiceInterface, TrackService, TrackServiceType } from './services/track.service';
+import { CryptoCurrencyServiceInterface, CryptoCurrencyServiceType, CryptoCurrencyService } from './services/crypto.currency.service';
+import { CryptoCurrencyHandlerInterface, CryptoCurrencyHandlerType, CryptoCurrencyHandler } from './handlers/crypto.currency.handler';
 
 let container = new Container();
 
@@ -31,6 +33,7 @@ if (process.env.MAIL_DRIVER === 'mailjet') {
 
 container.bind<EmailQueueInterface>(EmailQueueType).to(EmailQueue).inSingletonScope();
 container.bind<Web3ClientInterface>(Web3ClientType).to(Web3Client).inSingletonScope();
+container.bind<CryptoCurrencyHandlerInterface>(CryptoCurrencyHandlerType).toConstantValue(new CryptoCurrencyHandler());
 
 container.bind<AuthClientInterface>(AuthClientType).toConstantValue(new AuthClient(config.auth.baseUrl));
 container.bind<VerificationClientInterface>(VerificationClientType).toConstantValue(new VerificationClient(config.verify.baseUrl));
@@ -40,6 +43,7 @@ container.bind<EmailTemplateServiceInterface>(EmailTemplateServiceType).to(Email
 container.bind<LandingServiceInterface>(LandingServiceType).to(LandingService).inSingletonScope();
 container.bind<GameServiceInterface>(GameServiceType).to(GameService).inSingletonScope();
 container.bind<TrackServiceInterface>(TrackServiceType).to(TrackService).inSingletonScope();
+container.bind<CryptoCurrencyServiceInterface>(CryptoCurrencyServiceType).to(CryptoCurrencyService).inSingletonScope();
 
 const auth = new Auth(container.get<AuthClientInterface>(AuthClientType));
 // middlewares
