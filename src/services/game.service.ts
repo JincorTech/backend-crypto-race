@@ -25,7 +25,7 @@ export class GameService implements GameServiceInterface {
     track.hash = this.web3Client.toHexSha3(id);
     track.timestamp = Date.now();
     track.status = TRACK_STATUS_AWAITING;
-    return getConnection().mongoManager.save(Track, track);
+    return getConnection().mongoManager.getRepository(Track).save(track);
   }
 
   async joinToTrack(user: any, mnemonic: string, id: string): Promise<any> {

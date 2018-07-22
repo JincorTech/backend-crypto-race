@@ -43,7 +43,7 @@ export class Track {
 
   @Column()
   status: string;
-  
+
   @Column()
   isActive: boolean;
 
