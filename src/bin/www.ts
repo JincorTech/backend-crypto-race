@@ -109,7 +109,15 @@ race.on('connect', async socket => {
     x: Math.random() > 0.5 ? 33.3 : 66.6,
     fuel: [{name: 'btc', value: 10}, {name: 'eth', value: 90}]
   };
-  const isExist = (players: Array<Player>, newPlayer: Player) => players.reduce((acc, player) => player.email !== newPlayer.email ? true : acc, false)
+  const isExist = (players: Array<Player>, newPlayer: Player) => {
+    const rdc = (acc, player) => {
+      if (player.email === newPlayer.email) return true;
+      return acc;
+    };
+
+    return players.reduce(rdc, false);
+  };
+
   if (!isExist(init.players, player)) {
     socket.emit('joined', player);
     init.players.push(player);
