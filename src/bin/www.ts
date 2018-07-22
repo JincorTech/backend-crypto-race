@@ -143,7 +143,7 @@ tracks.on('connect', async socket => {
   const user = await getConnection().mongoManager.findOne(User, {where: {email: socket.handshake.query.email }});
   const tracks = await getConnection().mongoManager.find(Track, {take: 1000});
   if (tracks.filter((track) => {return track.status === 'awaiting'}).length < 3) {
-    tracks.push(await gameClient.createTrackFromBackend('ToTheMoon', '0.001'));
+    tracks.push(await gameClient.createTrackFromBackend('ToTheMoon', '0.1'));
     tracks.push(await gameClient.createTrackFromBackend('ToTheMoon', '0'));
   }
   socket.emit('init', {tracks: tracks});
