@@ -125,7 +125,4 @@ race.on('connect', async socket => {
 tracks.on('connect', async socket => {
   const result = await authClient.verifyUserToken(socket.handshake.query.token);
   const user = await getConnection().mongoManager.findOne(User, {where: {email: result.login}});
-
-
-
 });
