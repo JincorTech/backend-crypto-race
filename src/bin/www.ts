@@ -141,7 +141,7 @@ race.on('connect', async socket => {
 
 tracks.on('connect', async socket => {
   const user = await getConnection().mongoManager.findOne(User, {where: {email: socket.handshake.query.email }});
-  const tracks = await getConnection().mongoManager.find(Track, {take: 1000});
+  let tracks = await getConnection().mongoManager.find(Track, {take: 1000});
   if (tracks.filter((track) => {return track.status === 'awaiting'}).length < 3) {
     tracks.push(await gameClient.createTrackFromBackend('ToTheMoon', '0.1'));
     tracks.push(await gameClient.createTrackFromBackend('ToTheMoon', '0'));
@@ -150,11 +150,9 @@ tracks.on('connect', async socket => {
   socket.broadcast.emit('init', {tracks: tracks});
   socket.on('joinTrack', async (joinData: any) =>  {
     const track = await gameClient.joinToTrack(user, user.mnemonic, joinData.trackId);
-    console.log("track: ", track);
-    // const portfolio =
-    // await gameClient.setPortfolio(user, user.mnemonic, joinData.trackId);
-    socket.emit('init',{  } /*strafeData*/);
-    socket.broadcast.emit('init',{} /*strafeData*/);
+    tracks = await getConnection().mongoManager.find(Track, {take: 1000});
+    socket.emit('init',{tracks: tracks} /*strafeData*/);
+    socket.broadcast.emit('init',{tracks: tracks} /*strafeData*/);
   });
 
 });
