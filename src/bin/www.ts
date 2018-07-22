@@ -147,7 +147,7 @@ tracks.on('connect', async socket => {
     tracks.push(await gameClient.createTrackFromBackend('ToTheMoon', '0'));
   }
   socket.emit('init', {tracks: tracks});
-  socket.broadcast('init', {tracks: tracks});
+  socket.broadcast.emit('init', {tracks: tracks});
   socket.on('joinTrack', (track: any) => {
     socket.emit('init',{} /*strafeData*/);
     socket.broadcast.emit('init',{} /*strafeData*/);
