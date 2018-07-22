@@ -1,6 +1,9 @@
 import { injectable, inject } from 'inversify';
 import { Web3ClientType, Web3ClientInterface } from './web3.client';
-import { Track, TRACK_TYPE_BACKEND, TRACK_STATUS_AWAITING, TRACK_STATUS_STARTING } from '../entities/track';
+import {
+    Track, TRACK_TYPE_BACKEND, TRACK_STATUS_AWAITING, TRACK_STATUS_STARTING,
+    TRACK_STATUS_ACTIVE
+} from '../entities/track';
 import {getConnection} from 'typeorm';
 import { ObjectID } from 'mongodb';
 import {User} from "../entities/user";
@@ -18,7 +21,7 @@ export class GameService implements GameServiceInterface {
     const track = new Track();
     track.betAmount = betAmount;
     track.name = id;
-    track.maxPlayers = 3; // TODO
+    track.maxPlayers = 2; // TODO
     track.numPlayers = 0;
     track.duration = 300;
     track.type = TRACK_TYPE_BACKEND;
@@ -39,7 +42,7 @@ export class GameService implements GameServiceInterface {
     }
     track.numPlayers += 1;
     if(track.numPlayers === track.maxPlayers) {
-      track.status = TRACK_STATUS_STARTING;
+      track.status = TRACK_STATUS_ACTIVE;
     }
     track.players.push(user.id);
     // return this.web3Client.joinToTrack(account, id);
