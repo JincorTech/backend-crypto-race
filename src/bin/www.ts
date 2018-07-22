@@ -76,6 +76,7 @@ chat.on('connect', async socket => {
   socket.on('message', message => {
     messages.push({ author: user.name, userId: user.id, ts: Date.now(), message });
     socket.emit('update', messages);
+    socket.broadcast.emit('update', messages);
   });
 });
 
@@ -116,8 +117,9 @@ race.on('connect', async socket => {
   socket.emit('joined', player);
   socket.on('moveX', (strafeData: Strafe) => {
     socket.emit('moveXupdate', strafeData);
+    socket.broadcast.emit('moveXupdate', strafeData);
   });
-  
+
 });
 
 tracks.on('connect', async socket => {
