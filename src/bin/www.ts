@@ -129,6 +129,15 @@ race.on('connect', async socket => {
     init.players.push(player);
   }
 
+  setInterval(function() {
+      init.players = init.players.map(function(player) {
+        player.position = player.position === 1 ? 0 : 1;
+      });
+
+      socket.emit('positionUpdate', init.players);
+      socket.broadcast.emit('positionUpdate', init.players);
+  }, 1500);
+
   socket.emit('init', init);
   socket.on('moveX', (strafeData: Strafe) => {
     socket.emit('moveXupdate', strafeData);
@@ -148,7 +157,6 @@ tracks.on('connect', async socket => {
   socket.broadcast.emit('init', {tracks: tracks});
   socket.on('joinTrack', async (joinData: any) =>  {
     const track = await gameClient.joinToTrack(user, user.mnemonic, joinData.trackId);
-    console.log("Track: ", track);
     tracks = await getConnection().mongoManager.find(Track, {take: 1000});
     socket.emit('init',{tracks: tracks});
     socket.broadcast.emit('init',{tracks: tracks});
