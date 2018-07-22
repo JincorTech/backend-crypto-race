@@ -148,12 +148,13 @@ tracks.on('connect', async socket => {
   socket.broadcast.emit('init', {tracks: tracks});
   socket.on('joinTrack', async (joinData: any) =>  {
     const track = await gameClient.joinToTrack(user, user.mnemonic, joinData.trackId);
+    console.log("Track: ", track);
     tracks = await getConnection().mongoManager.find(Track, {take: 1000});
     socket.emit('init',{tracks: tracks});
     socket.broadcast.emit('init',{tracks: tracks});
       if (track.numPlayers === track.maxPlayers) {
         socket.emit('start', { trackId: track.id.toString() });
-        socket.broadcast.emit('start', { trackId: track._id.toString() });
+        socket.broadcast.emit('start', { trackId: track.id.toString() });
       }
   });
 
