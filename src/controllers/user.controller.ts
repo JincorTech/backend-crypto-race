@@ -185,7 +185,6 @@ export class UserController {
             return res.send(err);
           }
         } else {
-          console.log("user: ", user);
           const result = await userService.createActivatedUser({
             agreeTos: true,
             email: user.email,
