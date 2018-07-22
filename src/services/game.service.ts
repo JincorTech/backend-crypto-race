@@ -1,6 +1,6 @@
 import { injectable, inject } from 'inversify';
 import { Web3ClientType, Web3ClientInterface } from './web3.client';
-import { Track, TRACK_TYPE_BACKEND } from '../entities/track';
+import { Track, TRACK_TYPE_BACKEND, TRACK_STATUS_AWAITING } from '../entities/track';
 import { getConnection } from 'typeorm';
 
 @injectable()
