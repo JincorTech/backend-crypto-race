@@ -9,7 +9,7 @@ import 'reflect-metadata';
 import { createConnection, ConnectionOptions, getConnection } from 'typeorm';
 import { AuthClientType } from '../services/auth.client';
 import { GameServiceType } from '../services/game.service';
-import {TrackServiceType, TrackServiceInterface} from '../services/track.service';
+// import {TrackServiceType, TrackServiceInterface} from '../services/track.service';
 import { User } from '../entities/user';
 import { Track } from '../entities/track';
 import {ancestorWhere} from "tslint";
@@ -50,7 +50,7 @@ const tracks = io.of('/tracks');
 const messages = [];
 const authClient: AuthClientInterface = container.get(AuthClientType);
 const gameClient: GameServiceInterface = container.get(GameServiceType);
-const trackService: TrackServiceInterface = container.get(TrackServiceType);
+// const trackService: TrackServiceInterface = container.get(TrackServiceType);
 
 chat.use(async(socket, next) => {
   let handshake = socket.handshake;
