@@ -122,7 +122,9 @@ tracks.on('connect', async socket => {
   socket.on('joinTrack', async (joinData: any) =>  {
     const track = await gameClient.joinToTrack(user, user.mnemonic, joinData.trackId);
     if (track) {
-      socket.join(joinData.trackId);
+      socket.join(joinData.trackId, () => {
+        console.log("User: " + socket.id + " joined the room " + joinData.trackId);
+      });
       console.log("Broadcasting to " + socket.id);
       socket.to(socket.id).emit('joined', joinData);
     }
