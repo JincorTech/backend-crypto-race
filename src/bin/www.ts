@@ -123,6 +123,7 @@ tracks.on('connect', async socket => {
     const track = await gameClient.joinToTrack(user, user.mnemonic, joinData.trackId);
     if (track) {
       socket.join(joinData.trackId);
+      console.log("Broadcasting to " + id);
       socket.to(id).emit('joined', joinData);
     }
     tracks = await getConnection().mongoManager.find(Track, {take: 1000});
