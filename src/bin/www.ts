@@ -86,13 +86,6 @@ chat.on('connect', async socket => {
   });
 });
 
-// race
-let init: InitRace = {
-  raceName: 'to-the-moon',
-  start: Date.now(),
-  end: Date.now() + 300,
-  players: new Array<Player>()
-};
 
 setInterval((raceSock, raceData) => {
   const players: Array<Player> = raceData.players;
@@ -107,23 +100,20 @@ race.on('connect', async socket => {
   const user = await getConnection().mongoManager.findOne(User, {where: {email: socket.handshake.query.email}});
   const track = await getConnection().mongoManager.findOne(Track, {
     where: {
-      players: {
-        '$in': [user.id.toString()]
+      ['players.' + user.id.toString()]: {
+        '$exists': true
       }
     }
   });
   if (!track) {
     socket.disconnect();
   }
-  const player: Player = {
-    id: user.id.toString(),
-    email: user.email, //TODO: replace with some ID
-    picture: user.picture,
-    name: user.name,
-    position: init.players.length,
-    ship: {type: 'nova'},
-    x: Math.random() > 0.5 ? 33.3 : 66.6,
-    fuel: [{name: 'btc', value: 10}, {name: 'eth', value: 90}]
+  console.log("Found track!", track);
+  let init: InitRace = {
+    raceName: track.name,
+    start: Date.now(),
+    end: Date.now() + 300,
+    players: new Array<Player>()
   };
   init.start = Date.now();
   init.end = Date.now() + 300;

@@ -41,10 +41,19 @@ export class GameService implements GameServiceInterface {
         return false;
     }
     track.numPlayers += 1;
+    track.players[user.id.toString()] = {
+      id: user.id.toString(),
+      email: user.email,
+      picture: user.picture,
+      name: user.name,
+      position: track.numPlayers,
+      ship: { type: 'nova' },
+      x: Math.random() > 0.5 ? 33.3 : 66.6,
+      fuel: [{name: 'btc', value: 10}, {name: 'eth', value: 90}]
+    };
     if(track.numPlayers === track.maxPlayers) {
       track.status = TRACK_STATUS_ACTIVE;
     }
-    track.players.push(user.id.toString());
     // return this.web3Client.joinToTrack(account, id);
     return getConnection().mongoManager.save(Track, track);
   }
