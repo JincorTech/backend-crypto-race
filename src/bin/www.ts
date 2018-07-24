@@ -124,7 +124,7 @@ tracks.on('connect', async socket => {
     const track = await gameClient.joinToTrack(user, user.mnemonic, joinData.trackId);
     if (track) {
       socket.join('tracks' + joinData.trackId, function () {
-        socket.in('tracks' + joinData.trackId).emit('joined', joinData);
+        socket.to(socket.id).emit('joined', joinData);
         if (track.numPlayers === track.maxPlayers) {
           socket.in('tracks' + joinData.trackId).emit('start', { trackId: joinData.trackId });
         }
