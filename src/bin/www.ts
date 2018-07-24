@@ -119,22 +119,20 @@ tracks.on('connect', async socket => {
   }
   socket.emit('init', {tracks: tracks});
   socket.broadcast.emit('init', {tracks: tracks});
+
   socket.on('joinTrack', async (joinData: any) =>  {
     const track = await gameClient.joinToTrack(user, user.mnemonic, joinData.trackId);
     if (track) {
-      socket.join(joinData.trackId, () => {
-        console.log("User: " + socket.id + " joined the room " + joinData.trackId);
+      socket.join('tracks' + joinData.trackId, function () {
+        socket.in(socket.id).emit('joined', joinData);
+        if (track.numPlayers === track.maxPlayers) {
+          socket.in('tracks' + joinData.trackId).emit('start', { trackId: joinData.trackId });
+        }
       });
-      console.log("Broadcasting to " + socket.id);
-      socket.to(socket.id).emit('joined', joinData);
     }
     tracks = await getConnection().mongoManager.find(Track, {take: 1000});
     socket.emit('init',{tracks: tracks});
     socket.broadcast.emit('init',{tracks: tracks});
-      if (track.numPlayers === track.maxPlayers) {
-        socket.to(joinData.trackId).emit('start', { trackId: track.id.toString() });
-        socket.to(joinData.trackId).broadcast.emit('start', { trackId: track.id.toString() });
-      }
   });
 
 });
