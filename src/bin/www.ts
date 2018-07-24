@@ -96,6 +96,7 @@ race.on('connect', async socket => {
       }
     }
   });
+  console.log("Track: ", track);
   if (!track) {
     socket.disconnect();
   }
