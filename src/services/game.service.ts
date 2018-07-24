@@ -44,7 +44,7 @@ export class GameService implements GameServiceInterface {
     if(track.numPlayers === track.maxPlayers) {
       track.status = TRACK_STATUS_ACTIVE;
     }
-    track.players.push(user.id);
+    track.players.push(user.id.toString());
     // return this.web3Client.joinToTrack(account, id);
     return getConnection().mongoManager.save(Track, track);
   }
