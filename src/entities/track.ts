@@ -54,9 +54,13 @@ export class Track {
   end: number;
 
   @Column()
-  players: Player;
+  users: Array<string>;
+
+  @Column()
+  players: Array<Player>;
 
   constructor() {
-    this.players = new Array<ObjectID>();
+    this.players = [];
+    this.users = [];
   }
 }

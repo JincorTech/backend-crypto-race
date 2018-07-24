@@ -87,42 +87,35 @@ chat.on('connect', async socket => {
 });
 
 
+setInterval((raceSock, raceData) => {
+  const players: Array<Player> = raceData.players;
+  const yPositions: YPosition = {playersYPositions: new Array<PlayerYPosition>()};
+  players.forEach(player => {
+    yPositions.playersYPositions.push({id: player.id, y: Math.random() * 100});
+  });
+  raceSock.emit('move', yPositions);
+}, 3000, race, init);
+
 race.on('connect', async socket => {
   const user = await getConnection().mongoManager.findOne(User, {where: {email: socket.handshake.query.email}});
   const track = await getConnection().mongoManager.findOne(Track, {
     where: {
-      ['players.' + user.id.toString()]: {
-        '$exists': true
+      users: {
+        '$in': [user.id.toString()]
       }
     }
   });
   if (!track) {
     socket.disconnect();
   }
-  console.log("Found track!", track);
-  // let init: InitRace = {
-  //   raceName: track.name,
-  //   start: Date.now(),
-  //   end: Date.now() + 300,
-  //   players: new Array<Player>()
-  // };
-  // init.start = Date.now();
-  // init.end = Date.now() + 300;
-  // const isExist = (players: Array<Player>, newPlayer: Player) => {
-  //   const rdc = (acc, player) => {
-  //     if (player.email === newPlayer.email) return true;
-  //     return acc;
-  //   };
-  //
-  //   return players.reduce(rdc, false);
-  // };
-  //
-  // if (!isExist(init.players, player)) {
-  //   socket.emit('joined', player);
-  //   init.players.push(player);
-  // }
+  let init: InitRace = {
+    raceName: track.name,
+    start: Date.now(),
+    end: Date.now() + 300,
+    players: track.players
+  };
 
-  // socket.emit('init', init);
+  socket.emit('init', init);
   socket.on('moveX', (strafeData: Strafe) => {
     socket.emit('moveXupdate', strafeData);
     socket.broadcast.emit('moveXupdate', strafeData);
