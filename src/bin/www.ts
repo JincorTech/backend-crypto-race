@@ -87,15 +87,6 @@ chat.on('connect', async socket => {
 });
 
 
-setInterval((raceSock, raceData) => {
-  const players: Array<Player> = raceData.players;
-  const yPositions: YPosition = {playersYPositions: new Array<PlayerYPosition>()};
-  players.forEach(player => {
-    yPositions.playersYPositions.push({id: player.id, y: Math.random() * 100});
-  });
-  raceSock.emit('move', yPositions);
-}, 3000, race, init);
-
 race.on('connect', async socket => {
   const user = await getConnection().mongoManager.findOne(User, {where: {email: socket.handshake.query.email}});
   const track = await getConnection().mongoManager.findOne(Track, {
