@@ -105,6 +105,14 @@ setInterval((raceSock, raceData) => {
 
 race.on('connect', async socket => {
   const user = await getConnection().mongoManager.findOne(User, {where: {email: socket.handshake.query.email}});
+  const track = await getConnection().mongoManager.findOne(Track, {
+    where: {
+      players: {
+        '$in': [user.id.toString()]
+      }
+    }
+  });
+  console.log("Track is: ", track);
   const player: Player = {
     id: user.id.toString(),
     email: user.email, //TODO: replace with some ID
