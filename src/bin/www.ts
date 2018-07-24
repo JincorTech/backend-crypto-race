@@ -113,7 +113,7 @@ race.on('connect', async socket => {
     }
   });
   if (!track) {
-    race.disconnect();
+    socket.disconnect();
   }
   const player: Player = {
     id: user.id.toString(),
