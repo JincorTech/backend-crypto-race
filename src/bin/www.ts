@@ -112,7 +112,9 @@ race.on('connect', async socket => {
       }
     }
   });
-  console.log("Track is: ", track);
+  if (!track) {
+    race.disconnect();
+  }
   const player: Player = {
     id: user.id.toString(),
     email: user.email, //TODO: replace with some ID
