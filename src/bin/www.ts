@@ -90,13 +90,13 @@ sock.on('connect', async socket => {
       }
     });
 
-    tracks = await getConnection().mongoManager.find(Track, {take: 1000});
+    const tracks = await getConnection().mongoManager.find(Track, {take: 1000});
     socket.emit('initTracks',{tracks: tracks});
     socket.broadcast.emit('initTracks',{tracks: tracks});
   });
 
   socket.on('moveX', (strafeData: Strafe) => {
-    socket.in('tracks_' + track.id.toString()).emit('moveXupdate', strafeData);
+    socket.in('tracks_' + strafeData.trackId).emit('moveXupdate', strafeData);
   });
 
 
