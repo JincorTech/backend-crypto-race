@@ -8,7 +8,7 @@ import config from '../config';
 import 'reflect-metadata';
 import { createConnection, ConnectionOptions, getConnection } from 'typeorm';
 import { AuthClientType } from '../services/auth.client';
-import { TrackServiceType, TrackServiceInterface } from '../services/track.service';
+import { TrackServiceType, TrackService, TrackServiceInterface } from '../services/track.service';
 import { User } from '../entities/user';
 import {Track, TRACK_STATUS_ACTIVE} from '../entities/track';
 import { ancestorWhere } from 'tslint';
