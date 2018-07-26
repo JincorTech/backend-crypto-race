@@ -42,7 +42,7 @@ createConnection(ormOptions).then(async connection => {
     httpsServer.listen(config.app.httpsPort);
   }
 }).catch(error => console.log('TypeORM connection error: ', error));
-
+const sock = io.of('/');
 const chat = io.of('/chat');
 const race = io.of('/race');
 const tracks = io.of('/tracks');
