@@ -195,9 +195,9 @@ export class Web3Client implements Web3ClientInterface {
 
     return new Promise(async(resolve, reject) => {
       const params = {
-        value: betAmount,
+        value: this.web3.utils.toWei(betAmount),
         to: this.raceBase.options.address,
-        gas: 2000000,
+        gas: 400000,
         nonce: await this.web3.eth.getTransactionCount(account.address, 'pending'),
         data: this.raceBase.methods.createTrack(nameBates32).encodeABI()
       };

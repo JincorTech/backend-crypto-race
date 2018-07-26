@@ -5,6 +5,8 @@ import { Track, TRACK_TYPE_BACKEND, TRACK_STATUS_AWAITING, TRACK_TYPE_USER, TRAC
 import { Web3ClientInterface, Web3ClientType } from './web3.client';
 import { getConnection, MongoRepository } from 'typeorm';
 import { ObjectID } from 'mongodb';
+import { Currency } from '../entities/currency';
+import { stat } from 'fs';
 
 export interface TrackServiceInterface {
   joinToTrack(user: User, mnemonic: string, id: string): Promise<Track>;
@@ -23,8 +25,10 @@ export interface TrackServiceInterface {
   createTrack(user: User, mnemonic: string, betAmount: string): Promise<Track>;
   internalCreateTrack(betAmount: string): Promise<Track>;
   getPlayers(id: string): Promise<Array<User>>;
-  startTrack(id: string): Promise<boolean>;
+  startTrack(id: string, start: number): Promise<boolean>;
   isReady(id: string): Promise<boolean>;
+  getStats(id: string): Promise<any>;
+  getWinners(id: string): Promise<any>;
 }
 
 @injectable()
@@ -107,6 +111,10 @@ export class TrackService implements TrackServiceInterface {
     return getConnection().mongoManager.findOne(Portfolio, {where: {track: track.id, user: user.id}});
   }
 
+  async getPortfolios(id: string): Promise<Array<Portfolio>> {
+    return getConnection().mongoManager.find(Portfolio, {where: {track: new ObjectID(id)}});
+  }
+
   async getAllTracks(): Promise<Track[]> {
     return this.trackRepo.find();
   }
@@ -124,13 +132,15 @@ export class TrackService implements TrackServiceInterface {
     return getConnection().mongoManager.findByIds(User, track.users);
   }
 
-  async startTrack(id: string): Promise<boolean> {
+  async startTrack(id: string, start: number): Promise<boolean> {
     if (!(await this.isReady(id))) {
       throw new Error(`Track #${id} is not ready`);
     }
 
     const track = await this.getTrackById(id);
     track.status = TRACK_STATUS_ACTIVE;
+    track.start = start;
+    track.end = track.start + track.duration;
 
     await this.trackRepo.save(track);
 
@@ -145,10 +155,73 @@ export class TrackService implements TrackServiceInterface {
     return false;
   }
 
+  async getStats(id: string): Promise<any> {
+    const portfolios = await this.getPortfolios(id);
+    const track = await this.getTrackById(id);
+    const ratios = this.getRatios(
+      await this.getCurrencyRates(track.start),
+      await this.getCurrencyRates(track.end)
+    );
+
+    const playersStats = [];
+
+    for (let i = 0; i < portfolios.length; i++) {
+      playersStats.push({
+        player: portfolios[i].user,
+        score: this.calculateScore(portfolios[i], ratios)
+      });
+    }
+
+    return playersStats.sort((a, b) => { return b.score - a.score; });
+  }
+
+  async getWinners(id: string): Promise<any> {
+    const stats = await this.getStats(id);
+    const winners = [stats[0]];
+
+    for (let i = 1; i < stats.length; i++) {
+      if (winners[0].score === stats[i].score) {
+        winners.push(stats[i]);
+      } else {
+        return winners;
+      }
+    }
+
+    return winners;
+  }
+
+  async getCurrencyRates(timestamp: number): Promise<any> {
+    const rates = await getConnection().mongoManager.find(Currency, {where: {timestamp: timestamp}});
+    const result = {};
+    for (let i = 0; i < rates.length; i++) {
+      result[rates[i].name] = rates[i].usd;
+    }
+    return result;
+  }
+
   private async addPlayerToTrack(track: Track, player: User): Promise<boolean> {
     track.users.push(player.id);
     await this.trackRepo.save(track);
     return true;
+  }
+
+  private calculateScore(portfolio: Portfolio, ratios: any): number {
+    let score = 0;
+
+    for (let i = 0; i < portfolio.assets.length; i++) {
+      score += ratios[portfolio.assets[i].name.toUpperCase()] * portfolio.assets[i].value;
+    }
+
+    return score;
+  }
+
+  private getRatios(startRates, endRates): any {
+    const tickers = ['LTC','BTC', 'XRP', 'ETH', 'BCH'];
+    const result = {};
+    for (let i = 0; i < tickers.length; i++) {
+      result[tickers[i]] = endRates[tickers[i]] / startRates[tickers[i]];
+    }
+    return result;
   }
 }
 

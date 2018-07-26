@@ -74,7 +74,7 @@ describe('trackService', () => {
     await trackService.setPortfolio(user2, 'seed', savedTrack.id.toHexString(), assets);
     await trackService.setPortfolio(user3, 'seed', savedTrack.id.toHexString(), assets);
     await trackService.setPortfolio(user4, 'seed', savedTrack.id.toHexString(), assets);
-    await trackService.startTrack(savedTrack.id.toHexString());
+    await trackService.startTrack(savedTrack.id.toHexString(), 1532614801635);
     const result = await trackService.activeTracks();
 
     expect(result).to.shallowDeepEqual([track]);
@@ -169,7 +169,7 @@ describe('trackService', () => {
     await trackService.setPortfolio(user2, 'seed', track.id.toHexString(), assets);
     await trackService.setPortfolio(user3, 'seed', track.id.toHexString(), assets);
     await trackService.setPortfolio(user4, 'seed', track.id.toHexString(), assets);
-    await trackService.startTrack(track.id.toHexString());
+    await trackService.startTrack(track.id.toHexString(), 1532614801635);
     const result = await trackService.getTrackById(track.id.toHexString());
 
     expect(result.status).to.eq(TRACK_STATUS_ACTIVE);
@@ -191,8 +191,59 @@ describe('trackService', () => {
 
     expect((await trackService.isReady(track.id.toHexString()))).to.eq(true);
   });
+
+  it('should get stats', async() => {
+    const [user1, user2, user3, user4] = await getUsers();
+    const [assets1, assets2, assets3, assets4] = getAssets();
+    const track = await trackService.createTrack(user1, 'seed', '0.1');
+
+    await trackService.setPortfolio(user1, 'seed', track.id.toHexString(), assets1);
+    await trackService.setPortfolio(user2, 'seed', track.id.toHexString(), assets2);
+    await trackService.setPortfolio(user3, 'seed', track.id.toHexString(), assets3);
+    await trackService.setPortfolio(user4, 'seed', track.id.toHexString(), assets4);
+
+    await trackService.startTrack(track.id.toHexString(), 1532614801635);
+
+    const winners = await trackService.getStats(track.id.toHexString());
+
+    expect(winners).to.shallowDeepEqual([
+      { score: 96.22129568205688 },
+      { score: 95.58540756349362 },
+      { score: 94.94951944493036 },
+      { score: 94.31363132636712 }
+    ]);
+  });
+
+  it('should get winners', async() => {
+    const [user1, user2, user3, user4] = await getUsers();
+    const [assets1, assets2, assets3, assets4] = getAssets();
+    const track = await trackService.createTrack(user1, 'seed', '0.1');
+
+    await trackService.setPortfolio(user1, 'seed', track.id.toHexString(), assets1);
+    await trackService.setPortfolio(user2, 'seed', track.id.toHexString(), assets2);
+    await trackService.setPortfolio(user3, 'seed', track.id.toHexString(), assets4);
+    await trackService.setPortfolio(user4, 'seed', track.id.toHexString(), assets4);
+
+    await trackService.startTrack(track.id.toHexString(), 1532614801635);
+
+    const winners = await trackService.getWinners(track.id.toHexString());
+
+    expect(winners).to.shallowDeepEqual([
+      { score: 96.22129568205688 },
+      { score: 96.22129568205688 }
+    ]);
+  });
 });
 
 async function getUsers(): Promise<Array<User>> {
   return await getConnection().mongoManager.find(User, {where: {email: {$in: ['activated@test.com', 'kyc.verified@test.com', 'kyc.verified_shuftipro@test.com', '2fa@test.com']}}});
+}
+
+function getAssets(): Array<Array<Asset>> {
+  return [
+    [{name: 'btc', value: 10}, {name: 'eth', value: 90}],
+    [{name: 'btc', value: 20}, {name: 'eth', value: 80}],
+    [{name: 'btc', value: 30}, {name: 'eth', value: 70}],
+    [{name: 'btc', value: 40}, {name: 'eth', value: 60}]
+  ];
 }
