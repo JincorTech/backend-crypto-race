@@ -136,7 +136,7 @@ export class TrackService implements TrackServiceInterface {
   }
 
   private async addPlayerToTrack(track: Track, player: User): Promise<boolean> {
-    if (this.trackRepo.find({ users: { "$in": [ player.id.toString() ] } })) {
+    if (this.trackRepo.find({ users: { $in: [ player.id.toString() ] } })) {
       return false;
     }
     if (track.status !== TRACK_STATUS_AWAITING) {
