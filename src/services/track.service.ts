@@ -3,7 +3,7 @@ import { User } from '../entities/user';
 import { Portfolio } from '../entities/portfolio';
 import { Track, TRACK_TYPE_BACKEND, TRACK_STATUS_AWAITING, TRACK_TYPE_USER, TRACK_STATUS_ACTIVE } from '../entities/track';
 import { Web3ClientInterface, Web3ClientType } from './web3.client';
-import {getConnection, MongoRepository, getConnection} from 'typeorm';
+import {getConnection, MongoRepository} from 'typeorm';
 import { ObjectID } from 'mongodb';
 
 export interface TrackServiceInterface {
