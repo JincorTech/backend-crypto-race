@@ -63,8 +63,8 @@ sock.on('connect', async socket => {
   const user = await getConnection().mongoManager.findOne(User, {where: {email: socket.handshake.query.email}});
 
 
-  socket.on('ping', function () {
-    console.log('Ping ', socket.id);
+  socket.on('ping', function (message) {
+    console.log('Ping ', socket.id, message);
     socket.emit('pong');
   });
 
