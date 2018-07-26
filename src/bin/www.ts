@@ -41,88 +41,89 @@ createConnection(ormOptions).then(async connection => {
     const httpsServer = https.createServer(httpsOptions, app);
     httpsServer.listen(config.app.httpsPort);
   }
+
+
+
+  const messages = {};
+  const authClient: AuthClientInterface = container.get(AuthClientType);
+  const trackService: TrackServiceInterface = container.get(TrackServiceType);
+
+  const sock = io.of('/');
+
+  sock.use(async(socket, next) => {
+    let handshake = socket.handshake;
+    const result = await authClient.verifyUserToken(handshake.query.token);
+    socket.handshake.query.email = result.login;
+    next();
+  });
+
+
+  sock.on('connect', async socket => {
+    const user = await getConnection().mongoManager.findOne(User, {where: {email: socket.handshake.query.email}});
+
+
+    socket.on('ping', function (message) {
+      console.log('Ping ', socket.id, message);
+      socket.emit('pong');
+    });
+
+    /**
+     * ================== TRACK SECTION ===============
+     */
+    socket.on('getTracks', async () => {
+      console.log("Getting tracks");
+
+      let tracks = await getConnection().mongoManager.find(Track, {take: 1000});
+      if (tracks.filter((track) => { return track.status === 'awaiting'; }).length < 2) {
+        tracks.push(await trackService.internalCreateTrack('1'));
+        tracks.push(await trackService.internalCreateTrack('0'));
+      }
+      socket.emit('initTracks', {tracks: tracks});
+      console.log("emitted ", {tracks: tracks});
+      socket.broadcast.emit('initTracks', {tracks: tracks});
+    });
+
+    socket.on('joinTrack', async (joinData: any) => {
+      const track = await trackService.joinToTrack(user, user.mnemonic, joinData.trackId);
+      if (!track) {
+        socket.to(socket.id).emit('error', {message: "Track not found"});
+        return;
+      }
+
+      socket.join('tracks_' + joinData.trackId, () => {
+        socket.in('tracks_' + joinData.trackId).emit('joinedTrack', joinData);
+        if (track.status === TRACK_STATUS_ACTIVE) {
+          let init: InitRace = { raceName: track.id.toHexString(), start: Date.now(), end: Date.now() + 300, players: track.players};
+          socket.in('tracks_' + joinData.trackId).emit('start', init);
+        }
+      });
+
+      const tracks = await getConnection().mongoManager.find(Track, {take: 1000});
+      socket.emit('initTracks',{tracks: tracks});
+      socket.broadcast.emit('initTracks',{tracks: tracks});
+    });
+
+    socket.on('moveX', (strafeData: Strafe) => {
+      socket.in('tracks_' + strafeData.trackId).emit('moveXupdate', strafeData);
+    });
+
+
+    /**
+     * ================== CHAT SECTION ===============
+     */
+    socket.on('joinChat', async (joinData: any) => {
+      socket.join('chats_' + joinData.trackId, () => {
+        if(messages[joinData.trackId].length === 0) {
+          messages[joinData.trackId] = [];
+        }
+        socket.in('chats_' + joinData.trackId).emit('joinedChat', messages[joinData.trackId]);
+      });
+    });
+
+    socket.on('message', message => {
+      messages[message.chatId].push({ author: user.name, userId: user.id, ts: Date.now(), message });
+      socket.in('chats_' + message.chatId).emit('updateChat', messages[message.chatId]);
+    });
+
+  });
 }).catch(error => console.log('TypeORM connection error: ', error));
-
-
-const messages = {};
-const authClient: AuthClientInterface = container.get(AuthClientType);
-const trackService: TrackServiceInterface = container.get(TrackServiceType);
-
-const sock = io.of('/');
-
-sock.use(async(socket, next) => {
-  let handshake = socket.handshake;
-  const result = await authClient.verifyUserToken(handshake.query.token);
-  socket.handshake.query.email = result.login;
-  next();
-});
-
-
-sock.on('connect', async socket => {
-  const user = await getConnection().mongoManager.findOne(User, {where: {email: socket.handshake.query.email}});
-
-
-  socket.on('ping', function (message) {
-    console.log('Ping ', socket.id, message);
-    socket.emit('pong');
-  });
-
-  /**
-   * ================== TRACK SECTION ===============
-   */
-  socket.on('getTracks', async () => {
-    console.log("Getting tracks");
-
-    let tracks = await getConnection().mongoManager.find(Track, {take: 1000});
-    if (tracks.filter((track) => { return track.status === 'awaiting'; }).length < 2) {
-      tracks.push(await trackService.internalCreateTrack('1'));
-      tracks.push(await trackService.internalCreateTrack('0'));
-    }
-    socket.emit('initTracks', {tracks: tracks});
-    console.log("emitted ", {tracks: tracks});
-    socket.broadcast.emit('initTracks', {tracks: tracks});
-  });
-
-  socket.on('joinTrack', async (joinData: any) => {
-    const track = await trackService.joinToTrack(user, user.mnemonic, joinData.trackId);
-    if (!track) {
-      socket.to(socket.id).emit('error', {message: "Track not found"});
-      return;
-    }
-
-    socket.join('tracks_' + joinData.trackId, () => {
-      socket.in('tracks_' + joinData.trackId).emit('joinedTrack', joinData);
-      if (track.status === TRACK_STATUS_ACTIVE) {
-        let init: InitRace = { raceName: track.id.toHexString(), start: Date.now(), end: Date.now() + 300, players: track.players};
-        socket.in('tracks_' + joinData.trackId).emit('start', init);
-      }
-    });
-
-    const tracks = await getConnection().mongoManager.find(Track, {take: 1000});
-    socket.emit('initTracks',{tracks: tracks});
-    socket.broadcast.emit('initTracks',{tracks: tracks});
-  });
-
-  socket.on('moveX', (strafeData: Strafe) => {
-    socket.in('tracks_' + strafeData.trackId).emit('moveXupdate', strafeData);
-  });
-
-
-  /**
-   * ================== CHAT SECTION ===============
-   */
-  socket.on('joinChat', async (joinData: any) => {
-    socket.join('chats_' + joinData.trackId, () => {
-      if(messages[joinData.trackId].length === 0) {
-        messages[joinData.trackId] = [];
-      }
-      socket.in('chats_' + joinData.trackId).emit('joinedChat', messages[joinData.trackId]);
-    });
-  });
-
-  socket.on('message', message => {
-    messages[message.chatId].push({ author: user.name, userId: user.id, ts: Date.now(), message });
-    socket.in('chats_' + message.chatId).emit('updateChat', messages[message.chatId]);
-  });
-
-});
