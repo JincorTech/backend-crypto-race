@@ -64,7 +64,7 @@ createConnection(ormOptions).then(async connection => {
 
     socket.on('ping', (message) => {
       console.log('Ping ', socket.id, message);
-      socket.emit('pong', message);
+      socket.emit('pong', { front: message, back: Date.now() });
     });
 
     /**
