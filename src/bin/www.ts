@@ -62,8 +62,9 @@ createConnection(ormOptions).then(async connection => {
     const user = await getConnection().mongoManager.findOne(User, {where: {email: socket.handshake.query.email}});
 
 
-    socket.on('ping', function (message) {
-      socket.emit('pong');
+    socket.on('ping', (message) => {
+      console.log('Ping ', socket.id, message);
+      socket.emit('pong', message);
     });
 
     /**
