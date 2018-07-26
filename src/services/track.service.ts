@@ -29,9 +29,11 @@ export interface TrackServiceInterface {
 @injectable()
 export class TrackService implements TrackServiceInterface {
   private trackRepo: MongoRepository<Track>;
+  private userRepo: MongoRepository<User>;
 
   constructor(@inject(Web3ClientType) private web3Client: Web3ClientInterface) {
     this.trackRepo = getConnection().mongoManager.getMongoRepository(Track);
+    this.userRepo = getConnection().mongoManager.getMongoRepository(User);
   }
 
   async createTrack(user: User, mnemonic: string, betAmount: string): Promise<Track> {
@@ -134,7 +136,7 @@ export class TrackService implements TrackServiceInterface {
   }
 
   private async addPlayerToTrack(track: Track, player: User): Promise<boolean> {
-    if (this.trackRepo.findOne({users: {"$in": [player.id.toString()]}})) {
+    if (this.trackRepo.find({ users: { "$in": [ player.id.toString() ] } })) {
       return false;
     }
     if (track.status !== TRACK_STATUS_AWAITING) {
@@ -143,7 +145,7 @@ export class TrackService implements TrackServiceInterface {
     if (track.maxPlayers < track.numPlayers + 1) {
       return false;
     }
-    track.users.push(player.id);
+    track.users.push(player.id.toString());
     track.numPlayers += 1;
     track.players.push({
       id: player.id.toString(),
