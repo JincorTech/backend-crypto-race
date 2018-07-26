@@ -2,10 +2,8 @@ import { injectable, inject } from 'inversify';
 import { controller, httpPost, httpGet, requestParam, response } from 'inversify-express-utils';
 import { Request, Response, NextFunction } from 'express';
 import { LandingServiceType } from '../services/landing.service';
-import { GameServiceType } from '../services/game.service';
 import { AuthorizedRequest } from '../requests/authorized.request';
-import { getConnection } from 'typeorm';
-import { Track } from '../entities/track';
+import { TrackServiceType, TrackServiceInterface } from '../services/track.service';
 
 @injectable()
 @controller(
@@ -16,7 +14,7 @@ export class GameController {
 
   constructor(
     @inject(LandingServiceType) private landingService: LandingServiceInterface,
-    @inject(GameServiceType) private gameService: GameServiceInterface
+    @inject(TrackServiceType) private trackService: TrackServiceInterface
   ) {}
 
   @httpPost(
@@ -34,21 +32,21 @@ export class GameController {
   )
   async createTrackFromBackend(req: Request, res: Response): Promise<void> {
     try {
-      await this.gameService.createTrackFromBackend(req.body.id, req.body.betAmount);
-      res.status(200).json({ statusCode: 200, id: req.body.id});
+      const track = await this.trackService.internalCreateTrack(req.body.betAmount);
+      res.status(200).json({ statusCode: 200, id: track.id.toHexString()});
     } catch (error) {
       res.send(error);
     }
   }
 
   @httpPost(
-    '/createtrack',
+    '/track',
     'AuthMiddleware'
   )
   async createTrackFromUserAccount(req: AuthorizedRequest, res: Response): Promise<void> {
     try {
-      await this.gameService.createTrackFromUserAccount(req.user, req.body.mnemonic, req.body.id, req.body.betAmount);
-      res.status(200).json({ statusCode: 200, id: req.body.id });
+      const track = await this.trackService.createTrack(req.user, req.body.mnemonic, req.body.betAmount);
+      res.status(200).json(track);
     } catch (error) {
       res.send(error);
     }
@@ -60,7 +58,7 @@ export class GameController {
   )
   async joinToTrack(req: AuthorizedRequest, res: Response): Promise<void> {
     try {
-      await this.gameService.joinToTrack(req.user, req.body.mnemonic, req.body.id);
+      await this.trackService.joinToTrack(req.user, req.body.mnemonic, req.body.id);
       res.status(200).json({ statusCode: 200 });
     } catch (error) {
       res.send(error);
@@ -73,44 +71,25 @@ export class GameController {
   )
   async setPortfolio(req: AuthorizedRequest, res: Response): Promise<void> {
     try {
-      await this.gameService.setPortfolio(req.user, req.body.mnemonic, req.body.id, req.body.portfolio);
+      await this.trackService.setPortfolio(req.user, req.body.mnemonic, req.body.id, req.body.portfolio);
       res.status(200).json({ statusCode: 200 });
     } catch (error) {
       res.send(error);
     }
   }
 
-  @httpPost(
-    '/track',
-    'AuthMiddleware'
-  )
-  async createTrack(req: AuthorizedRequest, res: Response): Promise<void> {
-    try {
-      const track = await this.gameService.createTrackFromUserAccount(
-        req.user,
-        req.body.mnemonic,
-        req.body.name,
-        req.body.betAmount
-      );
-
-      res.send(track);
-    } catch (error) {
-      throw(error);
-    }
-  }
-
   @httpGet('/tracks')
   async getAllTracks(req: Request, res: Response): Promise<void> {
-    res.send(await this.gameService.getAllTracks());
+    res.send(await this.trackService.getAllTracks());
   }
 
-  @httpGet('/track/:name')
-  async getTrackByName(@requestParam('name') name, @response() res: Response): Promise<void> {
-    res.send(await this.gameService.getTrackByName(name));
+  @httpGet('/track/:id')
+  async getTrackById(@requestParam('id') id, @response() res: Response): Promise<void> {
+    res.send(await this.trackService.getTrackById(id));
   }
 
   @httpGet('/tracks/my', 'AuthMiddleware')
   async getTracksFromCurrentUser(req: AuthorizedRequest, res: Response): Promise<void> {
-    res.send(await this.gameService.getTracksByUser(req.user));
+    res.send(await this.trackService.getTracksByUser(req.user));
   }
 }

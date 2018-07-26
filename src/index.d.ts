@@ -399,7 +399,6 @@ declare interface LandingServiceInterface {
 
 declare interface GameServiceInterface {
   createTrackFromBackend(id: string, betAmount: string): Promise<any>;
-  createTrackFromUserAccount(user: any, mnemonic: string, id: string, betAmount: string): Promise<any>;
   joinToTrack(user: any, mnemonic: string, id: string): Promise<any>;
   setPortfolio(user: any, mnemonic: string, id: string, portfolio: any): Promise<any>;
   getAllTracks(): Promise<Array<any>>;

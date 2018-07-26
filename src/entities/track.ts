@@ -15,12 +15,6 @@ export class Track {
   id: ObjectID;
 
   @Column()
-  name: string;
-
-  @Column()
-  hash: string;
-
-  @Column()
   timestamp: number;
 
   @Column()
@@ -54,7 +48,7 @@ export class Track {
   end: number;
 
   @Column()
-  users: Array<string>;
+  users: Array<ObjectID>;
 
   @Column()
   players: Array<Player>;
@@ -62,5 +56,18 @@ export class Track {
   constructor() {
     this.players = [];
     this.users = [];
+  }
+
+  static createTrack(betAmount: string, type: string): Track {
+    const track = new Track();
+    track.betAmount = betAmount;
+    track.duration = 300;
+    track.maxPlayers = 4;
+    track.numPlayers = 0;
+    track.status = TRACK_STATUS_AWAITING;
+    track.timestamp = Date.now();
+    track.type = type;
+
+    return track;
   }
 }
