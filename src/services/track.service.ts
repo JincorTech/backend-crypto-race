@@ -76,8 +76,9 @@ export class TrackService implements TrackServiceInterface {
       const account = this.web3Client.getAccountByMnemonicAndSalt(mnemonic, user.ethWallet.salt);
       this.web3Client.joinToTrack(account, id);
       const track = await this.getTrackById(id);
-      await this.addPlayerToTrack(track, user);
-      return track;
+      if(await this.addPlayerToTrack(track, user)) {
+        return track;
+      }
     } catch (error) {
       throw(error);
     }
@@ -133,7 +134,31 @@ export class TrackService implements TrackServiceInterface {
   }
 
   private async addPlayerToTrack(track: Track, player: User): Promise<boolean> {
+    if (this.trackRepo.findOne({users: {"$in": [player.id.toString()]}})) {
+      return false;
+    }
+    if (track.status !== TRACK_STATUS_AWAITING) {
+      return false;
+    }
+    if (track.maxPlayers < track.numPlayers + 1) {
+      return false;
+    }
     track.users.push(player.id);
+    track.numPlayers += 1;
+    track.players.push({
+      id: player.id.toString(),
+      email: player.email,
+      picture: player.picture,
+      name: player.name,
+      position: track.numPlayers,
+      ship: { type: 'nova' },
+      x: track.numPlayers === 1 ? 33.3 : 66.6,
+      fuel: [{name: 'btc', value: 10}, {name: 'eth', value: 90}]
+    });
+
+    if(track.numPlayers === track.maxPlayers) {
+      track.status = TRACK_STATUS_ACTIVE;
+    }
     await this.trackRepo.save(track);
     return true;
   }
