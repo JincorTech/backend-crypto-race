@@ -63,7 +63,6 @@ createConnection(ormOptions).then(async connection => {
 
 
     socket.on('ping', function (message) {
-      console.log('Ping ', socket.id, message);
       socket.emit('pong');
     });
 
@@ -71,15 +70,12 @@ createConnection(ormOptions).then(async connection => {
      * ================== TRACK SECTION ===============
      */
     socket.on('getTracks', async () => {
-      console.log("Getting tracks");
-
       let tracks = await getConnection().mongoManager.find(Track, {take: 1000});
       if (tracks.filter((track) => { return track.status === 'awaiting'; }).length < 2) {
         tracks.push(await trackService.internalCreateTrack('1'));
         tracks.push(await trackService.internalCreateTrack('0'));
       }
       socket.emit('initTracks', {tracks: tracks});
-      console.log("emitted ", {tracks: tracks});
       socket.broadcast.emit('initTracks', {tracks: tracks});
     });
 
@@ -126,4 +122,5 @@ createConnection(ormOptions).then(async connection => {
     });
 
   });
+
 }).catch(error => console.log('TypeORM connection error: ', error));
