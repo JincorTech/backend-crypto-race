@@ -136,7 +136,7 @@ export class TrackService implements TrackServiceInterface {
   }
 
   private async addPlayerToTrack(track: Track, player: User): Promise<boolean> {
-    if (getConnection().mongoManager.find(Track, { users: { $in: [ player.id.toString() ] } })) {
+    if (getConnection().mongoManager.find(Track, { where: { users: { $in: [ player.id.toString() ] } } })) {
       return false;
     }
     if (track.status !== TRACK_STATUS_AWAITING) {
