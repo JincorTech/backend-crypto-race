@@ -60,6 +60,7 @@ createConnection(ormOptions).then(async connection => {
 
 
       socket.on('ping', function () {
+        console.log('Ping ', socket.id);
         socket.emit('pong');
       });
 
