@@ -79,7 +79,7 @@ container.bind<express.RequestHandler>('OnlyAcceptApplicationJson').toConstantVa
 
 // controllers
 container.bind<interfaces.Controller>(TYPE.Controller).to(UserController).whenTargetNamed('UserController');
-container.bind<interfaces.Controller>(TYPE.Controller).to(DashboardController).whenTargetNamed('DashboardController');
-container.bind<interfaces.Controller>(TYPE.Controller).to(GameController).whenTargetNamed('GameController');
+// container.bind<interfaces.Controller>(TYPE.Controller).to(DashboardController).whenTargetNamed('DashboardController');
+// container.bind<interfaces.Controller>(TYPE.Controller).to(GameController).whenTargetNamed('GameController');
 
 export { container };
