@@ -24,6 +24,7 @@ export interface TrackServiceInterface {
   internalCreateTrack(betAmount: string): Promise<Track>;
   getPlayers(id: string): Promise<Array<User>>;
   startTrack(id: string): Promise<boolean>;
+  isReady(id: string): Promise<boolean>;
 }
 
 @injectable()
@@ -123,13 +124,25 @@ export class TrackService implements TrackServiceInterface {
     return getConnection().mongoManager.findByIds(User, track.users);
   }
 
-  async startTrack(name: string): Promise<boolean> {
-    const track = await this.getTrackById(name);
+  async startTrack(id: string): Promise<boolean> {
+    if (!(await this.isReady(id))) {
+      throw new Error(`Track #${id} is not ready`);
+    }
+
+    const track = await this.getTrackById(id);
     track.status = TRACK_STATUS_ACTIVE;
 
     await this.trackRepo.save(track);
 
     return true;
+  }
+
+  async isReady(id: string): Promise<boolean> {
+    const track = await this.getTrackById(id);
+    if ((await getConnection().mongoManager.count(Portfolio, {track: new ObjectID(id)})) === track.maxPlayers) {
+      return true;
+    }
+    return false;
   }
 
   private async addPlayerToTrack(track: Track, player: User): Promise<boolean> {
