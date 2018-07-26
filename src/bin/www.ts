@@ -59,10 +59,15 @@ createConnection(ormOptions).then(async connection => {
       const user = await getConnection().mongoManager.findOne(User, {where: {email: socket.handshake.query.email}});
 
 
+      socket.on('ping', function () {
+        socket.emit('pong');
+      });
+
       /**
        * ================== TRACK SECTION ===============
        */
       socket.on('getTracks', async () => {
+        console.log("Getting tracks");
 
         let tracks = await getConnection().mongoManager.find(Track, {take: 1000});
         if (tracks.filter((track) => { return track.status === 'awaiting'; }).length < 2) {
@@ -70,6 +75,7 @@ createConnection(ormOptions).then(async connection => {
           tracks.push(await trackService.internalCreateTrack('0'));
         }
         socket.emit('initTracks', {tracks: tracks});
+        console.log("emitted ", {tracks: tracks});
         socket.broadcast.emit('initTracks', {tracks: tracks});
       });
 
