@@ -3,49 +3,49 @@ import * as chai from 'chai';
 import { expect } from 'chai';
 import {} from 'chai-shallow-deep-equal';
 import { TrackServiceInterface, TrackServiceType } from '../track.service';
-import { Track, TRACK_STATUS_PENDING, TRACK_TYPE_USER } from '../../entities/track';
+import { Track, TRACK_STATUS_AWAITING, TRACK_TYPE_USER, TRACK_STATUS_ACTIVE } from '../../entities/track';
 import { getConnection } from 'typeorm';
 import { User } from '../../entities/user';
 
 chai.use(require('chai-shallow-deep-equal'));
 
 const trackService = container.get<TrackServiceInterface>(TrackServiceType);
+const EXISTING_TRACK_ID = '5a041e9295b9822e1b617777';
 
 describe('trackService', () => {
   it('should create new track', async() => {
     const user = await getConnection().mongoManager.findOne(User, {where: {email: 'activated@test.com'}});
 
-    const track = new Track();
-    track.betAmount = '1000';
-    track.numPlayers = 4;
-    track.status = TRACK_STATUS_PENDING;
-    track.type = TRACK_TYPE_USER;
-    track.creator = user.id;
-    track.duration = 300;
-    track.name = 'toTheMoon';
-    track.timestamp = Date.now();
-    track.hash = '123456';
+    const track = {
+      betAmount: '1000',
+      maxPlayers: 4,
+      numPlayers: 0,
+      status: TRACK_STATUS_AWAITING,
+      type: TRACK_TYPE_USER,
+      creator: user.id,
+      duration: 300,
+      users: [user.id.toHexString()]
+    };
 
-    const result = await trackService.createTrack(user, 'seed', track);
+    const result = await trackService.createTrack(user, 'seed', '1000');
     expect(result).to.shallowDeepEqual(track);
   });
 
   it('should get awaiting tracks', async() => {
     const user = await getConnection().mongoManager.findOne(User, {where: {email: 'activated@test.com'}});
 
-    const track = new Track();
-    track.betAmount = '1000';
-    track.numPlayers = 4;
-    track.status = TRACK_STATUS_PENDING;
-    track.type = TRACK_TYPE_USER;
-    track.creator = user.id;
-    track.duration = 300;
-    track.name = 'toTheMoon';
-    track.timestamp = Date.now();
-    track.hash = '123456';
-    track.isActive = false;
+    const track = {
+      betAmount: '1000',
+      maxPlayers: 4,
+      numPlayers: 0,
+      status: TRACK_STATUS_AWAITING,
+      type: TRACK_TYPE_USER,
+      creator: user.id,
+      duration: 300,
+      users: [user.id.toHexString()]
+    };
 
-    await trackService.createTrack(user, 'seed', track);
+    await trackService.createTrack(user, 'seed', '1000');
     const result = await trackService.awaitingTracks();
 
     expect(result).to.shallowDeepEqual([track]);
@@ -54,19 +54,19 @@ describe('trackService', () => {
   it('should get active tracks', async() => {
     const user = await getConnection().mongoManager.findOne(User, {where: {email: 'activated@test.com'}});
 
-    const track = new Track();
-    track.betAmount = '1000';
-    track.numPlayers = 4;
-    track.status = TRACK_STATUS_PENDING;
-    track.type = TRACK_TYPE_USER;
-    track.creator = user.id;
-    track.duration = 300;
-    track.name = 'toTheMoon';
-    track.timestamp = Date.now();
-    track.hash = '123456';
-    track.isActive = true;
+    const track = {
+      betAmount: '1000',
+      maxPlayers: 4,
+      numPlayers: 0,
+      status: TRACK_STATUS_ACTIVE,
+      type: TRACK_TYPE_USER,
+      creator: user.id,
+      duration: 300,
+      users: [user.id.toHexString()]
+    };
 
-    await trackService.createTrack(user, 'seed', track);
+    const savedTrack = await trackService.createTrack(user, 'seed', '1000');
+    await trackService.startTrack(savedTrack.id.toHexString());
     const result = await trackService.activeTracks();
 
     expect(result).to.shallowDeepEqual([track]);
@@ -76,47 +76,23 @@ describe('trackService', () => {
     const user = await getConnection().mongoManager.findOne(User, {where: {email: 'activated@test.com'}});
     const user2 = await getConnection().mongoManager.findOne(User, {where: {email: 'kyc.verified@test.com'}});
 
-    const track = new Track();
-    track.betAmount = '1000';
-    track.numPlayers = 4;
-    track.status = TRACK_STATUS_PENDING;
-    track.type = TRACK_TYPE_USER;
-    track.creator = user.id;
-    track.duration = 300;
-    track.name = 'toTheMoon';
-    track.timestamp = Date.now();
-    track.hash = '123456';
-    track.isActive = true;
+    const createdTrack = await trackService.createTrack(user, 'seed', '1000');
+    const returnedTrack = await trackService.joinToTrack(user2, 'seed', createdTrack.id.toHexString());
 
-    await trackService.createTrack(user, 'seed', track);
-    const result = await trackService.joinToTrack(user2, 'seed', 'toTheMoon');
-
-    expect(result).to.eq(true);
+    expect(returnedTrack.users).to.shallowDeepEqual([user.id, user2.id]);
   });
 
   it('should set portfolio', async() => {
     const user = await getConnection().mongoManager.findOne(User, {where: {email: 'activated@test.com'}});
 
-    const track = new Track();
-    track.betAmount = '1000';
-    track.numPlayers = 4;
-    track.status = TRACK_STATUS_PENDING;
-    track.type = TRACK_TYPE_USER;
-    track.creator = user.id;
-    track.duration = 300;
-    track.name = 'toTheMoon';
-    track.timestamp = Date.now();
-    track.hash = '123456';
-    track.isActive = false;
-
-    await trackService.createTrack(user, 'seed', track);
+    const track = await trackService.createTrack(user, 'seed', '1000');
 
     const assets: Array<Asset> = [
       {name: 'btc', value: 10},
       {name: 'eth', value: 90}
     ];
 
-    const result = await trackService.setPortfolio(user, 'seed', 'toTheMoon', assets);
+    const result = await trackService.setPortfolio(user, 'seed', track.id.toHexString(), assets);
 
     expect(result.assets).to.deep.eq(assets);
   });
@@ -124,48 +100,24 @@ describe('trackService', () => {
   it('should get portfolio', async() => {
     const user = await getConnection().mongoManager.findOne(User, {where: {email: 'activated@test.com'}});
 
-    const track = new Track();
-    track.betAmount = '1000';
-    track.numPlayers = 4;
-    track.status = TRACK_STATUS_PENDING;
-    track.type = TRACK_TYPE_USER;
-    track.creator = user.id;
-    track.duration = 300;
-    track.name = 'toTheMoon';
-    track.timestamp = Date.now();
-    track.hash = '123456';
-    track.isActive = false;
-
-    await trackService.createTrack(user, 'seed', track);
+    const track = await trackService.createTrack(user, 'seed', '1000');
 
     const assets: Array<Asset> = [
       {name: 'btc', value: 10},
       {name: 'eth', value: 90}
     ];
 
-    const portfolio = await trackService.setPortfolio(user, 'seed', 'toTheMoon', assets);
-    const result = await trackService.getPortfolio(user, 'toTheMoon');
+    const portfolio = await trackService.setPortfolio(user, 'seed', track.id.toHexString(), assets);
+    const result = await trackService.getPortfolio(user, track.id.toHexString());
 
-    expect(result).to.shallowDeepEqual(portfolio);
+    expect(result.assets).to.shallowDeepEqual(portfolio.assets);
   });
 
   it('should get all tracks', async() => {
-    const storedTrack = await getConnection().mongoManager.findOne(Track, {where: {name: 'starTrack'}});
+    const storedTrack = await trackService.getTrackById(EXISTING_TRACK_ID);
     const user = await getConnection().mongoManager.findOne(User, {where: {email: 'activated@test.com'}});
 
-    const track = new Track();
-    track.betAmount = '1000';
-    track.numPlayers = 4;
-    track.status = TRACK_STATUS_PENDING;
-    track.type = TRACK_TYPE_USER;
-    track.creator = user.id;
-    track.duration = 300;
-    track.name = 'toTheMoon';
-    track.timestamp = Date.now();
-    track.hash = '123456';
-    track.isActive = false;
-
-    await trackService.createTrack(user, 'seed', track);
+    const track = await trackService.createTrack(user, 'seed', '1000');
     const result = await trackService.getAllTracks();
 
     expect(result).to.shallowDeepEqual([storedTrack, track]);
@@ -173,7 +125,7 @@ describe('trackService', () => {
 
   it('should get track by name', async() => {
     const storedTrack = await getConnection().mongoManager.findOne(Track, {where: {name: 'starTrack'}});
-    const result = await trackService.getTrackByName('starTrack');
+    const result = await trackService.getTrackById(EXISTING_TRACK_ID);
 
     expect(result).to.shallowDeepEqual(storedTrack);
   });
@@ -190,42 +142,21 @@ describe('trackService', () => {
     const user = await getConnection().mongoManager.findOne(User, {where: {email: 'activated@test.com'}});
     const user2 = await getConnection().mongoManager.findOne(User, {where: {email: 'kyc.verified@test.com'}});
 
-    const track = new Track();
-    track.betAmount = '1000';
-    track.numPlayers = 4;
-    track.status = TRACK_STATUS_PENDING;
-    track.type = TRACK_TYPE_USER;
-    track.creator = user.id;
-    track.duration = 300;
-    track.name = 'toTheMoon';
-    track.timestamp = Date.now();
-    track.hash = '123456';
-    track.isActive = false;
-    await trackService.createTrack(user, 'seed', track);
-    await trackService.joinToTrack(user2, 'seed', 'toTheMoon');
+    const track = await trackService.createTrack(user, 'seed', '1000');
+    await trackService.joinToTrack(user2, 'seed', track.id.toHexString());
 
-    const result = await trackService.getPlayers('toTheMoon');
+    const result = await trackService.getPlayers(track.id.toHexString());
     expect(result).to.shallowDeepEqual([user, user2]);
   });
 
   it('should start track', async() => {
     const user = await getConnection().mongoManager.findOne(User, {where: {email: 'activated@test.com'}});
-    const track = new Track();
-    track.betAmount = '1000';
-    track.numPlayers = 4;
-    track.status = TRACK_STATUS_PENDING;
-    track.type = TRACK_TYPE_USER;
-    track.creator = user.id;
-    track.duration = 300;
-    track.name = 'toTheMoon';
-    track.timestamp = Date.now();
-    track.hash = '123456';
-    track.isActive = false;
-    await trackService.createTrack(user, 'seed', track);
 
-    await trackService.startTrack('toTheMoon');
-    const result = await trackService.getTrackByName('toTheMoon');
+    const track = await trackService.createTrack(user, 'seed', '1000');
 
-    expect(result.isActive).to.eq(true);
+    await trackService.startTrack(track.id.toHexString());
+    const result = await trackService.getTrackById(track.id.toHexString());
+
+    expect(result.status).to.eq(TRACK_STATUS_ACTIVE);
   });
 });
