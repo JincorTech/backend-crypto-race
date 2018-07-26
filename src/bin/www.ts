@@ -37,12 +37,11 @@ createConnection(ormOptions).then(async connection => {
       requestCert: true,
       rejectUnauthorized: false
     };
+
+    const httpsServer = https.createServer(httpsOptions, app);
+    httpsServer.listen(config.app.httpsPort);
   }
 }).catch(error => console.log('TypeORM connection error: ', error));
-
-
-const httpsServer = https.createServer(httpsOptions, app);
-httpsServer.listen(config.app.httpsPort);
 
 
 const messages = {};
