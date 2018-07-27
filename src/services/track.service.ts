@@ -9,7 +9,7 @@ import { Currency } from '../entities/currency';
 import { stat } from 'fs';
 
 export interface TrackServiceInterface {
-  joinToTrack(user: User, mnemonic: string, id: string, fuel: Array): Promise<Track>;
+  joinToTrack(user: User, mnemonic: string, id: string, fuel: Array<any>): Promise<Track>;
   setPortfolio(
     user: User,
     mnemonic: string,
@@ -49,7 +49,7 @@ export class TrackService implements TrackServiceInterface {
     const account = this.web3Client.getAccountByMnemonicAndSalt(mnemonic, user.ethWallet.salt);
     this.web3Client.createTrackFromUserAccount(account, track.id.toHexString(), betAmount);
 
-    await this.addPlayerToTrack(track, user);
+    // await this.addPlayerToTrack(track, user);
 
     return track;
   }
@@ -78,14 +78,14 @@ export class TrackService implements TrackServiceInterface {
     return this.trackRepo.find({where: {status: TRACK_STATUS_AWAITING}});
   }
 
-  async joinToTrack(user: User, mnemonic: string, id: string, fuel: Array): Promise<Track> {
+  async joinToTrack(user: User, mnemonic: string, id: string, fuel: Array<any>): Promise<Track> {
     // try {
     const account = this.web3Client.getAccountByMnemonicAndSalt(mnemonic, user.ethWallet.salt);
       // this.web3Client.joinToTrack(account, id);
     const track = await this.getTrackById(id);
     const assets = this.assetsFromFuel(fuel);
     await this.addPlayerToTrack(track, user, assets);
-    await this.setPortfolio(user, user.mnemonic, track.id, assets);
+    await this.setPortfolio(user, user.mnemonic, track.id.toString(), assets);
     return track;
       // }
     // } catch (error) {
@@ -243,7 +243,7 @@ export class TrackService implements TrackServiceInterface {
     return result;
   }
 
-  private assetsFromFuel(fuel: Array): Asset[] {
+  private assetsFromFuel(fuel: Array<string>): Asset[] {
       let result = [];
       for (let i = 0; i < fuel.length; i++) {
         const asset = {
