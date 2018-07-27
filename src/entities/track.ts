@@ -107,7 +107,7 @@ export class Track {
    * @param numPlayers
    * @returns {number}
    */
-  static getPlayerStartingX(maxPlayers: number, numPlayers: number) {
+  getPlayerStartingX(maxPlayers: number, numPlayers: number) {
     switch (maxPlayers) {
       case 2:
         if (numPlayers === 1) return 33.3;
@@ -136,7 +136,7 @@ export class Track {
    * @param numPlayers
    * @returns {number}
    */
-  static getPlayerStartingPosition(numPlayers: number) {
+  getPlayerStartingPosition(numPlayers: number) {
     return numPlayers - 1;
   }
 }
