@@ -1,0 +1,93 @@
+[
+	{
+		"constant": true,
+		"inputs": [
+			{
+				"name": "",
+				"type": "uint256"
+			},
+			{
+				"name": "",
+				"type": "bytes32"
+			}
+		],
+		"name": "rates",
+		"outputs": [
+			{
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [
+			{
+				"name": "time",
+				"type": "uint256"
+			},
+			{
+				"name": "names",
+				"type": "bytes32[]"
+			}
+		],
+		"name": "getRates",
+		"outputs": [
+			{
+				"name": "",
+				"type": "uint256[]"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [
+			{
+				"name": "time",
+				"type": "uint256"
+			},
+			{
+				"name": "name",
+				"type": "bytes32"
+			}
+		],
+		"name": "getRate",
+		"outputs": [
+			{
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "time",
+				"type": "uint256"
+			},
+			{
+				"name": "names",
+				"type": "bytes32[]"
+			},
+			{
+				"name": "amounts",
+				"type": "uint256[]"
+			}
+		],
+		"name": "setRates",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	}
+]
