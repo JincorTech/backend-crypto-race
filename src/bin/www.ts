@@ -81,14 +81,13 @@ createConnection(ormOptions).then(async connection => {
         socket.to(socket.id).emit('error', {message: "Track not found"});
         return;
       }
-      sock.join('tracks_' + joinData.trackId, () => {
-        console.log("Joined room");
-        sock.in('tracks_' + joinData.trackId).emit('joinedTrack', joinData);
-        if (track.status === TRACK_STATUS_ACTIVE) {
-          let init: InitRace = { raceName: track.id.toHexString(), start: Date.now(), end: Date.now() + 300, players: track.players};
-          sock.in('tracks_' + joinData.trackId).emit('start', init);
-        }
-      });
+      sock.join('tracks_' + joinData.trackId);
+      console.log("Joined: ", 'tracks_' + joinData.trackId);
+      sock.in('tracks_' + joinData.trackId).emit('joinedTrack', joinData);
+      if (track.status === TRACK_STATUS_ACTIVE) {
+        let init: InitRace = { raceName: track.id.toHexString(), start: Date.now(), end: Date.now() + 300, players: track.players};
+        sock.in('tracks_' + joinData.trackId).emit('start', init);
+      }
 
       const tracks = await getConnection().mongoManager.find(Track, {take: 1000});
       socket.emit('initTracks',{tracks: tracks});
