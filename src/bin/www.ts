@@ -85,7 +85,7 @@ createConnection(ormOptions).then(async connection => {
         io.sockets.in(socket.id).emit('error', {message: "Track is already active"});
         return;
       }
-      track = await trackService.joinToTrack(user, user.mnemonic, joinData.trackId);
+      track = await trackService.joinToTrack(user, user.mnemonic, joinData.trackId, joinData.fuel);
       if (!track) {
         io.sockets.in(socket.id).emit('error', {message: "Can not join  track"});
       }
