@@ -162,7 +162,7 @@ export class Web3Client implements Web3ClientInterface {
     return '0x' + wallet.getPrivateKey().toString('hex');
   }
 
-  createTrackFromBackend(id: string, betAmount: string): Promise<any> {
+  async createTrackFromBackend(id: string, betAmount: string): Promise<any> {
     const nameBates32 = this.web3.utils.toHex(this.web3.utils.sha3(id));
 
     return new Promise(async(resolve, reject) => {
@@ -170,9 +170,9 @@ export class Web3Client implements Web3ClientInterface {
       const params = {
         value: '0',
         to: this.raceBase.options.address,
-        gas: 200000,
+        gas: '2000000',
         nonce: await this.web3.eth.getTransactionCount(account.address, 'pending'),
-        data: this.raceBase.methods.createTrackFromBack(nameBates32, betAmount).encodeABI()
+        data: this.raceBase.methods.createTrackFromBack(nameBates32, this.web3.utils.toWei(betAmount, 'ether')).encodeABI()
       };
 
       account.signTransaction(params).then(transaction => {
@@ -197,7 +197,7 @@ export class Web3Client implements Web3ClientInterface {
       const params = {
         value: this.web3.utils.toWei(betAmount),
         to: this.raceBase.options.address,
-        gas: 400000,
+        gas: '2000000',
         nonce: await this.web3.eth.getTransactionCount(account.address, 'pending'),
         data: this.raceBase.methods.createTrack(nameBates32).encodeABI()
       };
@@ -224,7 +224,7 @@ export class Web3Client implements Web3ClientInterface {
       const params = {
         value: await this.getBetAmount(id),
         to: this.raceBase.options.address,
-        gas: 2000000,
+        gas: '2000000',
         nonce: await this.web3.eth.getTransactionCount(account.address, 'pending'),
         data: this.raceBase.methods.joinToTrack(nameBytes32).encodeABI()
       };

@@ -45,7 +45,7 @@ export class TrackService implements TrackServiceInterface {
     await this.trackRepo.save(track);
 
     const account = this.web3Client.getAccountByMnemonicAndSalt(mnemonic, user.ethWallet.salt);
-    const hash = this.web3Client.createTrackFromUserAccount(account, track.id.toHexString(), betAmount);
+    this.web3Client.createTrackFromUserAccount(account, track.id.toHexString(), betAmount);
 
     await this.addPlayerToTrack(track, user);
 
