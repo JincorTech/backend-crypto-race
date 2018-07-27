@@ -106,9 +106,9 @@ createConnection(ormOptions).then(async connection => {
                 prize: 0.1
               },
               {
-                id: track.players[1].name,
+                id: track.players[1].id.toString(),
                 position: 1,
-                name: 'Andrey',
+                name: track.players[1].id.toString(),
                 score: 300,
                 prize: 0
               }
@@ -121,7 +121,7 @@ createConnection(ormOptions).then(async connection => {
             console.log("stats: ", stats);
             const playerPositions = stats.map((stat, index) => {
               return {
-                id: stat.player.id.toString(),
+                id: stat.player.id.toHexString(),
                 position: index
               };
             });
