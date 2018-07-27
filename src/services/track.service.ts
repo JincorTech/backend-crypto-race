@@ -163,7 +163,6 @@ export class TrackService implements TrackServiceInterface {
   async getStats(id: string): Promise<any> {
     const portfolios = await this.getPortfolios(id);
     const track = await this.getTrackById(id);
-    console.log("Start: ", track.start, track.end);
     const ratios = this.getRatios(
       await this.getCurrencyRates(track.start),
       await this.getCurrencyRates(track.end)
@@ -199,8 +198,16 @@ export class TrackService implements TrackServiceInterface {
   }
 
   async getCurrencyRates(timestamp: number): Promise<any> {
-    const rates = await getConnection().mongoManager.find(Currency, {where: {timestamp: timestamp}});
+    const lte = await getConnection().mongoManager.find(Currency, {where: {timestamp: { $lte: timestamp }}, order: {timestamp: -1}, take: 5});
+    const gt = await getConnection().mongoManager.find(Currency, {where: {timestamp: { $gt: timestamp }}, order: {timestamp: 1}, take: 5});
+    const gtTimestampDiff = gt[0].timestamp - timestamp;
+    const ltTimestampDiff = timestamp - lte[0].timestamp;
+    let rates = [];
+    //select the nearest stamp
+    if(gtTimestampDiff < ltTimestampDiff) rates = gt;
+    else rates = lte;
     const result = {};
+    console.log("Rates: ", rates);
     for (let i = 0; i < rates.length; i++) {
       result[rates[i].name] = rates[i].usd;
     }
