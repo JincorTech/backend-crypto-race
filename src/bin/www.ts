@@ -83,12 +83,10 @@ createConnection(ormOptions).then(async connection => {
       }
       socket.join('tracks_' + joinData.trackId);
       console.log("Joined: ", 'tracks_' + joinData.trackId);
-      socket.to('tracks_' + joinData.trackId).emit('joinedTrack', joinData);
-      socket.to('tracks_' + joinData.trackId).broadcast.emit('joinedTrack', joinData);
+      sock.sockets.in('tracks_' + joinData.trackId).emit('joinedTrack', joinData);
       if (track.status === TRACK_STATUS_ACTIVE) {
         let init: InitRace = { raceName: track.id.toHexString(), start: Date.now(), end: Date.now() + 300, players: track.players};
-        socket.to('tracks_' + joinData.trackId).emit('start', init);
-        socket.to('tracks_' + joinData.trackId).broadcast.emit('start', init);
+        sock.sockets.in('tracks_' + joinData.trackId).emit('start', init);
       }
 
       const tracks = await getConnection().mongoManager.find(Track, {take: 1000});
