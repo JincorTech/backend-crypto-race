@@ -9,7 +9,7 @@ import { Currency } from '../entities/currency';
 import { stat } from 'fs';
 
 export interface TrackServiceInterface {
-  joinToTrack(user: User, mnemonic: string, id: string): Promise<Track>;
+  joinToTrack(user: User, mnemonic: string, id: string, fuel: Array): Promise<Track>;
   setPortfolio(
     user: User,
     mnemonic: string,
