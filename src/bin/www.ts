@@ -120,10 +120,10 @@ createConnection(ormOptions).then(async connection => {
             const stats = await trackService.getStats(track.id.toString());
             console.log("stats: ", stats);
             const playerPositions = stats.map((stat, index) => {
-              let res = {};
-              res.id = stat.player.id;
-              res.position = index;
-              return res;
+              return {
+                id: stat.player.id,
+                position: index
+              };
             });
             console.log("Player positions: ", playerPositions);
             io.sockets.in('tracks_' + joinData.trackId).emit('positionUpdate', playerPositions);
