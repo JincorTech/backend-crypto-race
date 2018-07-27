@@ -98,6 +98,21 @@ createConnection(ormOptions).then(async connection => {
       socket.broadcast.emit('initTracks',{tracks: tracks});
     });
 
+    socket.on('loadTrack', async (joinData: any) => {
+      const track = await trackService.joinToTrack(user, user.mnemonic, joinData.trackId);
+      if (!track) {
+        io.sockets.in(socket.id).emit('error', {message: "Track not found"});
+        return;
+      }
+      if (track.status !== TRACK_STATUS_ACTIVE) {
+        io.sockets.in(socket.id).emit('error', {message: "You can not join inactive track"});
+        return;
+      }
+      let init: InitRace = { id: track.id.toString(), raceName: track.id.toHexString(), start: Date.now(), end: Date.now() + 300, players: track.players};
+      io.sockets.in(socket.id).emit('start', init);
+
+    });
+
     socket.on('moveX', (strafeData: Strafe) => {
       io.sockets.in('tracks_' + strafeData.trackId).emit('moveXupdate', strafeData);
     });
