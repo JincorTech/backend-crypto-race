@@ -229,11 +229,6 @@ export class TrackService implements TrackServiceInterface {
     return score;
   }
 
-  public calculateCurrentPositions(track: Track): any {
-      const players: Player[] = track.players;
-      let portfolio = players[0].fuel
-  }
-
   private getRatios(startRates, endRates): any {
     const tickers = ['LTC','BTC', 'XRP', 'ETH', 'BCH'];
     const result = {};

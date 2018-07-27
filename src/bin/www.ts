@@ -115,6 +115,19 @@ createConnection(ormOptions).then(async connection => {
             ];
             io.sockets.in('tracks_' + joinData.trackId).emit('gameover', players);
           }, 30000);
+
+          setTimeout(async () => {
+            const stats = await trackService.getStats(track.id.toString());
+            console.log("stats: ", stats);
+            const playerPositions = stats.map((stat, index) => {
+              let res = {};
+              res.id = stat.player.id;
+              res.position = index;
+              return res;
+            });
+            console.log("Player positions: ", playerPositions);
+            io.sockets.in('tracks_' + joinData.trackId).emit('positionUpdate', playerPositions);
+          }, 8000);
         }
       });
 
