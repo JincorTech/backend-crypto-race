@@ -78,8 +78,10 @@ export class TrackService implements TrackServiceInterface {
       const account = this.web3Client.getAccountByMnemonicAndSalt(mnemonic, user.ethWallet.salt);
       // this.web3Client.joinToTrack(account, id);
       const track = await this.getTrackById(id);
+      const result = await this.addPlayerToTrack(track, user);
+      console.log('res: ', result)
       /*if(*/await this.addPlayerToTrack(track, user)/*) {*/
-        return track;
+        return result;
       // }
     // } catch (error) {
     //   throw(error);
