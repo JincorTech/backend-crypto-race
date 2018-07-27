@@ -73,7 +73,7 @@ export class Track {
   }
 
   addPlayer(player: User, ship: string, fuel: Asset[]) : boolean {
-    if (this.status === TRACK_STATUS_AWAITING) {
+    if (this.status !== TRACK_STATUS_AWAITING) {
       return false;
     }
     if (this.maxPlayers === this.numPlayers) {
