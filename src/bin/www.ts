@@ -10,7 +10,7 @@ import { createConnection, ConnectionOptions, getConnection } from 'typeorm';
 import { AuthClientType } from '../services/auth.client';
 import { TrackServiceType, TrackService, TrackServiceInterface } from '../services/track.service';
 import { User } from '../entities/user';
-import {Track, TRACK_STATUS_ACTIVE} from '../entities/track';
+import {Track, TRACK_STATUS_ACTIVE, TRACK_STATUS_AWAITING} from '../entities/track';
 import { ancestorWhere } from 'tslint';
 // import { jwt_decode } from 'jwt-decode';
 
@@ -78,7 +78,11 @@ createConnection(ormOptions).then(async connection => {
     socket.on('joinTrack', async (joinData: any) => {
       const track = await trackService.joinToTrack(user, user.mnemonic, joinData.trackId);
       if (!track) {
-        socket.to(socket.id).emit('error', {message: "Track not found"});
+        io.sockets.in(socket.id).emit('error', {message: "Track not found"});
+        return;
+      }
+      if (track.status !== TRACK_STATUS_AWAITING) {
+        io.sockets.in(socket.id).emit('error', {message: "Track is already active"});
         return;
       }
       socket.join('tracks_' + joinData.trackId, () => {
