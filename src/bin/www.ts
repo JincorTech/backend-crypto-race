@@ -104,7 +104,7 @@ createConnection(ormOptions).then(async connection => {
      */
     socket.on('joinChat', async (joinData: any) => {
       socket.join('chats_' + joinData.trackId, () => {
-        if(messages[joinData.trackId].length === 0) {
+        if(!messages[joinData.trackId] || messages[joinData.trackId].length === 0) {
           messages[joinData.trackId] = [];
         }
         io.sockets.in('chats_' + joinData.trackId).emit('joinedChat', messages[joinData.trackId]);
