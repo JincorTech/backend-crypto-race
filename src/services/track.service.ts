@@ -163,7 +163,6 @@ export class TrackService implements TrackServiceInterface {
   async getStats(id: string): Promise<any> {
     const portfolios = await this.getPortfolios(id);
     const track = await this.getTrackById(id);
-    console.log("Start: ", track.start, track.end);
     const ratios = this.getRatios(
       await this.getCurrencyRates(track.start),
       await this.getCurrencyRates(track.end)
