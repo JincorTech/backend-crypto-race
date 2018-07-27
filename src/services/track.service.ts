@@ -80,8 +80,7 @@ export class TrackService implements TrackServiceInterface {
       const track = await this.getTrackById(id);
       const result = await this.addPlayerToTrack(track, user);
       console.log('res: ', result)
-      /*if(*/await this.addPlayerToTrack(track, user)/*) {*/
-        return result;
+      return track;
       // }
     // } catch (error) {
     //   throw(error);
@@ -138,7 +137,12 @@ export class TrackService implements TrackServiceInterface {
   }
 
   private async addPlayerToTrack(track: Track, player: User): Promise<boolean> {
-    if (getConnection().mongoManager.find(Track, { where: { users: { $in: [ player.id.toString() ] } } })) {
+    const exists = await getConnection().mongoManager.find(Track, {
+      where: {
+        users: { $in: [ player.id.toString() ] }
+      }
+    });
+    if (exists.length > 0) {
       return false;
     }
     if (track.status !== TRACK_STATUS_AWAITING) {
