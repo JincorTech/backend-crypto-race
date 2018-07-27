@@ -48,7 +48,7 @@ export class Track {
   end: number;
 
   @Column()
-  users: Array<ObjectID>;
+  users: Array<string>;
 
   @Column()
   players: Array<Player>;

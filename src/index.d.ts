@@ -427,6 +427,7 @@ declare interface Ship {
 }
 
 declare interface InitRace {
+  id: string;
   raceName: string;
   start: number;
   end: number;

@@ -3,7 +3,7 @@ import { User } from '../entities/user';
 import { Portfolio } from '../entities/portfolio';
 import { Track, TRACK_TYPE_BACKEND, TRACK_STATUS_AWAITING, TRACK_TYPE_USER, TRACK_STATUS_ACTIVE } from '../entities/track';
 import { Web3ClientInterface, Web3ClientType } from './web3.client';
-import { getConnection, MongoRepository } from 'typeorm';
+import {getConnection, MongoRepository} from 'typeorm';
 import { ObjectID } from 'mongodb';
 import { Currency } from '../entities/currency';
 import { stat } from 'fs';
@@ -34,9 +34,11 @@ export interface TrackServiceInterface {
 @injectable()
 export class TrackService implements TrackServiceInterface {
   private trackRepo: MongoRepository<Track>;
+  private userRepo: MongoRepository<User>;
 
   constructor(@inject(Web3ClientType) private web3Client: Web3ClientInterface) {
     this.trackRepo = getConnection().mongoManager.getMongoRepository(Track);
+    this.userRepo = getConnection().mongoManager.getMongoRepository(User);
   }
 
   async createTrack(user: User, mnemonic: string, betAmount: string): Promise<Track> {
@@ -77,15 +79,16 @@ export class TrackService implements TrackServiceInterface {
   }
 
   async joinToTrack(user: User, mnemonic: string, id: string): Promise<Track> {
-    try {
+    // try {
       const account = this.web3Client.getAccountByMnemonicAndSalt(mnemonic, user.ethWallet.salt);
-      this.web3Client.joinToTrack(account, id);
+      // this.web3Client.joinToTrack(account, id);
       const track = await this.getTrackById(id);
       await this.addPlayerToTrack(track, user);
       return track;
-    } catch (error) {
-      throw(error);
-    }
+      // }
+    // } catch (error) {
+    //   throw(error);
+    // }
   }
 
   async setPortfolio(
@@ -200,7 +203,36 @@ export class TrackService implements TrackServiceInterface {
   }
 
   private async addPlayerToTrack(track: Track, player: User): Promise<boolean> {
-    track.users.push(player.id);
+    const exists = await getConnection().mongoManager.find(Track, {
+      where: {
+        users: { $in: [ player.id.toString() ] }
+      }
+    });
+    if (exists.length > 0) {
+      return false;
+    }
+    if (track.status !== TRACK_STATUS_AWAITING) {
+      return false;
+    }
+    if (track.maxPlayers < track.numPlayers + 1) {
+      return false;
+    }
+    track.users.push(player.id.toString());
+    track.numPlayers += 1;
+    track.players.push({
+      id: player.id.toString(),
+      email: player.email,
+      picture: player.picture,
+      name: player.name,
+      position: track.numPlayers,
+      ship: { type: 'nova' },
+      x: track.numPlayers === 1 ? 33.3 : 66.6,
+      fuel: [{name: 'btc', value: 10}, {name: 'eth', value: 90}]
+    });
+
+    if(track.numPlayers === track.maxPlayers) {
+      track.status = TRACK_STATUS_ACTIVE;
+    }
     await this.trackRepo.save(track);
     return true;
   }

@@ -62,12 +62,6 @@ createConnection(ormOptions).then(async connection => {
     const user = await getConnection().mongoManager.findOne(User, {where: {email: socket.handshake.query.email}});
 
 
-    socket.on('ping2', (message) => {
-      console.log('Ping ', socket.id, message);
-      const pong = { front: message, back: Date.now() };
-      socket.emit('pong2', pong);
-    });
-
     /**
      * ================== TRACK SECTION ===============
      */
@@ -87,12 +81,11 @@ createConnection(ormOptions).then(async connection => {
         socket.to(socket.id).emit('error', {message: "Track not found"});
         return;
       }
-
       socket.join('tracks_' + joinData.trackId, () => {
-        socket.in('tracks_' + joinData.trackId).emit('joinedTrack', joinData);
+        io.sockets.in('tracks_' + joinData.trackId).emit('joinedTrack', joinData);
         if (track.status === TRACK_STATUS_ACTIVE) {
-          let init: InitRace = { raceName: track.id.toHexString(), start: Date.now(), end: Date.now() + 300, players: track.players};
-          socket.in('tracks_' + joinData.trackId).emit('start', init);
+          let init: InitRace = { id: track.id.toString(), raceName: track.id.toHexString(), start: Date.now(), end: Date.now() + 300, players: track.players};
+          io.sockets.in('tracks_' + joinData.trackId).emit('start', init);
         }
       });
 
@@ -102,7 +95,7 @@ createConnection(ormOptions).then(async connection => {
     });
 
     socket.on('moveX', (strafeData: Strafe) => {
-      socket.in('tracks_' + strafeData.trackId).emit('moveXupdate', strafeData);
+      io.sockets.in('tracks_' + strafeData.trackId).emit('moveXupdate', strafeData);
     });
 
 
