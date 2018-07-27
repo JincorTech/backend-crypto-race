@@ -1,4 +1,5 @@
 import { Entity, ObjectIdColumn, ObjectID, Column } from 'typeorm';
+import {User} from "./user";
 
 export const TRACK_TYPE_USER = 'user';
 export const TRACK_TYPE_BACKEND = 'backend';
@@ -69,5 +70,73 @@ export class Track {
     track.type = type;
 
     return track;
+  }
+
+  addPlayer(player: User, ship: string, fuel: Asset[]) : boolean {
+    if (this.status === TRACK_STATUS_AWAITING) {
+      return false;
+    }
+    if (this.maxPlayers === this.numPlayers) {
+      return false;
+    }
+    this.numPlayers++;
+    this.users.push(player.id.toString());
+    this.players.push({
+      id: player.id.toString(),
+      email: player.email,
+      picture: player.picture,
+      name: player.name,
+      position: this.getPlayerStartingPosition(this.numPlayers),
+      ship: { type: ship },
+      x: this.getPlayerStartingX(this.maxPlayers, this.numPlayers),
+      fuel: fuel
+    });
+
+    if (this.numPlayers === this.maxPlayers) {
+      this.status = TRACK_STATUS_ACTIVE;
+    }
+    return true;
+  }
+
+  /**
+   * Get x coordinate for the players starting position
+   * Player's starting point depends on the number of players in race(player's number)
+   * and maximal allowed number of players
+   *
+   * @param maxPlayers
+   * @param numPlayers
+   * @returns {number}
+   */
+  static getPlayerStartingX(maxPlayers: number, numPlayers: number) {
+    switch (maxPlayers) {
+      case 2:
+        if (numPlayers === 1) return 33.3;
+        return 66.6;
+      case 3:
+        if (numPlayers === 1) return 25;
+        else if (numPlayers === 2) return 50;
+        else return 75;
+      case 4:
+        if (numPlayers === 1) return 20;
+        else if (numPlayers === 2) return 40;
+        else if (numPlayers === 3) return 60;
+        else return 80;
+      case 5:
+        if (numPlayers === 1) return 15;
+        else if (numPlayers === 2) return 30;
+        else if (numPlayers === 3) return 45;
+        else if (numPlayers === 4) return 60;
+        else return 75;
+    }
+  }
+
+  /**
+   * Get starting position of the player
+   *
+   * @param numPlayers
+   * @returns {number}
+   */
+  static getPlayerStartingPosition(numPlayers: number) {
+    return numPlayers - 1;
   }
 }

@@ -211,28 +211,7 @@ export class TrackService implements TrackServiceInterface {
     if (exists.length > 0) {
       return false;
     }
-    if (track.status !== TRACK_STATUS_AWAITING) {
-      return false;
-    }
-    if (track.maxPlayers < track.numPlayers + 1) {
-      return false;
-    }
-    track.users.push(player.id.toString());
-    track.numPlayers += 1;
-    track.players.push({
-      id: player.id.toString(),
-      email: player.email,
-      picture: player.picture,
-      name: player.name,
-      position: track.numPlayers,
-      ship: { type: 'nova' },
-      x: track.numPlayers === 1 ? 33.3 : 66.6,
-      fuel: [{name: 'btc', value: 10}, {name: 'eth', value: 90}]
-    });
-
-    if (track.numPlayers === track.maxPlayers) {
-      track.status = TRACK_STATUS_ACTIVE;
-    }
+    track.addPlayer(player, 'nova', []);
     await this.trackRepo.save(track);
     return true;
   }

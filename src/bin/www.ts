@@ -90,6 +90,25 @@ createConnection(ormOptions).then(async connection => {
         if (track.status === TRACK_STATUS_ACTIVE) {
           let init: InitRace = { id: track.id.toString(), raceName: track.id.toHexString(), start: Date.now(), end: Date.now() + 300, players: track.players};
           io.sockets.in('tracks_' + joinData.trackId).emit('start', init);
+          setTimeout(() => {
+            const players = [
+              {
+                id: track.players[0].id.toString(),
+                position: 0,
+                name: track.players[0].name,
+                score: 500,
+                prize: 0.1
+              },
+              {
+                id: track.players[1].name,
+                position: 1,
+                name: 'Andrey',
+                score: 300,
+                prize: 0
+              }
+            ];
+            io.sockets.in('tracks_' + joinData.trackId).emit('gameover', players);
+          }, 30000);
         }
       });
 
