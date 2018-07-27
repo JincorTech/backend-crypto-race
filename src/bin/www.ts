@@ -81,13 +81,12 @@ createConnection(ormOptions).then(async connection => {
         socket.to(socket.id).emit('error', {message: "Track not found"});
         return;
       }
-      console.log("Joined track: ", joinData.trackId);
-
-      socket.join('tracks_' + joinData.trackId, () => {
-        socket.in('tracks_' + joinData.trackId).emit('joinedTrack', joinData);
+      sock.join('tracks_' + joinData.trackId, () => {
+        console.log("Joined room");
+        sock.in('tracks_' + joinData.trackId).emit('joinedTrack', joinData);
         if (track.status === TRACK_STATUS_ACTIVE) {
           let init: InitRace = { raceName: track.id.toHexString(), start: Date.now(), end: Date.now() + 300, players: track.players};
-          socket.in('tracks_' + joinData.trackId).emit('start', init);
+          sock.in('tracks_' + joinData.trackId).emit('start', init);
         }
       });
 
