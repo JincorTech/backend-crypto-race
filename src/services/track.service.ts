@@ -74,16 +74,16 @@ export class TrackService implements TrackServiceInterface {
   }
 
   async joinToTrack(user: User, mnemonic: string, id: string): Promise<Track> {
-    try {
+    // try {
       const account = this.web3Client.getAccountByMnemonicAndSalt(mnemonic, user.ethWallet.salt);
       // this.web3Client.joinToTrack(account, id);
       const track = await this.getTrackById(id);
-      if(await this.addPlayerToTrack(track, user)) {
+      /*if(*/await this.addPlayerToTrack(track, user)/*) {*/
         return track;
-      }
-    } catch (error) {
-      throw(error);
-    }
+      // }
+    // } catch (error) {
+    //   throw(error);
+    // }
   }
 
   async setPortfolio(
