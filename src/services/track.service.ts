@@ -265,9 +265,9 @@ export class TrackService implements TrackServiceInterface {
         case 1:
           return "eth";
         case 2:
-          return "xrp";
+          return "rpl";
         case 3:
-          return "bch";
+          return "bcc";
         case 4:
           return "ltc";
       }
