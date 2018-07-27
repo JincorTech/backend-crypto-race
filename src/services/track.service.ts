@@ -168,6 +168,8 @@ export class TrackService implements TrackServiceInterface {
       await this.getCurrencyRates(track.end)
     );
 
+    console.log("Rates: ", await this.getCurrencyRates(track.start), await this.getCurrencyRates(track.end));
+
     const playersStats = [];
 
     for (let i = 0; i < portfolios.length; i++) {
