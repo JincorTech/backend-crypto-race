@@ -246,10 +246,13 @@ export class TrackService implements TrackServiceInterface {
   private assetsFromFuel(fuel: Array<string>): Asset[] {
       let result = [];
       for (let i = 0; i < fuel.length; i++) {
-        const asset = {
+        let asset = {
           name: this.getAssetNameByIndex(i),
           value: fuel[i]
         };
+        if (i === 5) {
+          asset.name = this.getAssetNameByIndex(Math.floor(Math.random() * 4))
+        }
         result.push(asset);
       }
       return result;
