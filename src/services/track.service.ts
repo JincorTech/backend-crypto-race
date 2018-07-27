@@ -27,7 +27,7 @@ export interface TrackServiceInterface {
   getPlayers(id: string): Promise<Array<string>>;
   startTrack(id: string, start: number): Promise<boolean>;
   isReady(id: string): Promise<boolean>;
-  getStats(id: string): Promise<any>;
+  getStats(id: string, end?: number): Promise<any>;
   getWinners(id: string): Promise<any>;
 }
 
@@ -160,12 +160,15 @@ export class TrackService implements TrackServiceInterface {
     return false;
   }
 
-  async getStats(id: string): Promise<any> {
+  async getStats(id: string, end?: number): Promise<any> {
     const portfolios = await this.getPortfolios(id);
     const track = await this.getTrackById(id);
+    if(!end) {
+      end = track.end;
+    }
     const ratios = this.getRatios(
       await this.getCurrencyRates(track.start),
-      await this.getCurrencyRates(track.end)
+      await this.getCurrencyRates(end)
     );
 
     const playersStats = [];
