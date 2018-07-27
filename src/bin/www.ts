@@ -10,7 +10,7 @@ import { createConnection, ConnectionOptions, getConnection } from 'typeorm';
 import { AuthClientType } from '../services/auth.client';
 import { TrackServiceType, TrackService, TrackServiceInterface } from '../services/track.service';
 import { User } from '../entities/user';
-import {Track, TRACK_STATUS_ACTIVE} from '../entities/track';
+import {Track, TRACK_STATUS_ACTIVE, TRACK_STATUS_AWAITING} from '../entities/track';
 import { ancestorWhere } from 'tslint';
 // import { jwt_decode } from 'jwt-decode';
 
@@ -78,7 +78,11 @@ createConnection(ormOptions).then(async connection => {
     socket.on('joinTrack', async (joinData: any) => {
       const track = await trackService.joinToTrack(user, user.mnemonic, joinData.trackId);
       if (!track) {
-        socket.to(socket.id).emit('error', {message: "Track not found"});
+        io.sockets.in(socket.id).emit('error', {message: "Track not found"});
+        return;
+      }
+      if (track.status !== TRACK_STATUS_AWAITING) {
+        io.sockets.in(socket.id).emit('error', {message: "Track is already active"});
         return;
       }
       socket.join('tracks_' + joinData.trackId, () => {
@@ -94,6 +98,22 @@ createConnection(ormOptions).then(async connection => {
       socket.broadcast.emit('initTracks',{tracks: tracks});
     });
 
+    socket.on('loadTrack', async (joinData: any) => {
+      const track = await trackService.joinToTrack(user, user.mnemonic, joinData.trackId);
+      if (!track) {
+        io.sockets.in(socket.id).emit('error', {message: "Track not found"});
+        return;
+      }
+      if (track.status !== TRACK_STATUS_ACTIVE) {
+        io.sockets.in(socket.id).emit('error', {message: "You can not join inactive track"});
+        return;
+      }
+      socket.join('tracks_' + joinData.trackId, () => {
+        let init: InitRace = { id: track.id.toString(), raceName: track.id.toHexString(), start: Date.now(), end: Date.now() + 300, players: track.players};
+        io.sockets.in(socket.id).emit('start', init);
+      });
+    });
+
     socket.on('moveX', (strafeData: Strafe) => {
       io.sockets.in('tracks_' + strafeData.trackId).emit('moveXupdate', strafeData);
     });
@@ -104,16 +124,16 @@ createConnection(ormOptions).then(async connection => {
      */
     socket.on('joinChat', async (joinData: any) => {
       socket.join('chats_' + joinData.trackId, () => {
-        if(messages[joinData.trackId].length === 0) {
+        if(!messages[joinData.trackId] || messages[joinData.trackId].length === 0) {
           messages[joinData.trackId] = [];
         }
-        socket.in('chats_' + joinData.trackId).emit('joinedChat', messages[joinData.trackId]);
+        io.sockets.in('chats_' + joinData.trackId).emit('joinedChat', messages[joinData.trackId]);
       });
     });
 
     socket.on('message', message => {
       messages[message.chatId].push({ author: user.name, userId: user.id, ts: Date.now(), message });
-      socket.in('chats_' + message.chatId).emit('updateChat', messages[message.chatId]);
+      io.sockets.in('chats_' + message.chatId).emit('updateChat', messages[message.chatId]);
     });
 
   });
