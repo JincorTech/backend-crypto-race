@@ -121,7 +121,7 @@ createConnection(ormOptions).then(async connection => {
             console.log("stats: ", stats);
             const playerPositions = stats.map((stat, index) => {
               return {
-                id: stat.player.id,
+                id: stat.player.id.toString(),
                 position: index
               };
             });
