@@ -201,7 +201,7 @@ export class TrackService implements TrackServiceInterface {
   async getCurrencyRates(timestamp: number): Promise<any> {
     const lte = await getConnection().mongoManager.find(Currency, {where: {timestamp: { $lte: timestamp }}, order: {timestamp: -1}, take: 5});
     const gt = await getConnection().mongoManager.find(Currency, {where: {timestamp: { $gt: timestamp }}, order: {timestamp: 1}, take: 5});
-    console.log("found: ", lte.length, gte.length);
+    console.log("found: ", lte.length, gt.length);
     const gtTimestampDiff = gt[0].timestamp - timestamp;
     const ltTimestampDiff = timestamp - lte[0].timestamp;
     let rates = [];
