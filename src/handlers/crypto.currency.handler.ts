@@ -7,12 +7,13 @@ export interface CryptoCurrencyHandlerInterface { }
 
 export class CryptoCurrencyHandler implements CryptoCurrencyHandlerInterface {
   constructor() {
-    cryptoSocket.start('bittrex',['LTCUSD','BTCUSD', 'XRPUSD', 'ETHUSD', 'BCHUSD']);
     setInterval(
       async function() {
+        cryptoSocket.start('bittrex',['LTCUSD','BTCUSD', 'XRPUSD', 'ETHUSD', 'BCHUSD']);
         const now = Date.now();
         let currentTime = now + (5 - (now % 5));
         let rate = cryptoSocket.Exchanges['bittrex'];
+        console.log("BTC: ", rate.BTCUSD);
         getConnection().mongoManager.save(Currency, Currency.createCurrency({
           timestamp: currentTime,
           name: 'LTC',
@@ -38,6 +39,7 @@ export class CryptoCurrencyHandler implements CryptoCurrencyHandlerInterface {
           name: 'BCH',
           usd: rate.BCHUSD
         }));
+        cryptoSocket.close('bittrex');
       },
       5000
     );
