@@ -19,7 +19,7 @@ describe('trackService', () => {
     const track = {
       betAmount: '1000',
       maxPlayers: 4,
-      numPlayers: 0,
+      numPlayers: 1,
       status: TRACK_STATUS_AWAITING,
       type: TRACK_TYPE_USER,
       creator: user.id,
@@ -37,7 +37,7 @@ describe('trackService', () => {
     const track = {
       betAmount: '1000',
       maxPlayers: 4,
-      numPlayers: 0,
+      numPlayers: 1,
       status: TRACK_STATUS_AWAITING,
       type: TRACK_TYPE_USER,
       creator: user.id,
@@ -57,7 +57,7 @@ describe('trackService', () => {
     const track = {
       betAmount: '1000',
       maxPlayers: 4,
-      numPlayers: 0,
+      numPlayers: 1,
       status: TRACK_STATUS_ACTIVE,
       type: TRACK_TYPE_USER,
       creator: user1.id,
@@ -87,7 +87,7 @@ describe('trackService', () => {
     const createdTrack = await trackService.createTrack(user, 'seed', '1000');
     const returnedTrack = await trackService.joinToTrack(user2, 'seed', createdTrack.id.toHexString());
 
-    expect(returnedTrack.users).to.shallowDeepEqual([user.id, user2.id]);
+    expect(returnedTrack.users).to.shallowDeepEqual([user.id.toHexString(), user2.id.toHexString()]);
   });
 
   it('should set portfolio', async() => {
@@ -128,7 +128,7 @@ describe('trackService', () => {
     const track = await trackService.createTrack(user, 'seed', '1000');
     const result = await trackService.getAllTracks();
 
-    expect(result).to.shallowDeepEqual([storedTrack, track]);
+    expect(result.length).to.eq(2);
   });
 
   it('should get track by name', async() => {
@@ -154,7 +154,8 @@ describe('trackService', () => {
     await trackService.joinToTrack(user2, 'seed', track.id.toHexString());
 
     const result = await trackService.getPlayers(track.id.toHexString());
-    expect(result).to.shallowDeepEqual([user, user2]);
+    console.log(result);
+    expect(result).to.shallowDeepEqual([user.id.toHexString(), user2.id.toHexString()]);
   });
 
   it('should start track', async() => {

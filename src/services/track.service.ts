@@ -3,7 +3,7 @@ import { User } from '../entities/user';
 import { Portfolio } from '../entities/portfolio';
 import { Track, TRACK_TYPE_BACKEND, TRACK_STATUS_AWAITING, TRACK_TYPE_USER, TRACK_STATUS_ACTIVE } from '../entities/track';
 import { Web3ClientInterface, Web3ClientType } from './web3.client';
-import {getConnection, MongoRepository} from 'typeorm';
+import { getConnection, MongoRepository } from 'typeorm';
 import { ObjectID } from 'mongodb';
 import { Currency } from '../entities/currency';
 import { stat } from 'fs';
@@ -24,7 +24,7 @@ export interface TrackServiceInterface {
   awaitingTracks(): Promise<Array<Track>>;
   createTrack(user: User, mnemonic: string, betAmount: string): Promise<Track>;
   internalCreateTrack(betAmount: string): Promise<Track>;
-  getPlayers(id: string): Promise<Array<User>>;
+  getPlayers(id: string): Promise<Array<string>>;
   startTrack(id: string, start: number): Promise<boolean>;
   isReady(id: string): Promise<boolean>;
   getStats(id: string): Promise<any>;
@@ -80,11 +80,11 @@ export class TrackService implements TrackServiceInterface {
 
   async joinToTrack(user: User, mnemonic: string, id: string): Promise<Track> {
     // try {
-      const account = this.web3Client.getAccountByMnemonicAndSalt(mnemonic, user.ethWallet.salt);
+    const account = this.web3Client.getAccountByMnemonicAndSalt(mnemonic, user.ethWallet.salt);
       // this.web3Client.joinToTrack(account, id);
-      const track = await this.getTrackById(id);
-      await this.addPlayerToTrack(track, user);
-      return track;
+    const track = await this.getTrackById(id);
+    await this.addPlayerToTrack(track, user);
+    return track;
       // }
     // } catch (error) {
     //   throw(error);
@@ -130,9 +130,9 @@ export class TrackService implements TrackServiceInterface {
     return this.trackRepo.find({where: {creator: user.id}});
   }
 
-  async getPlayers(id: string): Promise<User[]> {
+  async getPlayers(id: string): Promise<string[]> {
     const track = await this.getTrackById(id);
-    return getConnection().mongoManager.findByIds(User, track.users);
+    return track.users;
   }
 
   async startTrack(id: string, start: number): Promise<boolean> {
@@ -230,7 +230,7 @@ export class TrackService implements TrackServiceInterface {
       fuel: [{name: 'btc', value: 10}, {name: 'eth', value: 90}]
     });
 
-    if(track.numPlayers === track.maxPlayers) {
+    if (track.numPlayers === track.maxPlayers) {
       track.status = TRACK_STATUS_ACTIVE;
     }
     await this.trackRepo.save(track);
