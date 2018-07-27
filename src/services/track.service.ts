@@ -234,6 +234,7 @@ export class TrackService implements TrackServiceInterface {
     let score = 0;
 
     for (let i = 0; i < portfolio.assets.length; i++) {
+      console.log("Name: ", portfolio.assets[i].name.toUpperCase(), ratios[portfolio.assets[i].name.toUpperCase()]);
       score += ratios[portfolio.assets[i].name.toUpperCase()] * portfolio.assets[i].value;
     }
 
