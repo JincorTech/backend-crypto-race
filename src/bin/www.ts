@@ -77,6 +77,8 @@ createConnection(ormOptions).then(async connection => {
 
     socket.on('joinTrack', async (joinData: any) => {
       const track = await trackService.joinToTrack(user, user.mnemonic, joinData.trackId);
+      console.log("Track: ", track);
+
       if (!track) {
         socket.to(socket.id).emit('error', {message: "Track not found"});
         return;
