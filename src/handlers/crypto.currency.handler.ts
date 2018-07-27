@@ -7,7 +7,7 @@ export interface CryptoCurrencyHandlerInterface { }
 
 export class CryptoCurrencyHandler implements CryptoCurrencyHandlerInterface {
   constructor() {
-    cryptoSocket.start('bitmex',['LTCUSD','BTCUSD', 'XRPUSD', 'ETHUSD', 'BCHUSD']);
+    cryptoSocket.start('bitstamp',['LTCUSD','BTCUSD', 'XRPUSD', 'ETHUSD', 'BCHUSD']);
     setInterval(
       async function() {
         const now = Date.now();
