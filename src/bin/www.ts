@@ -97,7 +97,7 @@ createConnection(ormOptions).then(async connection => {
 
           let timer = setInterval(async () => {
             let now = Date.now();
-            const stats = await trackService.getStats(track.id.toString(now));
+            const stats = await trackService.getStats(track.id.toString, now);
             console.log("stats: ", stats);
             const playerPositions = stats.map((stat, index) => {
               return {
