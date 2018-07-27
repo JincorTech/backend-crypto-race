@@ -81,6 +81,7 @@ createConnection(ormOptions).then(async connection => {
         socket.to(socket.id).emit('error', {message: "Track not found"});
         return;
       }
+      console.log("Joined track: ", joinData.trackId);
 
       socket.join('tracks_' + joinData.trackId, () => {
         socket.in('tracks_' + joinData.trackId).emit('joinedTrack', joinData);
