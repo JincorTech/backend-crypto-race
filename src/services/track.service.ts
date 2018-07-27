@@ -249,6 +249,7 @@ export class TrackService implements TrackServiceInterface {
   private getRatios(startRates, endRates): any {
     const tickers = ['LTC','BTC', 'XRP', 'ETH', 'BCH'];
     const result = {};
+    console.log("start, end", startRates, endRates);
     for (let i = 0; i < tickers.length; i++) {
       result[tickers[i]] = endRates[tickers[i]] / startRates[tickers[i]];
     }
