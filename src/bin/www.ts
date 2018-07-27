@@ -124,7 +124,7 @@ createConnection(ormOptions).then(async connection => {
     });
 
     socket.on('loadTrack', async (joinData: any) => {
-      const track = await trackService.joinToTrack(user, user.mnemonic, joinData.trackId);
+      const track = await trackService.getTrackById(joinData.trackId);
       if (!track) {
         io.sockets.in(socket.id).emit('error', {message: "Track not found"});
         return;
@@ -134,7 +134,7 @@ createConnection(ormOptions).then(async connection => {
         return;
       }
       socket.join('tracks_' + joinData.trackId, () => {
-        let init: InitRace = { id: track.id.toString(), raceName: track.id.toHexString(), start: Date.now(), end: Date.now() + 300, players: track.players};
+        let init: InitRace = { id: track.id.toString(), raceName: track.id.toHexString(), start: track.start, end: track.end, players: track.players};
         io.sockets.in(socket.id).emit('start', init);
       });
     });
