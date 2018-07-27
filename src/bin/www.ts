@@ -82,7 +82,6 @@ createConnection(ormOptions).then(async connection => {
         return;
       }
       socket.join('tracks_' + joinData.trackId, () => {
-        console.log(io.sockets);
         io.sockets.in('tracks_' + joinData.trackId).emit('joinedTrack', joinData);
         if (track.status === TRACK_STATUS_ACTIVE) {
           let init: InitRace = { id: track.id.toString(), raceName: track.id.toHexString(), start: Date.now(), end: Date.now() + 300, players: track.players};
@@ -96,7 +95,7 @@ createConnection(ormOptions).then(async connection => {
     });
 
     socket.on('moveX', (strafeData: Strafe) => {
-      socket.in('tracks_' + strafeData.trackId).emit('moveXupdate', strafeData);
+      io.sockets.in('tracks_' + strafeData.trackId).emit('moveXupdate', strafeData);
     });
 
 
