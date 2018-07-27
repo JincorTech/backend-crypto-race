@@ -39,7 +39,6 @@ export class CryptoCurrencyHandler implements CryptoCurrencyHandlerInterface {
           name: 'BCH',
           usd: rate.BCHUSD
         }));
-        cryptoSocket.close('bittrex');
       },
       5000
     );
