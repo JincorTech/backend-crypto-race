@@ -57,7 +57,7 @@ export class TrackService implements TrackServiceInterface {
   async internalCreateTrack(betAmount: string): Promise<Track> {
     const track = new Track();
     track.betAmount = betAmount;
-    track.maxPlayers = 4; // TODO
+    track.maxPlayers = 2; // TODO
     track.numPlayers = 0;
     track.duration = 300;
     track.type = TRACK_TYPE_BACKEND;
@@ -168,8 +168,6 @@ export class TrackService implements TrackServiceInterface {
       await this.getCurrencyRates(track.end)
     );
 
-    console.log("Ratios: ", ratios);
-
     const playersStats = [];
 
     for (let i = 0; i < portfolios.length; i++) {
@@ -207,11 +205,9 @@ export class TrackService implements TrackServiceInterface {
     if(gtTimestampDiff < ltTimestampDiff) rates = gt;
     else rates = lte;
     const result = {};
-    console.log("Rates: ", rates);
     for (let i = 0; i < rates.length; i++) {
       result[rates[i].name] = rates[i].usd;
     }
-    console.log("Result: ", result);
     return result;
   }
 

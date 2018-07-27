@@ -95,39 +95,32 @@ createConnection(ormOptions).then(async connection => {
           let init: InitRace = { id: track.id.toString(), raceName: track.id.toHexString(), start: Date.now(), end: Date.now() + 300, players: track.players};
           io.sockets.in('tracks_' + joinData.trackId).emit('start', init);
 
-
-          setTimeout(() => {
-            const players = [
-              {
-                id: track.players[0].id.toString(),
-                position: 0,
-                name: track.players[0].name,
-                score: 500,
-                prize: 0.1
-              },
-              {
-                id: track.players[1].id.toString(),
-                position: 1,
-                name: track.players[1].id.toString(),
-                score: 300,
-                prize: 0
-              }
-            ];
-            io.sockets.in('tracks_' + joinData.trackId).emit('gameover', players);
-          }, 30000);
-
-          setTimeout(async () => {
+          let timer = setInterval(async () => {
             const stats = await trackService.getStats(track.id.toString());
+            let now = Date.now();
             console.log("stats: ", stats);
             const playerPositions = stats.map((stat, index) => {
               return {
-                id: stat.player.id.toHexString(),
+                id: stat.player.toString(),
                 position: index
               };
             });
-            console.log("Player positions: ", playerPositions);
             io.sockets.in('tracks_' + joinData.trackId).emit('positionUpdate', playerPositions);
-          }, 8000);
+
+            if (now >= track.end) {
+              const winners = stats.map((stat, index) => {
+                return {
+                  id: stat.player.toString(),
+                  position: index,
+                  name: stat.player.toString(),
+                  score: stat.score,
+                  prize: index === 0 ? 0.1 : 0
+                };
+              });
+              io.sockets.in('tracks_' + joinData.trackId).emit('gameover', winners);
+              clearInterval(timer);
+            }
+          }, 5000);
         }
       });
 

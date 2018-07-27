@@ -63,7 +63,7 @@ export class Track {
     const track = new Track();
     track.betAmount = betAmount;
     track.duration = 300;
-    track.maxPlayers = 4;
+    track.maxPlayers = 2;
     track.numPlayers = 0;
     track.status = TRACK_STATUS_AWAITING;
     track.timestamp = Date.now();
