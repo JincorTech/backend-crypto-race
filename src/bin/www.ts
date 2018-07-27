@@ -107,7 +107,7 @@ createConnection(ormOptions).then(async connection => {
             });
             io.sockets.in('tracks_' + joinData.trackId).emit('positionUpdate', playerPositions);
 
-            if (now >= track.end) {
+            if (track.end >= now) {
               const winners = stats.map((stat, index) => {
                 return {
                   id: stat.player.toString(),
