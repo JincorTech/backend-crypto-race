@@ -76,7 +76,7 @@ createConnection(ormOptions).then(async connection => {
     });
 
     socket.on('joinTrack', async (joinData: any) => {
-      const track = await trackService.joinToTrack(user, user.mnemonic, joinData.trackId);
+      let track = await trackService.getTrackById(joinData.trackId);
       if (!track) {
         io.sockets.in(socket.id).emit('error', {message: "Track not found"});
         return;
@@ -85,11 +85,17 @@ createConnection(ormOptions).then(async connection => {
         io.sockets.in(socket.id).emit('error', {message: "Track is already active"});
         return;
       }
+      track = await trackService.joinToTrack(user, user.mnemonic, joinData.trackId);
+      if (!track) {
+        io.sockets.in(socket.id).emit('error', {message: "Can not join  track"});
+      }
       socket.join('tracks_' + joinData.trackId, () => {
         io.sockets.in('tracks_' + joinData.trackId).emit('joinedTrack', joinData);
         if (track.status === TRACK_STATUS_ACTIVE) {
           let init: InitRace = { id: track.id.toString(), raceName: track.id.toHexString(), start: Date.now(), end: Date.now() + 300, players: track.players};
           io.sockets.in('tracks_' + joinData.trackId).emit('start', init);
+
+
           setTimeout(() => {
             const players = [
               {
