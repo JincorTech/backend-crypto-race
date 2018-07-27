@@ -107,13 +107,13 @@ createConnection(ormOptions).then(async connection => {
         if(messages[joinData.trackId].length === 0) {
           messages[joinData.trackId] = [];
         }
-        socket.in('chats_' + joinData.trackId).emit('joinedChat', messages[joinData.trackId]);
+        io.sockets.in('chats_' + joinData.trackId).emit('joinedChat', messages[joinData.trackId]);
       });
     });
 
     socket.on('message', message => {
       messages[message.chatId].push({ author: user.name, userId: user.id, ts: Date.now(), message });
-      socket.in('chats_' + message.chatId).emit('updateChat', messages[message.chatId]);
+      io.sockets.in('chats_' + message.chatId).emit('updateChat', messages[message.chatId]);
     });
 
   });
