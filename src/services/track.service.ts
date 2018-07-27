@@ -78,12 +78,14 @@ export class TrackService implements TrackServiceInterface {
     return this.trackRepo.find({where: {status: TRACK_STATUS_AWAITING}});
   }
 
-  async joinToTrack(user: User, mnemonic: string, id: string): Promise<Track> {
+  async joinToTrack(user: User, mnemonic: string, id: string, fuel: Array): Promise<Track> {
     // try {
     const account = this.web3Client.getAccountByMnemonicAndSalt(mnemonic, user.ethWallet.salt);
       // this.web3Client.joinToTrack(account, id);
     const track = await this.getTrackById(id);
-    await this.addPlayerToTrack(track, user);
+    const assets = this.assetsFromFuel(fuel);
+    await this.addPlayerToTrack(track, user, assets);
+    await this.setPortfolio(user, user.mnemonic, track.id, assets);
     return track;
       // }
     // } catch (error) {
@@ -102,7 +104,7 @@ export class TrackService implements TrackServiceInterface {
     portfolioEntity.track = new ObjectID(id);
     portfolioEntity.user = user.id;
     const account = this.web3Client.getAccountByMnemonicAndSalt(mnemonic, user.ethWallet.salt);
-    this.web3Client.setPortfolio(account, id, portfolio);
+    // this.web3Client.setPortfolio(account, id, portfolio);
 
     await getConnection().mongoManager.save(Portfolio, portfolioEntity);
 
@@ -202,7 +204,7 @@ export class TrackService implements TrackServiceInterface {
     return result;
   }
 
-  private async addPlayerToTrack(track: Track, player: User): Promise<boolean> {
+  private async addPlayerToTrack(track: Track, player: User, fuel: Asset[]): Promise<boolean> {
     //  @TODO: return checks!
     // const exists = await getConnection().mongoManager.find(Track, {
     //   where: {
@@ -212,7 +214,7 @@ export class TrackService implements TrackServiceInterface {
     // if (exists.length > 0) {
     //   return false;
     // }
-    track.addPlayer(player, 'nova', [{name: 'btc', value: 90},  {name: 'eth', value: 10}]);
+    track.addPlayer(player, 'nova', fuel);
     await this.trackRepo.save(track);
     return true;
   }
@@ -227,6 +229,11 @@ export class TrackService implements TrackServiceInterface {
     return score;
   }
 
+  public calculateCurrentPositions(track: Track): any {
+      const players: Player[] = track.players;
+      let portfolio = players[0].fuel
+  }
+
   private getRatios(startRates, endRates): any {
     const tickers = ['LTC','BTC', 'XRP', 'ETH', 'BCH'];
     const result = {};
@@ -234,6 +241,33 @@ export class TrackService implements TrackServiceInterface {
       result[tickers[i]] = endRates[tickers[i]] / startRates[tickers[i]];
     }
     return result;
+  }
+
+  private assetsFromFuel(fuel: Array): Asset[] {
+      let result = [];
+      for (let i = 0; i < fuel.length; i++) {
+        const asset = {
+          name: this.getAssetNameByIndex(i),
+          value: fuel[i]
+        };
+        result.push(asset);
+      }
+      return result;
+  }
+
+  private getAssetNameByIndex(index: number): string {
+      switch (index){
+        case 0:
+          return "btc";
+        case 1:
+          return "eth";
+        case 2:
+          return "xrp";
+        case 3:
+          return "bch";
+        case 4:
+          return "ltc";
+      }
   }
 }
 
