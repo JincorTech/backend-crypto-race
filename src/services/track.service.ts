@@ -57,7 +57,7 @@ export class TrackService implements TrackServiceInterface {
   async internalCreateTrack(betAmount: string): Promise<Track> {
     const track = new Track();
     track.betAmount = betAmount;
-    track.maxPlayers = 2; // TODO
+    track.maxPlayers = 4; // TODO
     track.numPlayers = 0;
     track.duration = 300;
     track.type = TRACK_TYPE_BACKEND;

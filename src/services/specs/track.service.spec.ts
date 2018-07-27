@@ -3,7 +3,7 @@ import * as chai from 'chai';
 import { expect } from 'chai';
 import {} from 'chai-shallow-deep-equal';
 import { TrackServiceInterface, TrackServiceType } from '../track.service';
-import { Track, TRACK_STATUS_AWAITING, TRACK_TYPE_USER, TRACK_STATUS_ACTIVE } from '../../entities/track';
+import { Track, TRACK_STATUS_AWAITING, TRACK_TYPE_USER, TRACK_STATUS_ACTIVE, TRACK_TYPE_BACKEND } from '../../entities/track';
 import { getConnection } from 'typeorm';
 import { User } from '../../entities/user';
 
@@ -154,7 +154,6 @@ describe('trackService', () => {
     await trackService.joinToTrack(user2, 'seed', track.id.toHexString());
 
     const result = await trackService.getPlayers(track.id.toHexString());
-    console.log(result);
     expect(result).to.shallowDeepEqual([user.id.toHexString(), user2.id.toHexString()]);
   });
 
@@ -233,6 +232,20 @@ describe('trackService', () => {
       { score: 96.22129568205688 },
       { score: 96.22129568205688 }
     ]);
+  });
+
+  it('should internal create track', async() => {
+    const createdTrack = await trackService.internalCreateTrack('0.01');
+    const track = {
+      betAmount: '0.01',
+      maxPlayers: 4,
+      numPlayers: 0,
+      status: TRACK_STATUS_AWAITING,
+      type: TRACK_TYPE_BACKEND,
+      duration: 300
+    };
+
+    expect(createdTrack).to.shallowDeepEqual(track);
   });
 });
 
