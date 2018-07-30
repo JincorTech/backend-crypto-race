@@ -12,6 +12,7 @@ import { TrackServiceType, TrackService, TrackServiceInterface } from '../servic
 import { User } from '../entities/user';
 import {Track, TRACK_STATUS_ACTIVE, TRACK_STATUS_AWAITING, TRACK_STATUS_FINISHED} from '../entities/track';
 import { ancestorWhere } from 'tslint';
+import Promise = ChaiHttp.Promise;
 // import { jwt_decode } from 'jwt-decode';
 
 /**
@@ -65,6 +66,7 @@ createConnection(ormOptions).then(async connection => {
       io.sockets.in(socket.id).emit('resProfile', {
         picture: user.picture,
         balance: user.ethWallet.balance,
+        address: user.ethWallet.address,
         name: user.name
       });
     });
@@ -123,10 +125,12 @@ createConnection(ormOptions).then(async connection => {
                   prize: index === 0 ? 0.1 : 0
                 };
               });
-              console.log("Here are some winners: ", winners);
-              await trackService.finishTrack(track, winners);
-              io.sockets.in('tracks_' + joinData.trackId).emit('gameover', winners);
-              clearInterval(timer);
+              Promise.all(winners).then(async (result) => {
+                console.log("Here are some winners: ", result);
+                await trackService.finishTrack(track, result);
+                io.sockets.in('tracks_' + joinData.trackId).emit('gameover', result);
+                clearInterval(timer);
+              });
             }
           }, 5000);
         }
