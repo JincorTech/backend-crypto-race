@@ -115,6 +115,7 @@ createConnection(ormOptions).then(async connection => {
             if (track.end <= now) {
               const winners = stats.map(async (stat, index) => {
                 const player = await getConnection().mongoManager.getRepository(User).findOneById(stat.player);
+                console.log("Player: ", player);
                 return {
                   id: stat.player.toString(),
                   position: index,
