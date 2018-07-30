@@ -235,15 +235,15 @@ export class TrackService implements TrackServiceInterface {
   }
 
   private async addPlayerToTrack(track: Track, player: User, fuel: Asset[], ship: number): Promise<boolean> {
-    // const exists = await getConnection().mongoManager.find(Track, {
-    //   where: {
-    //     users: { $in: [ player.id.toString() ] },
-    //     status: TRACK_STATUS_AWAITING,
-    //   }
-    // });
-    // if (exists.length > 0) {
-    //   return false;
-    // }
+    const exists = await getConnection().mongoManager.find(Track, {
+      where: {
+        users: { $in: [ player.id.toString() ] },
+        status: TRACK_STATUS_AWAITING,
+      }
+    });
+    if (exists.length > 0) {
+      return false;
+    }
     track.addPlayer(player, ship, fuel);
     await this.trackRepo.save(track);
     return true;
