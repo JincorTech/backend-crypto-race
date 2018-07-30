@@ -423,7 +423,7 @@ declare interface Player {
 }
 
 declare interface Ship {
-  type: string;
+  type: number;
 }
 
 declare interface InitRace {
