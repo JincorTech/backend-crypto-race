@@ -122,6 +122,7 @@ createConnection(ormOptions).then(async connection => {
                   prize: index === 0 ? 0.1 : 0
                 };
               });
+              console.log("Here are some winners: ", winners);
               await trackService.finishTrack(track, winners);
               io.sockets.in('tracks_' + joinData.trackId).emit('gameover', winners);
               clearInterval(timer);
