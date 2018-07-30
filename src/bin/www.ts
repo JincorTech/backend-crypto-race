@@ -12,7 +12,6 @@ import { TrackServiceType, TrackService, TrackServiceInterface } from '../servic
 import { User } from '../entities/user';
 import {Track, TRACK_STATUS_ACTIVE, TRACK_STATUS_AWAITING, TRACK_STATUS_FINISHED} from '../entities/track';
 import { ancestorWhere } from 'tslint';
-import Promise = ChaiHttp.Promise;
 // import { jwt_decode } from 'jwt-decode';
 
 /**
