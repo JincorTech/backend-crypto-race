@@ -61,6 +61,13 @@ createConnection(ormOptions).then(async connection => {
   sock.on('connect', async socket => {
     const user = await getConnection().mongoManager.findOne(User, {where: {email: socket.handshake.query.email}});
 
+    socket.on('reqProfile', () => {
+      io.sockets.in(socket.id).emit('resProfile', {
+        picture: user.picture,
+        balance: user.ethWallet.balance,
+        name: user.name
+      });
+    });
 
     /**
      * ================== TRACK SECTION ===============
