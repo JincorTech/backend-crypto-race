@@ -69,7 +69,7 @@ export class TrackService implements TrackServiceInterface {
     track.betAmount = betAmount;
     track.maxPlayers = 4; // TODO
     track.numPlayers = 0;
-    track.duration = 300000;
+    track.duration = 100000;
     track.type = TRACK_TYPE_BACKEND;
     track.timestamp = Date.now();
     track.status = TRACK_STATUS_AWAITING;
