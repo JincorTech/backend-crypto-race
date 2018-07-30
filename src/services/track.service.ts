@@ -271,6 +271,7 @@ export class TrackService implements TrackServiceInterface {
           });
         }
       }
+      console.log("Result: ", result);
       return result;
   }
 
