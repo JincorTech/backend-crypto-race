@@ -75,9 +75,20 @@ createConnection(ormOptions).then(async connection => {
      */
     socket.on('getTracks', async () => {
       let tracks = await getConnection().mongoManager.find(Track, {take: 1000});
-      if (tracks.filter((track) => { return track.status === 'awaiting'; }).length < 2) {
-        tracks.push(await trackService.internalCreateTrack('1'));
-        tracks.push(await trackService.internalCreateTrack('0'));
+      if (tracks.filter((track) => { return track.status === 'awaiting' && track.maxPlayers === 2; }).length === 0) {
+        tracks.push(await trackService.internalCreateTrack('0', 2));
+      }
+      if (tracks.filter((track) => { return track.status === 'awaiting' && track.maxPlayers === 3; }).length === 0) {
+        tracks.push(await trackService.internalCreateTrack('0', 3));
+      }
+      if (tracks.filter((track) => { return track.status === 'awaiting' && track.maxPlayers === 4; }).length === 0) {
+        tracks.push(await trackService.internalCreateTrack('0', 4));
+      }
+      if (tracks.filter((track) => { return track.status === 'awaiting' && track.maxPlayers === 5; }).length === 0) {
+        tracks.push(await trackService.internalCreateTrack('0', 5));
+      }
+      if (tracks.filter((track) => { return track.status === 'awaiting' && track.maxPlayers === 6; }).length === 0) {
+        tracks.push(await trackService.internalCreateTrack('0', 6));
       }
       socket.emit('initTracks', {tracks: tracks});
       socket.broadcast.emit('initTracks', {tracks: tracks});

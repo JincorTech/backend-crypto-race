@@ -26,7 +26,7 @@ export interface TrackServiceInterface {
   activeTracks(): Promise<Array<Track>>;
   awaitingTracks(): Promise<Array<Track>>;
   createTrack(user: User, mnemonic: string, betAmount: string): Promise<Track>;
-  internalCreateTrack(betAmount: string): Promise<Track>;
+  internalCreateTrack(betAmount: string, players: number): Promise<Track>;
   getPlayers(id: string): Promise<Array<string>>;
   startTrack(id: string, start: number): Promise<boolean>;
   isReady(id: string): Promise<boolean>;
@@ -64,12 +64,12 @@ export class TrackService implements TrackServiceInterface {
     return await this.trackRepo.save(track);
   }
 
-  async internalCreateTrack(betAmount: string): Promise<Track> {
+  async internalCreateTrack(betAmount: string, players: number): Promise<Track> {
     const track = new Track();
     track.betAmount = betAmount;
-    track.maxPlayers = 4; // TODO
+    track.maxPlayers = players; // TODO
     track.numPlayers = 0;
-    track.duration = 100000;
+    track.duration = 300000;
     track.type = TRACK_TYPE_BACKEND;
     track.timestamp = Date.now();
     track.status = TRACK_STATUS_AWAITING;
