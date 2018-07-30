@@ -114,7 +114,7 @@ createConnection(ormOptions).then(async connection => {
             io.sockets.in('tracks_' + joinData.trackId).emit('positionUpdate', playerPositions);
             if (track.end <= now) {
               const winners = stats.map(async (stat, index) => {
-                return {
+                return await {
                   id: stat.player.toString(),
                   position: index,
                   name: (await getConnection().mongoManager.getRepository(User).findOneById(stat.player)).name,
