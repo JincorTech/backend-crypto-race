@@ -32,7 +32,7 @@ export interface TrackServiceInterface {
   isReady(id: string): Promise<boolean>;
   getStats(id: string, end?: number): Promise<any>;
   getWinners(id: string): Promise<any>;
-  finishTrack(track: Track);
+  finishTrack(track: Track, winners: any);
 }
 
 @injectable()
@@ -58,8 +58,9 @@ export class TrackService implements TrackServiceInterface {
     return track;
   }
 
-  public async finishTrack(track: Track) {
+  public async finishTrack(track: Track, winners) {
     track.status = TRACK_STATUS_FINISHED;
+    track.winners = winners;
     return await this.trackRepo.save(track);
   }
 

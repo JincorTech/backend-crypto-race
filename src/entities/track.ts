@@ -54,9 +54,13 @@ export class Track {
   @Column()
   players: Array<Player>;
 
+  @Column()
+  winners: Array<any>;
+
   constructor() {
     this.players = [];
     this.users = [];
+    this.winners = [];
   }
 
   static createTrack(betAmount: string, type: string): Track {
