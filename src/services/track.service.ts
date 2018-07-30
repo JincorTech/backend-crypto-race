@@ -265,7 +265,6 @@ export class TrackService implements TrackServiceInterface {
     for (let i = 0; i < tickers.length; i++) {
       result[tickers[i]] = endRates[tickers[i]] / startRates[tickers[i]];
     }
-    console.log("Ratios: ", result);
     return result;
   }
 
