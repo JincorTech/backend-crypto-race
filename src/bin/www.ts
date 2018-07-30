@@ -77,7 +77,6 @@ createConnection(ormOptions).then(async connection => {
 
     socket.on('joinTrack', async (joinData: any) => {
       let track = await trackService.getTrackById(joinData.trackId);
-      console.log("Track ", track);
       if (!track) {
         io.sockets.in(socket.id).emit('error', {message: "Track not found"});
         return;
@@ -86,8 +85,8 @@ createConnection(ormOptions).then(async connection => {
         io.sockets.in(socket.id).emit('error', {message: "Track is already active"});
         return;
       }
-      console.log("Data: ", user, user.mnemonic, joinData.trackId, joinData.fuel);
       track = await trackService.joinToTrack(user, user.mnemonic, joinData.trackId, joinData.fuel);
+      console.log("Track ", track);
       if (!track) {
         io.sockets.in(socket.id).emit('error', {message: "Can not join  track"});
       }
