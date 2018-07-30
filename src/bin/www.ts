@@ -6,11 +6,11 @@ import * as socketio from 'socket.io';
 import * as fs from 'fs';
 import config from '../config';
 import 'reflect-metadata';
-import { createConnection, ConnectionOptions, getConnection } from 'typeorm';
+import {createConnection, ConnectionOptions, getConnection, getMongoManager} from 'typeorm';
 import { AuthClientType } from '../services/auth.client';
 import { TrackServiceType, TrackService, TrackServiceInterface } from '../services/track.service';
 import { User } from '../entities/user';
-import {Track, TRACK_STATUS_ACTIVE, TRACK_STATUS_AWAITING} from '../entities/track';
+import {Track, TRACK_STATUS_ACTIVE, TRACK_STATUS_AWAITING, TRACK_STATUS_FINISHED} from '../entities/track';
 import { ancestorWhere } from 'tslint';
 // import { jwt_decode } from 'jwt-decode';
 
@@ -116,6 +116,7 @@ createConnection(ormOptions).then(async connection => {
                   prize: index === 0 ? 0.1 : 0
                 };
               });
+              await trackService.finishTrack(track);
               io.sockets.in('tracks_' + joinData.trackId).emit('gameover', winners);
               clearInterval(timer);
             }

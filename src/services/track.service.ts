@@ -1,7 +1,10 @@
 import { injectable, inject } from 'inversify';
 import { User } from '../entities/user';
 import { Portfolio } from '../entities/portfolio';
-import { Track, TRACK_TYPE_BACKEND, TRACK_STATUS_AWAITING, TRACK_TYPE_USER, TRACK_STATUS_ACTIVE } from '../entities/track';
+import {
+  Track, TRACK_TYPE_BACKEND, TRACK_STATUS_AWAITING, TRACK_TYPE_USER, TRACK_STATUS_ACTIVE,
+  TRACK_STATUS_FINISHED
+} from '../entities/track';
 import { Web3ClientInterface, Web3ClientType } from './web3.client';
 import { getConnection, MongoRepository } from 'typeorm';
 import { ObjectID } from 'mongodb';
@@ -29,6 +32,7 @@ export interface TrackServiceInterface {
   isReady(id: string): Promise<boolean>;
   getStats(id: string, end?: number): Promise<any>;
   getWinners(id: string): Promise<any>;
+  finishTrack(track: Track);
 }
 
 @injectable()
@@ -52,6 +56,11 @@ export class TrackService implements TrackServiceInterface {
     // await this.addPlayerToTrack(track, user);
 
     return track;
+  }
+
+  public async finishTrack(track: Track) {
+    track.status = TRACK_STATUS_FINISHED;
+    return await this.trackRepo.save(track);
   }
 
   async internalCreateTrack(betAmount: string): Promise<Track> {
@@ -241,10 +250,10 @@ export class TrackService implements TrackServiceInterface {
   private getRatios(startRates, endRates): any {
     const tickers = ['LTC','BTC', 'XRP', 'ETH', 'BCH'];
     const result = {};
-    console.log("start, end", startRates, endRates);
     for (let i = 0; i < tickers.length; i++) {
       result[tickers[i]] = endRates[tickers[i]] / startRates[tickers[i]];
     }
+    console.log("Ratios: ", result);
     return result;
   }
 
