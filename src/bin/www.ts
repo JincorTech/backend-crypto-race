@@ -106,7 +106,7 @@ createConnection(ormOptions).then(async connection => {
 
           let timer = setInterval(async () => {
             let now = Date.now();
-            const stats = await trackService.getStats(track.id.toString(), now);
+            let stats = await trackService.getStats(track.id.toString(), now);
             const playerPositions = stats.map((stat, index) => {
               return {
                 id: stat.player.toString(),
@@ -115,22 +115,32 @@ createConnection(ormOptions).then(async connection => {
             });
             io.sockets.in('tracks_' + joinData.trackId).emit('positionUpdate', playerPositions);
             if (track.end <= now) {
-              const winners = stats.map(async (stat, index) => {
-                const name = (await getConnection().mongoManager.getRepository(User).findOneById(stat.player)).name;
-                return await {
-                  id: stat.player.toString(),
-                  position: index,
+              for (let i = 0; i < stats.length; i++) {
+                const name = (await getConnection().mongoManager.getRepository(User).findOneById(stats[i].player)).name;
+                console.log("Name: ", name);
+                stats[i] = {
+                  id: stats[i].player.toString(),
+                  position: i,
                   name,
-                  score: stat.score,
-                  prize: index === 0 ? 0.1 : 0
+                  score: stats[i].score,
+                  prize: i === 0 ? 0.1 : 0
                 };
-              });
-              Promise.all(winners).then(async (result) => {
-                console.log("Here are some winners: ", result);
-                await trackService.finishTrack(track, result);
-                io.sockets.in('tracks_' + joinData.trackId).emit('gameover', result);
-                clearInterval(timer);
-              });
+              }
+
+              console.log("Here are some winners: ", stats);
+              await trackService.finishTrack(track, stats);
+              io.sockets.in('tracks_' + joinData.trackId).emit('gameover', stats);
+              clearInterval(timer);
+              // const winners = stats.map(async (stat, index) => {
+              //   const name = (await getConnection().mongoManager.getRepository(User).findOneById(stat.player)).name;
+              //   return await {
+              //     id: stat.player.toString(),
+              //     position: index,
+              //     name,
+              //     score: stat.score,
+              //     prize: index === 0 ? 0.1 : 0
+              //   };
+              // });
             }
           }, 5000);
         }
