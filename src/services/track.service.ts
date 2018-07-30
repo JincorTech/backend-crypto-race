@@ -215,15 +215,14 @@ export class TrackService implements TrackServiceInterface {
   }
 
   private async addPlayerToTrack(track: Track, player: User, fuel: Asset[]): Promise<boolean> {
-    //  @TODO: return checks!
-    // const exists = await getConnection().mongoManager.find(Track, {
-    //   where: {
-    //     users: { $in: [ player.id.toString() ] }
-    //   }
-    // });
-    // if (exists.length > 0) {
-    //   return false;
-    // }
+    const exists = await getConnection().mongoManager.find(Track, {
+      where: {
+        users: { $in: [ player.id.toString() ] }
+      }
+    });
+    if (exists.length > 0) {
+      return false;
+    }
     track.addPlayer(player, 'nova', fuel);
     await this.trackRepo.save(track);
     return true;
@@ -233,13 +232,6 @@ export class TrackService implements TrackServiceInterface {
     let score = 0;
 
     for (let i = 0; i < portfolio.assets.length; i++) {
-      if(portfolio.assets[i].name.toUpperCase() === 'BCC') {
-        portfolio.assets[i].name = 'bch';
-      }
-      if(portfolio.assets[i].name.toUpperCase() === 'RPL') {
-        portfolio.assets[i].name = 'xrp';
-      }
-      console.log("Name: ", portfolio.assets[i].name.toUpperCase(), ratios[portfolio.assets[i].name.toUpperCase()], portfolio.assets[i].value);
       score += ratios[portfolio.assets[i].name.toUpperCase()] * portfolio.assets[i].value;
     }
 
@@ -264,9 +256,19 @@ export class TrackService implements TrackServiceInterface {
           value: fuel[i]
         };
         if (i === 5) {
-          asset.name = this.getAssetNameByIndex(Math.floor(Math.random() * 4))
+          const name = this.getAssetNameByIndex(Math.floor(Math.random() * 4));
+          const found = result.findIndex((elem) => {
+            return elem.name === name;
+          });
+          if (found !== -1) {
+            result[found].value += fuel[i];
+          } else {
+            asset.name = name;
+            result.push(asset);
+          }
+        } else {
+          result.push(asset);
         }
-        result.push(asset);
       }
       return result;
   }
@@ -278,9 +280,9 @@ export class TrackService implements TrackServiceInterface {
         case 1:
           return "eth";
         case 2:
-          return "rpl";
+          return "xrp";
         case 3:
-          return "bcc";
+          return "bch";
         case 4:
           return "ltc";
       }
