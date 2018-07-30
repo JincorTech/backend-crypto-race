@@ -93,7 +93,6 @@ export class TrackService implements TrackServiceInterface {
       // this.web3Client.joinToTrack(account, id);
     const track = await this.getTrackById(id);
     const assets = this.assetsFromFuel(fuel);
-    console.log("Assets: ", assets);
     await this.addPlayerToTrack(track, user, assets);
     await this.setPortfolio(user, mnemonic, track.id.toString(), assets);
     return track;
@@ -227,7 +226,8 @@ export class TrackService implements TrackServiceInterface {
   private async addPlayerToTrack(track: Track, player: User, fuel: Asset[]): Promise<boolean> {
     const exists = await getConnection().mongoManager.find(Track, {
       where: {
-        users: { $in: [ player.id.toString() ] }
+        users: { $in: [ player.id.toString() ] },
+        status: TRACK_STATUS_AWAITING,
       }
     });
     if (exists.length > 0) {
