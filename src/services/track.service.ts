@@ -18,7 +18,7 @@ export interface TrackServiceInterface {
     mnemonic: string,
     nameTrack: string,
     portfolio: Array<Asset>
-  ): Promise<Portfolio>;
+  ): Promise<any>;
   getPortfolio(user: User, id: string);
   getAllTracks(): Promise<Array<Track>>;
   getTrackById(name: string): Promise<Track>;
@@ -108,7 +108,7 @@ export class TrackService implements TrackServiceInterface {
     mnemonic: string,
     id: string,
     portfolio: Asset[]
-  ): Promise<Portfolio> {
+  ): Promise<any> {
     const portfolioEntity = new Portfolio();
     portfolioEntity.assets = portfolio;
     portfolioEntity.track = new ObjectID(id);
