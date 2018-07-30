@@ -125,7 +125,7 @@ export class TrackService implements TrackServiceInterface {
         user: user.id
       }
     });
-    if (exists) return false;
+    if (exists.length > 0) return false;
     await getConnection().mongoManager.save(Portfolio, portfolioEntity);
 
     return portfolioEntity;
@@ -235,15 +235,15 @@ export class TrackService implements TrackServiceInterface {
   }
 
   private async addPlayerToTrack(track: Track, player: User, fuel: Asset[]): Promise<boolean> {
-    const exists = await getConnection().mongoManager.find(Track, {
-      where: {
-        users: { $in: [ player.id.toString() ] },
-        status: TRACK_STATUS_AWAITING,
-      }
-    });
-    if (exists.length > 0) {
-      return false;
-    }
+    // const exists = await getConnection().mongoManager.find(Track, {
+    //   where: {
+    //     users: { $in: [ player.id.toString() ] },
+    //     status: TRACK_STATUS_AWAITING,
+    //   }
+    // });
+    // if (exists.length > 0) {
+    //   return false;
+    // }
     track.addPlayer(player, 'nova', fuel);
     await this.trackRepo.save(track);
     return true;
