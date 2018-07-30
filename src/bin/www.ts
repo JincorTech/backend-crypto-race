@@ -6,7 +6,7 @@ import * as socketio from 'socket.io';
 import * as fs from 'fs';
 import config from '../config';
 import 'reflect-metadata';
-import {createConnection, ConnectionOptions, getConnection, getMongoManager} from 'typeorm';
+import {createConnection, ConnectionOptions, getConnection, getMongoManager, ObjectID} from 'typeorm';
 import { AuthClientType } from '../services/auth.client';
 import { TrackServiceType, TrackService, TrackServiceInterface } from '../services/track.service';
 import { User } from '../entities/user';
@@ -113,11 +113,12 @@ createConnection(ormOptions).then(async connection => {
             });
             io.sockets.in('tracks_' + joinData.trackId).emit('positionUpdate', playerPositions);
             if (track.end <= now) {
-              const winners = stats.map((stat, index) => {
+              const winners = stats.map(async (stat, index) => {
+                const player = await getConnection().mongoManager.getRepository(Track).findOneById(stat.player);
                 return {
                   id: stat.player.toString(),
                   position: index,
-                  name: stat.player.toString(),
+                  name: player.name,
                   score: stat.score,
                   prize: index === 0 ? 0.1 : 0
                 };
