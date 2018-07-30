@@ -93,6 +93,7 @@ export class TrackService implements TrackServiceInterface {
       // this.web3Client.joinToTrack(account, id);
     const track = await this.getTrackById(id);
     const assets = this.assetsFromFuel(fuel);
+    console.log("Assets: ", assets);
     await this.addPlayerToTrack(track, user, assets);
     await this.setPortfolio(user, mnemonic, track.id.toString(), assets);
     return track;

@@ -86,13 +86,11 @@ createConnection(ormOptions).then(async connection => {
         return;
       }
       track = await trackService.joinToTrack(user, user.mnemonic, joinData.trackId, joinData.fuel);
-      console.log("Track ", track);
       if (!track) {
         io.sockets.in(socket.id).emit('error', {message: "Can not join  track"});
       }
       socket.join('tracks_' + joinData.trackId, () => {
         io.sockets.in('tracks_' + joinData.trackId).emit('joinedTrack', joinData);
-        console.log("Emited join", joinData);
         if (track.status === TRACK_STATUS_ACTIVE) {
           let init: InitRace = { id: track.id.toString(), raceName: track.id.toHexString(), start: Date.now(), end: Date.now() + 300, players: track.players};
           io.sockets.in('tracks_' + joinData.trackId).emit('start', init);
