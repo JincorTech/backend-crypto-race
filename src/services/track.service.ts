@@ -251,11 +251,6 @@ export class TrackService implements TrackServiceInterface {
   private assetsFromFuel(fuel: Array<string>): Asset[] {
       let result = [];
       for (let i = 0; i < fuel.length; i++) {
-        let asset = {
-          name: this.getAssetNameByIndex(i),
-          value: fuel[i]
-        };
-        console.log("Asset: ", asset);
         if (i === 5) {
           const name = this.getAssetNameByIndex(Math.floor(Math.random() * 4));
           const found = result.findIndex((elem) => {
@@ -264,11 +259,16 @@ export class TrackService implements TrackServiceInterface {
           if (found !== -1) {
             result[found].value += fuel[i];
           } else {
-            asset.name = name;
-            result.push(asset);
+            result.push({
+              name: name,
+              value: fuel[i]
+            });
           }
         } else {
-          result.push(asset);
+          result.push({
+            name: this.getAssetNameByIndex(i),
+            value: fuel[i]
+          });
         }
       }
       return result;
