@@ -85,7 +85,7 @@ export class TrackService implements TrackServiceInterface {
     const track = await this.getTrackById(id);
     const assets = this.assetsFromFuel(fuel);
     await this.addPlayerToTrack(track, user, assets);
-    await this.setPortfolio(user, user.mnemonic, track.id.toString(), assets);
+    await this.setPortfolio(user, mnemonic, track.id.toString(), assets);
     return track;
       // }
     // } catch (error) {
