@@ -12,7 +12,7 @@ import { Currency } from '../entities/currency';
 import { stat } from 'fs';
 
 export interface TrackServiceInterface {
-  joinToTrack(user: User, mnemonic: string, id: string, fuel: Array<any>): Promise<Track>;
+  joinToTrack(user: User, mnemonic: string, id: string, fuel: Array<any>, ship: number): Promise<Track>;
   setPortfolio(
     user: User,
     mnemonic: string,
@@ -88,13 +88,13 @@ export class TrackService implements TrackServiceInterface {
     return this.trackRepo.find({where: {status: TRACK_STATUS_AWAITING}});
   }
 
-  async joinToTrack(user: User, mnemonic: string, id: string, fuel: Array<any>): Promise<Track> {
+  async joinToTrack(user: User, mnemonic: string, id: string, fuel: Array<any>, ship: number): Promise<Track> {
     // try {
     const account = this.web3Client.getAccountByMnemonicAndSalt(mnemonic, user.ethWallet.salt);
       // this.web3Client.joinToTrack(account, id);
     const track = await this.getTrackById(id);
     const assets = this.assetsFromFuel(fuel);
-    await this.addPlayerToTrack(track, user, assets);
+    await this.addPlayerToTrack(track, user, assets, ship);
     await this.setPortfolio(user, mnemonic, track.id.toString(), assets);
     return track;
       // }
@@ -234,7 +234,7 @@ export class TrackService implements TrackServiceInterface {
     return result;
   }
 
-  private async addPlayerToTrack(track: Track, player: User, fuel: Asset[]): Promise<boolean> {
+  private async addPlayerToTrack(track: Track, player: User, fuel: Asset[], ship: number): Promise<boolean> {
     // const exists = await getConnection().mongoManager.find(Track, {
     //   where: {
     //     users: { $in: [ player.id.toString() ] },
@@ -244,7 +244,7 @@ export class TrackService implements TrackServiceInterface {
     // if (exists.length > 0) {
     //   return false;
     // }
-    track.addPlayer(player, 'nova', fuel);
+    track.addPlayer(player, ship, fuel);
     await this.trackRepo.save(track);
     return true;
   }

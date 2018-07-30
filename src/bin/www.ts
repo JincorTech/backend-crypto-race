@@ -93,7 +93,7 @@ createConnection(ormOptions).then(async connection => {
         io.sockets.in(socket.id).emit('error', {message: "Track is already active"});
         return;
       }
-      track = await trackService.joinToTrack(user, user.mnemonic, joinData.trackId, joinData.fuel);
+      track = await trackService.joinToTrack(user, user.mnemonic, joinData.trackId, joinData.fuel, joinData.ship);
       if (!track) {
         io.sockets.in(socket.id).emit('error', {message: "Can not join  track"});
       }
@@ -116,7 +116,6 @@ createConnection(ormOptions).then(async connection => {
             if (track.end <= now) {
               for (let i = 0; i < stats.length; i++) {
                 const name = (await getConnection().mongoManager.getRepository(User).findOneById(stats[i].player)).name;
-                console.log("Name: ", name);
                 stats[i] = {
                   id: stats[i].player.toString(),
                   position: i,
@@ -125,8 +124,6 @@ createConnection(ormOptions).then(async connection => {
                   prize: i === 0 ? 0.1 : 0
                 };
               }
-
-              console.log("Here are some winners: ", stats);
               await trackService.finishTrack(track, stats);
               io.sockets.in('tracks_' + joinData.trackId).emit('gameover', stats);
               clearInterval(timer);

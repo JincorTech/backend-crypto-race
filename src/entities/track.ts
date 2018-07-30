@@ -76,7 +76,7 @@ export class Track {
     return track;
   }
 
-  addPlayer(player: User, ship: string, fuel: Asset[]) : boolean {
+  addPlayer(player: User, ship: number, fuel: Asset[]) : boolean {
     if (this.status !== TRACK_STATUS_AWAITING) {
       return false;
     }
