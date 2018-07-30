@@ -255,6 +255,7 @@ export class TrackService implements TrackServiceInterface {
           name: this.getAssetNameByIndex(i),
           value: fuel[i]
         };
+        console.log("Asset: ", asset);
         if (i === 5) {
           const name = this.getAssetNameByIndex(Math.floor(Math.random() * 4));
           const found = result.findIndex((elem) => {
