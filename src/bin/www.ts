@@ -130,16 +130,6 @@ createConnection(ormOptions).then(async connection => {
               await trackService.finishTrack(track, stats);
               io.sockets.in('tracks_' + joinData.trackId).emit('gameover', stats);
               clearInterval(timer);
-              // const winners = stats.map(async (stat, index) => {
-              //   const name = (await getConnection().mongoManager.getRepository(User).findOneById(stat.player)).name;
-              //   return await {
-              //     id: stat.player.toString(),
-              //     position: index,
-              //     name,
-              //     score: stat.score,
-              //     prize: index === 0 ? 0.1 : 0
-              //   };
-              // });
             }
           }, 5000);
         }

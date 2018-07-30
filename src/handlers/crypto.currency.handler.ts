@@ -13,7 +13,6 @@ export class CryptoCurrencyHandler implements CryptoCurrencyHandlerInterface {
         const now = Date.now();
         let currentTime = now + (5 - (now % 5));
         let rate = cryptoSocket.Exchanges['bittrex'];
-        console.log("BTC: ", rate.BTCUSD);
         getConnection().mongoManager.save(Currency, Currency.createCurrency({
           timestamp: currentTime,
           name: 'LTC',
