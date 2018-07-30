@@ -91,6 +91,7 @@ createConnection(ormOptions).then(async connection => {
       }
       socket.join('tracks_' + joinData.trackId, () => {
         io.sockets.in('tracks_' + joinData.trackId).emit('joinedTrack', joinData);
+        console.log("Emited join", joinData);
         if (track.status === TRACK_STATUS_ACTIVE) {
           let init: InitRace = { id: track.id.toString(), raceName: track.id.toHexString(), start: Date.now(), end: Date.now() + 300, players: track.players};
           io.sockets.in('tracks_' + joinData.trackId).emit('start', init);
@@ -98,7 +99,6 @@ createConnection(ormOptions).then(async connection => {
           let timer = setInterval(async () => {
             let now = Date.now();
             const stats = await trackService.getStats(track.id.toString(), now);
-            console.log("stats: ", stats);
             const playerPositions = stats.map((stat, index) => {
               return {
                 id: stat.player.toString(),
