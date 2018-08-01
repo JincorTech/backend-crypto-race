@@ -64,6 +64,7 @@ createConnection(ormOptions).then(async connection => {
     if(!user) {
       io.sockets.in(socket.id).emit('error', {message: "User not found"});
       socket.disconnect(true);
+      return false;
     }
     socket.on('reqProfile', () => {
       io.sockets.in(socket.id).emit('resProfile', {
