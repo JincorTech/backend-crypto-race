@@ -10,7 +10,7 @@ import {createConnection, ConnectionOptions, getConnection, getMongoManager, Obj
 import { AuthClientType } from '../services/auth.client';
 import { TrackServiceType, TrackService, TrackServiceInterface } from '../services/track.service';
 import { User } from '../entities/user';
-import {Track, TRACK_STATUS_ACTIVE, TRACK_STATUS_AWAITING, TRACK_STATUS_FINISHED} from '../entities/track';
+import { Track, TRACK_STATUS_ACTIVE, TRACK_STATUS_AWAITING, TRACK_STATUS_FINISHED } from '../entities/track';
 import { ancestorWhere } from 'tslint';
 // import { jwt_decode } from 'jwt-decode';
 
@@ -61,6 +61,11 @@ createConnection(ormOptions).then(async connection => {
   sock.on('connect', async socket => {
     const user = await getConnection().mongoManager.findOne(User, {where: {email: socket.handshake.query.email}});
 
+    if(!user) {
+      io.sockets.in(socket.id).emit('error', {message: "User not found"});
+      socket.disconnect(true);
+      return false;
+    }
     socket.on('reqProfile', () => {
       io.sockets.in(socket.id).emit('resProfile', {
         picture: user.picture,
@@ -146,9 +151,11 @@ createConnection(ormOptions).then(async connection => {
       const tracks = await getConnection().mongoManager.find(Track, {take: 1000});
       socket.emit('initTracks',{tracks: tracks});
       socket.broadcast.emit('initTracks',{tracks: tracks});
+
     });
 
     socket.on('loadTrack', async (joinData: any) => {
+
       const track = await trackService.getTrackById(joinData.trackId);
       if (!track) {
         io.sockets.in(socket.id).emit('error', {message: "Track not found"});
@@ -162,6 +169,7 @@ createConnection(ormOptions).then(async connection => {
         let init: InitRace = { id: track.id.toString(), raceName: track.id.toHexString(), start: track.start, end: track.end, players: track.players};
         io.sockets.in(socket.id).emit('start', init);
       });
+
     });
 
     socket.on('moveX', (strafeData: Strafe) => {
@@ -173,17 +181,21 @@ createConnection(ormOptions).then(async connection => {
      * ================== CHAT SECTION ===============
      */
     socket.on('joinChat', async (joinData: any) => {
+
       socket.join('chats_' + joinData.trackId, () => {
         if(!messages[joinData.trackId] || messages[joinData.trackId].length === 0) {
           messages[joinData.trackId] = [];
         }
         io.sockets.in('chats_' + joinData.trackId).emit('joinedChat', messages[joinData.trackId]);
       });
+
     });
 
     socket.on('message', message => {
+
       messages[message.chatId].push({ author: user.name, userId: user.id, ts: Date.now(), message });
       io.sockets.in('chats_' + message.chatId).emit('updateChat', messages[message.chatId]);
+
     });
 
   });
