@@ -147,6 +147,7 @@ createConnection(ormOptions).then(async connection => {
               if (botTrack.status === TRACK_STATUS_ACTIVE) {
                 let init: InitRace = { id: botTrack.id.toString(), raceName: botTrack.id.toHexString(), start: botTrack.start, end: botTrack.end, players: botTrack.players};
                 io.sockets.in('tracks_' + botTrack.id.toHexString()).emit('start', init);
+                let currenciesStart = await trackService.getCurrencyRates(botTrack.start);
 
                 let timer = setInterval(async() => {
                   let now = Math.floor(Date.now() / 1000);
@@ -158,7 +159,8 @@ createConnection(ormOptions).then(async connection => {
                       id: stat.player.toString(),
                       position: index,
                       score: stat.score,
-                      currencies: currencies
+                      currencies: currencies,
+                      currenciesStart: currenciesStart
                     };
                   });
                   io.sockets.in('tracks_' + botTrack.id.toHexString()).emit('positionUpdate', playerPositions);
@@ -189,12 +191,12 @@ createConnection(ormOptions).then(async connection => {
         }
       }, 1000 * 60 * 3, track);
 
-      socket.join('tracks_' + joinData.trackId, () => {
+      socket.join('tracks_' + joinData.trackId, async() => {
         io.sockets.in('tracks_' + joinData.trackId).emit('joinedTrack', joinData);
         if (track.status === TRACK_STATUS_ACTIVE) {
           let init: InitRace = { id: track.id.toString(), raceName: track.id.toHexString(), start: track.start, end: track.end, players: track.players};
           io.sockets.in('tracks_' + joinData.trackId).emit('start', init);
-
+          let currenciesStart = await trackService.getCurrencyRates(track.start);
           let timer = setInterval(async() => {
             let now = Math.floor(Date.now() / 1000);
             now = now % 5 === 0 ? now : now + (5 - (now % 5));
@@ -205,7 +207,8 @@ createConnection(ormOptions).then(async connection => {
                 id: stat.player.toString(),
                 position: index,
                 score: stat.score,
-                currencies: currencies
+                currencies: currencies,
+                currenciesStart: currenciesStart
               };
             });
             io.sockets.in('tracks_' + joinData.trackId).emit('positionUpdate', playerPositions);
