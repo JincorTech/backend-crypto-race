@@ -98,8 +98,9 @@ export class Track {
 
     if (this.numPlayers === this.maxPlayers) {
       this.status = TRACK_STATUS_ACTIVE;
-      const now = Date.now();
-      this.start = now + (5 - (now % 5));
+      let now = Math.floor(Date.now() / 1000);
+      now = now % 5 === 0 ? now : now + (5 - (now % 5));
+      this.start = now;
       this.end = this.start + this.duration;
     }
     return true;
