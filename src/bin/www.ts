@@ -118,13 +118,16 @@ createConnection(ormOptions).then(async connection => {
           io.sockets.in('tracks_' + joinData.trackId).emit('start', init);
 
           let timer = setInterval(async() => {
-            let now = Date.now();
+            let now = Math.floor(Date.now() / 1000);
+            now = now % 5 === 0 ? now : now + (5 - (now % 5));
             let stats = await trackService.getStats(track.id.toString(), now);
+            let currencies = await trackService.getCurrencyRates(now);
             const playerPositions = stats.map((stat, index) => {
               return {
                 id: stat.player.toString(),
                 position: index,
-                score: stat.score
+                score: stat.score,
+                currencies: currencies
               };
             });
             io.sockets.in('tracks_' + joinData.trackId).emit('positionUpdate', playerPositions);

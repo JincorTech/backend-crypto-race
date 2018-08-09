@@ -33,6 +33,7 @@ export interface TrackServiceInterface {
   getWinners(id: string): Promise<any>;
   finishTrack(track: Track, winners: any);
   getRewards(user: User, mnemonic: string, id: string): Promise<any>;
+  getCurrencyRates(timestamp: number): Promise<any>;
 }
 
 @injectable()
