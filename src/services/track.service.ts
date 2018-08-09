@@ -67,9 +67,9 @@ export class TrackService implements TrackServiceInterface {
     track.betAmount = betAmount;
     track.maxPlayers = maxPlayers;
     track.numPlayers = 0;
-    track.duration = 300000;
+    track.duration = 300;
     track.type = TRACK_TYPE_BACKEND;
-    track.timestamp = Date.now();
+    track.timestamp = Math.floor(Date.now() / 1000);
     track.status = TRACK_STATUS_AWAITING;
     await getConnection().mongoManager.getRepository(Track).save(track);
 
@@ -95,7 +95,7 @@ export class TrackService implements TrackServiceInterface {
 
     this.web3Client.joinToTrack(account, id, assets).then(r => {
       if (track.numPlayers === track.maxPlayers) {
-        this.startTrack(track.id.toHexString(), Math.floor(track.start / 1000));
+        this.startTrack(track.id.toHexString(), track.start);
       }
     });
     return track;
@@ -168,7 +168,7 @@ export class TrackService implements TrackServiceInterface {
 
     await this.trackRepo.save(track);
 
-    this.web3Client.startTrack(track.id.toHexString(), Math.floor(track.start / 1000));
+    this.web3Client.startTrack(track.id.toHexString(), track.start);
 
     return true;
   }

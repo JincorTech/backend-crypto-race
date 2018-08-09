@@ -10,8 +10,8 @@ export class CryptoCurrencyHandler implements CryptoCurrencyHandlerInterface {
     setInterval(
       async function() {
         cryptoSocket.start('bittrex',['LTCUSD','BTCUSD', 'XRPUSD', 'ETHUSD', 'BCHUSD']);
-        const now = Date.now();
-        let currentTime = now + (5 - (now % 5));
+        const now = Math.floor(Date.now() / 1000);
+        let currentTime = now % 5 === 0 ? now : now + (5 - (now % 5));
         let rate = cryptoSocket.Exchanges['bittrex'];
         getConnection().mongoManager.save(Currency, Currency.createCurrency({
           timestamp: currentTime,
