@@ -18,7 +18,7 @@ export interface TrackServiceInterface {
     nameTrack: string,
     portfolio: Array<Asset>
   ): Promise<any>;
-  getPortfolio(user: User, id: string);
+  getPortfolio(user: User, id: string): Promise<Portfolio>;
   getAllTracks(): Promise<Array<Track>>;
   getTrackById(name: string): Promise<Track>;
   getTracksByUser(user: User): Promise<Array<Track>>;

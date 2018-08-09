@@ -139,7 +139,7 @@ createConnection(ormOptions).then(async connection => {
             let botTrack = await trackService.joinToTrack(bot, bot.mnemonic, track.id.toHexString(), [], 2);
             io.sockets.in('tracks_' + track.id.toHexString()).emit('joinedTrack', {
               trackId: track.id.toHexString(),
-              fuel: [],
+              fuel: (await trackService.getPortfolio(bot, botTrack.id.toHexString())).assets,
               ship: 2
             });
 
