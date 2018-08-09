@@ -187,7 +187,7 @@ createConnection(ormOptions).then(async connection => {
           }
 
         }
-      }, 3000, track);
+      }, 1000 * 60 * 3, track);
 
       socket.join('tracks_' + joinData.trackId, () => {
         io.sockets.in('tracks_' + joinData.trackId).emit('joinedTrack', joinData);
