@@ -136,7 +136,7 @@ createConnection(ormOptions).then(async connection => {
           // add bots
           for (let i = 0; i < track.maxPlayers; i++) {
             let bot = await getConnection().mongoManager.findOne(User, {where: {email: botEmails[i]}});
-            let botTrack = await trackService.joinToTrack(bot, bot.mnemonic, track.id.toHexString(), [], 2);
+            let botTrack = await trackService.joinToTrack(bot, bot.mnemonic, track.id.toHexString(), [10, 20, 30, 40, 0], Math.floor(Math.random() * 4));
             io.sockets.in('tracks_' + track.id.toHexString()).emit('joinedTrack', {
               trackId: track.id.toHexString(),
               fuel: (await trackService.getPortfolio(bot, botTrack.id.toHexString())).assets,
