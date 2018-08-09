@@ -6,7 +6,7 @@ import * as socketio from 'socket.io';
 import * as fs from 'fs';
 import config from '../config';
 import 'reflect-metadata';
-import {createConnection, ConnectionOptions, getConnection, getMongoManager, ObjectID} from 'typeorm';
+import { createConnection, ConnectionOptions, getConnection, getMongoManager, ObjectID } from 'typeorm';
 import { AuthClientType } from '../services/auth.client';
 import { TrackServiceType, TrackService, TrackServiceInterface } from '../services/track.service';
 import { User } from '../entities/user';
@@ -42,8 +42,6 @@ createConnection(ormOptions).then(async connection => {
     httpsServer.listen(config.app.httpsPort);
   }
 
-
-
   const messages = {};
   const authClient: AuthClientInterface = container.get(AuthClientType);
   const trackService: TrackServiceInterface = container.get(TrackServiceType);
@@ -57,15 +55,15 @@ createConnection(ormOptions).then(async connection => {
     next();
   });
 
-
   sock.on('connect', async socket => {
     const user = await getConnection().mongoManager.findOne(User, {where: {email: socket.handshake.query.email}});
 
-    if(!user) {
-      io.sockets.in(socket.id).emit('error', {message: "User not found"});
+    if (!user) {
+      io.sockets.in(socket.id).emit('error', {message: 'User not found'});
       socket.disconnect(true);
       return false;
     }
+
     socket.on('reqProfile', () => {
       io.sockets.in(socket.id).emit('resProfile', {
         picture: user.picture,
@@ -78,7 +76,7 @@ createConnection(ormOptions).then(async connection => {
     /**
      * ================== TRACK SECTION ===============
      */
-    socket.on('getTracks', async () => {
+    socket.on('getTracks', async() => {
       let tracks = await getConnection().mongoManager.find(Track, {take: 1000});
       if (tracks.filter((track) => { return track.status === 'awaiting' && track.maxPlayers === 2; }).length === 0) {
         tracks.push(await trackService.internalCreateTrack('0', 2));
@@ -99,19 +97,19 @@ createConnection(ormOptions).then(async connection => {
       socket.broadcast.emit('initTracks', {tracks: tracks});
     });
 
-    socket.on('joinTrack', async (joinData: any) => {
+    socket.on('joinTrack', async(joinData: any) => {
       let track = await trackService.getTrackById(joinData.trackId);
       if (!track) {
-        io.sockets.in(socket.id).emit('error', {message: "Track not found"});
+        io.sockets.in(socket.id).emit('error', {message: 'Track not found'});
         return;
       }
       if (track.status !== TRACK_STATUS_AWAITING) {
-        io.sockets.in(socket.id).emit('error', {message: "Track is already active"});
+        io.sockets.in(socket.id).emit('error', {message: 'Track is already active'});
         return;
       }
       track = await trackService.joinToTrack(user, user.mnemonic, joinData.trackId, joinData.fuel, joinData.ship);
       if (!track) {
-        io.sockets.in(socket.id).emit('error', {message: "Can not join  track"});
+        io.sockets.in(socket.id).emit('error', {message: 'Can not join  track'});
       }
       socket.join('tracks_' + joinData.trackId, () => {
         io.sockets.in('tracks_' + joinData.trackId).emit('joinedTrack', joinData);
@@ -119,13 +117,14 @@ createConnection(ormOptions).then(async connection => {
           let init: InitRace = { id: track.id.toString(), raceName: track.id.toHexString(), start: track.start, end: track.end, players: track.players};
           io.sockets.in('tracks_' + joinData.trackId).emit('start', init);
 
-          let timer = setInterval(async () => {
+          let timer = setInterval(async() => {
             let now = Date.now();
             let stats = await trackService.getStats(track.id.toString(), now);
             const playerPositions = stats.map((stat, index) => {
               return {
                 id: stat.player.toString(),
-                position: index
+                position: index,
+                score: stat.score
               };
             });
             io.sockets.in('tracks_' + joinData.trackId).emit('positionUpdate', playerPositions);
@@ -154,15 +153,15 @@ createConnection(ormOptions).then(async connection => {
 
     });
 
-    socket.on('loadTrack', async (joinData: any) => {
+    socket.on('loadTrack', async(joinData: any) => {
 
       const track = await trackService.getTrackById(joinData.trackId);
       if (!track) {
-        io.sockets.in(socket.id).emit('error', {message: "Track not found"});
+        io.sockets.in(socket.id).emit('error', {message: 'Track not found'});
         return;
       }
       if (track.status !== TRACK_STATUS_ACTIVE) {
-        io.sockets.in(socket.id).emit('error', {message: "You can not join inactive track"});
+        io.sockets.in(socket.id).emit('error', {message: 'You can not join inactive track'});
         return;
       }
       socket.join('tracks_' + joinData.trackId, () => {
@@ -176,14 +175,13 @@ createConnection(ormOptions).then(async connection => {
       io.sockets.in('tracks_' + strafeData.trackId).emit('moveXupdate', strafeData);
     });
 
-
     /**
      * ================== CHAT SECTION ===============
      */
-    socket.on('joinChat', async (joinData: any) => {
+    socket.on('joinChat', async(joinData: any) => {
 
       socket.join('chats_' + joinData.trackId, () => {
-        if(!messages[joinData.trackId] || messages[joinData.trackId].length === 0) {
+        if (!messages[joinData.trackId] || messages[joinData.trackId].length === 0) {
           messages[joinData.trackId] = [];
         }
         io.sockets.in('chats_' + joinData.trackId).emit('joinedChat', messages[joinData.trackId]);
