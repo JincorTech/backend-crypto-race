@@ -136,7 +136,7 @@ createConnection(ormOptions).then(async connection => {
           // add bots
           for (let i = 0; i < track.maxPlayers; i++) {
             let bot = await getConnection().mongoManager.findOne(User, {where: {email: botEmails[i]}});
-            await trackService.joinToTrack(bot, bot.mnemonic, track.id.toHexString(), [], 2);
+            let botTrack = await trackService.joinToTrack(bot, bot.mnemonic, track.id.toHexString(), [], 2);
             io.sockets.in('tracks_' + track.id.toHexString()).emit('joinedTrack', {
               trackId: track.id.toHexString(),
               fuel: [],
@@ -144,14 +144,14 @@ createConnection(ormOptions).then(async connection => {
             });
 
             if ((actualTrack.numPlayers + 1) === track.maxPlayers) {
-              if (track.status === TRACK_STATUS_ACTIVE) {
-                let init: InitRace = { id: track.id.toString(), raceName: track.id.toHexString(), start: track.start, end: track.end, players: track.players};
-                io.sockets.in('tracks_' + track.id.toHexString()).emit('start', init);
+              if (botTrack.status === TRACK_STATUS_ACTIVE) {
+                let init: InitRace = { id: botTrack.id.toString(), raceName: botTrack.id.toHexString(), start: botTrack.start, end: botTrack.end, players: botTrack.players};
+                io.sockets.in('tracks_' + botTrack.id.toHexString()).emit('start', init);
 
                 let timer = setInterval(async() => {
                   let now = Math.floor(Date.now() / 1000);
                   now = now % 5 === 0 ? now : now + (5 - (now % 5));
-                  let stats = await trackService.getStats(track.id.toString(), now);
+                  let stats = await trackService.getStats(botTrack.id.toString(), now);
                   let currencies = await trackService.getCurrencyRates(now);
                   const playerPositions = stats.map((stat, index) => {
                     return {
@@ -161,8 +161,8 @@ createConnection(ormOptions).then(async connection => {
                       currencies: currencies
                     };
                   });
-                  io.sockets.in('tracks_' + joinData.trackId).emit('positionUpdate', playerPositions);
-                  if (track.end <= now) {
+                  io.sockets.in('tracks_' + botTrack.id.toHexString()).emit('positionUpdate', playerPositions);
+                  if (botTrack.end <= now) {
                     for (let i = 0; i < stats.length; i++) {
                       const name = (await getConnection().mongoManager.getRepository(User).findOneById(stats[i].player)).name;
                       stats[i] = {
@@ -173,8 +173,8 @@ createConnection(ormOptions).then(async connection => {
                         prize: i === 0 ? 0.1 : 0
                       };
                     }
-                    await trackService.finishTrack(track, stats);
-                    io.sockets.in('tracks_' + joinData.trackId).emit('gameover', stats);
+                    await trackService.finishTrack(botTrack, stats);
+                    io.sockets.in('tracks_' + botTrack.id.toHexString()).emit('gameover', stats);
                     clearInterval(timer);
                   }
                 }, 5000);
