@@ -40,6 +40,8 @@ export interface Web3ClientInterface {
 
   withdrawRewards(account: any, id: string): Promise<void>;
 
+  setRates(timestamp: number, names: string[], amounts: number[]): Promise<any>;
+
   isHex(key: any): boolean;
 
   toHexSha3(value: string): string;
@@ -337,6 +339,40 @@ export class Web3Client implements Web3ClientInterface {
         gas: 2000000,
         nonce: await this.web3.eth.getTransactionCount(account.address, 'pending'),
         data: this.raceBase.methods.setPortfolio(nameBytes32, names, amounts).encodeABI()
+      };
+
+      account.signTransaction(params).then(transaction => {
+        this.web3.eth.sendSignedTransaction(transaction.rawTransaction)
+          .on('transactionHash', transactionHash => {
+            resolve(transactionHash);
+          })
+          .on('error', (error) => {
+            reject(error);
+          })
+          .catch((error) => {
+            reject(error);
+          });
+      });
+    });
+  }
+
+  async setRates(timestamp: number, names: string[], amounts: number[]): Promise<any> {
+    const preparedNames: string[] = [];
+    const preparedAmounts: number[] = [];
+
+    for (let i = 0; i < names.length; i++) {
+      preparedNames.push(this.web3.utils.toHex(names[i]));
+      preparedAmounts.push(this.web3.utils.toBN(amounts[i]));
+    }
+
+    return new Promise(async(resolve, reject) => {
+      const account = this.web3.eth.accounts.privateKeyToAccount(config.contracts.raceBase.ownerPk);
+      const params = {
+        value: '0',
+        to: this.raceBase.options.address,
+        gas: 2000000,
+        nonce: await this.web3.eth.getTransactionCount(account.address, 'pending'),
+        data: this.rate.methods.setRates(this.web3.toBN(timestamp), preparedNames, preparedAmounts).encodeABI()
       };
 
       account.signTransaction(params).then(transaction => {

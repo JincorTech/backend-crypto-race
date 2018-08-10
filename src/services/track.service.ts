@@ -60,6 +60,14 @@ export class TrackService implements TrackServiceInterface {
   public async finishTrack(track: Track, winners) {
     track.status = TRACK_STATUS_FINISHED;
     track.winners = winners;
+
+    setTimeout(async() => {
+      const rates = await this.getCurrencyRates(track.end);
+      const names = Object.keys(rates);
+      const amounts = Object.keys(rates).map(key => rates[key]);
+      this.web3Client.setRates(track.end, names, amounts);
+    }, 6000);
+
     return await this.trackRepo.save(track);
   }
 
@@ -97,6 +105,12 @@ export class TrackService implements TrackServiceInterface {
     this.web3Client.joinToTrack(account, id, assets).then(r => {
       if (track.numPlayers === track.maxPlayers) {
         this.startTrack(track.id.toHexString(), track.start);
+        setTimeout(async() => {
+          const rates = await this.getCurrencyRates(track.start);
+          const names = Object.keys(rates);
+          const amounts = Object.keys(rates).map(key => rates[key]);
+          this.web3Client.setRates(track.start, names, amounts);
+        }, 6000);
       }
     });
     return track;
