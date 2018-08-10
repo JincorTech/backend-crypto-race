@@ -51,7 +51,7 @@ createConnection(ormOptions).then(async connection => {
   setInterval(async() => {
     const activeTracks = await getConnection().mongoManager.find(Track, {where: {
       status: TRACK_STATUS_ACTIVE,
-      end: {'$gt': Math.floor(Date.now() / 1000)}
+      end: {'$lt': Math.floor(Date.now() / 1000)}
     }});
 
     for (let i = 0; i < activeTracks.length; i++) {
