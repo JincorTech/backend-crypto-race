@@ -369,7 +369,7 @@ export class Web3Client implements Web3ClientInterface {
       const account = this.web3.eth.accounts.privateKeyToAccount(config.contracts.raceBase.ownerPk);
       const params = {
         value: '0',
-        to: this.raceBase.options.address,
+        to: this.rate.options.address,
         gas: 2000000,
         nonce: await this.web3.eth.getTransactionCount(account.address, 'pending'),
         data: this.rate.methods.setRates(this.web3.utils.toBN(timestamp), preparedNames, preparedAmounts).encodeABI()
