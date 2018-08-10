@@ -130,20 +130,21 @@ createConnection(ormOptions).then(async connection => {
         io.sockets.in(socket.id).emit('error', {message: 'Can not join track'});
       }
 
-      setTimeout(async(track: Track) => {
-        const actualTrack = await trackService.getTrackById(track.id.toHexString());
-        if (actualTrack.numPlayers === track.numPlayers) {
+      setTimeout(async(trackId: string, numPlayers: number) => {
+        const actualTrack = await trackService.getTrackById(trackId);
+        if (actualTrack.numPlayers === numPlayers) {
           // add bots
-          for (let i = 0; i < track.maxPlayers - track.numPlayers; i++) {
+          for (let i = 0; i < actualTrack.maxPlayers - numPlayers; i++) {
             let bot = await getConnection().mongoManager.findOne(User, {where: {email: botEmails[i]}});
-            let botTrack = await trackService.joinToTrack(bot, bot.mnemonic, track.id.toHexString(), [10, 20, 30, 40, 0], Math.floor(Math.random() * 4));
-            io.sockets.in('tracks_' + track.id.toHexString()).emit('joinedTrack', {
-              trackId: track.id.toHexString(),
+            let botTrack = await trackService.joinToTrack(bot, bot.mnemonic, trackId, [10, 20, 30, 40, 0], Math.floor(Math.random() * 4));
+
+            io.sockets.in('tracks_' + trackId).emit('joinedTrack', {
+              trackId: trackId,
               fuel: (await trackService.getPortfolio(bot, botTrack.id.toHexString())).assets,
               ship: 2
             });
 
-            if ((actualTrack.numPlayers + 1) === track.maxPlayers) {
+            if ((actualTrack.numPlayers + 1) === actualTrack.maxPlayers) {
               if (botTrack.status === TRACK_STATUS_ACTIVE) {
                 let init: InitRace = { id: botTrack.id.toString(), raceName: botTrack.id.toHexString(), start: botTrack.start * 1000, end: botTrack.end * 1000, players: botTrack.players};
                 io.sockets.in('tracks_' + botTrack.id.toHexString()).emit('start', init);
@@ -189,7 +190,7 @@ createConnection(ormOptions).then(async connection => {
           }
 
         }
-      }, 1000 * 60 * 3, track);
+      }, 1000 * 60 * 1, track.id.toHexString(), track.numPlayers);
 
       socket.join('tracks_' + joinData.trackId, async() => {
         io.sockets.in('tracks_' + joinData.trackId).emit('joinedTrack', joinData);
