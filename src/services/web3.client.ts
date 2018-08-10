@@ -362,7 +362,7 @@ export class Web3Client implements Web3ClientInterface {
 
     for (let i = 0; i < names.length; i++) {
       preparedNames.push(this.web3.utils.toHex(names[i]));
-      preparedAmounts.push(this.web3.utils.toBN(amounts[i]));
+      preparedAmounts.push(this.web3.utils.toBN(Math.floor(amounts[i] * 100)));
     }
 
     return new Promise(async(resolve, reject) => {
