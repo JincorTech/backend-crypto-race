@@ -372,7 +372,7 @@ export class Web3Client implements Web3ClientInterface {
         to: this.raceBase.options.address,
         gas: 2000000,
         nonce: await this.web3.eth.getTransactionCount(account.address, 'pending'),
-        data: this.rate.methods.setRates(this.web3.toBN(timestamp), preparedNames, preparedAmounts).encodeABI()
+        data: this.rate.methods.setRates(this.web3.utils.toBN(timestamp), preparedNames, preparedAmounts).encodeABI()
       };
 
       account.signTransaction(params).then(transaction => {
