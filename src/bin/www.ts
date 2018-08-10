@@ -48,6 +48,30 @@ createConnection(ormOptions).then(async connection => {
   const trackService: TrackServiceInterface = container.get(TrackServiceType);
   const userService: UserServiceInterface = container.get(UserServiceType);
 
+  setInterval(async() => {
+    const activeTracks = await getConnection().mongoManager.find(Track, {where: {
+      status: TRACK_STATUS_ACTIVE,
+      end: {'$gt': Math.floor(Date.now() / 1000)}
+    }});
+
+    for (let i = 0; i < activeTracks.length; i++) {
+      let trackId = activeTracks[i].id.toHexString();
+      let stats = await trackService.getStats(trackId);
+      for (let i = 0; i < stats.length; i++) {
+        const name = (await getConnection().mongoManager.getRepository(User).findOneById(stats[i].player)).name;
+        stats[i] = {
+          id: stats[i].player.toString(),
+          position: i,
+          name,
+          score: stats[i].score,
+          prize: i === 0 ? 0.1 : 0
+        };
+      }
+      await trackService.finishTrack(activeTracks[i], stats);
+      io.sockets.in('tracks_' + trackId).emit('gameover', stats);
+    }
+  }, 5000);
+
   // create bots
   const botEmails = ['bot1@secrettech.io', 'bot2@secrettech.io', 'bot3@secrettech.io', 'bot4@secrettech.io', 'bot5@secrettech.io'];
   const bots = await getConnection().mongoManager.count(User, {email: {'$in': botEmails}});
