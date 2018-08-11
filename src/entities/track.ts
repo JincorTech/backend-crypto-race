@@ -1,5 +1,5 @@
 import { Entity, ObjectIdColumn, ObjectID, Column } from 'typeorm';
-import {User} from "./user";
+import { User } from './user';
 
 export const TRACK_TYPE_USER = 'user';
 export const TRACK_TYPE_BACKEND = 'backend';
@@ -57,6 +57,9 @@ export class Track {
   @Column()
   winners: Array<any>;
 
+  @Column()
+  latestActivity?: number;
+
   constructor() {
     this.players = [];
     this.users = [];
@@ -76,7 +79,7 @@ export class Track {
     return track;
   }
 
-  addPlayer(player: User, ship: number, fuel: Asset[]) : boolean {
+  addPlayer(player: User, ship: number, fuel: Asset[]): boolean {
     if (this.status !== TRACK_STATUS_AWAITING) {
       return false;
     }
@@ -103,6 +106,8 @@ export class Track {
       this.start = now;
       this.end = this.start + this.duration;
     }
+
+    this.latestActivity = Date.now();
     return true;
   }
 
