@@ -77,7 +77,7 @@ createConnection(ormOptions).then(async connection => {
       status: TRACK_STATUS_AWAITING,
       '$and': [
         {latestActivity: {'$ne': 0}},
-        {latestActivity: {'$lt': Date.now() - 1000 * 60}}
+        {latestActivity: {'$lt': (Date.now() - 60000)}}
       ]
     }});
 
@@ -188,6 +188,8 @@ createConnection(ormOptions).then(async connection => {
                 currenciesStart: currenciesStart
               };
             });
+
+            console.log(playerPositions);
             io.sockets.in('tracks_' + joinData.trackId).emit('positionUpdate', playerPositions);
             if (track.end <= now) {
               for (let i = 0; i < stats.length; i++) {
@@ -274,8 +276,8 @@ async function addBots(trackService: TrackServiceInterface, botEmails, trackId, 
 
     if ((actualTrack.numPlayers + 1) === actualTrack.maxPlayers) {
       if (botTrack.status === TRACK_STATUS_ACTIVE) {
-        let init: InitRace = { id: botTrack.id.toString(), raceName: botTrack.id.toHexString(), start: botTrack.start * 1000, end: botTrack.end * 1000, players: botTrack.players };
-        io.sockets.in('tracks_' + botTrack.id.toHexString()).emit('start', init);
+        let init: InitRace = { id: botTrack.id.toString(), raceName: trackId, start: botTrack.start * 1000, end: botTrack.end * 1000, players: botTrack.players };
+        io.sockets.in('tracks_' + trackId).emit('start', init);
         let currenciesStart = await trackService.getCurrencyRates(botTrack.start);
 
         let timer = setInterval(async() => {
@@ -292,7 +294,8 @@ async function addBots(trackService: TrackServiceInterface, botEmails, trackId, 
               currenciesStart: currenciesStart
             };
           });
-          io.sockets.in('tracks_' + botTrack.id.toHexString()).emit('positionUpdate', playerPositions);
+
+          io.sockets.in('tracks_' + trackId).emit('positionUpdate', playerPositions);
           if (botTrack.end <= now) {
             for (let i = 0; i < stats.length; i++) {
               const name = (await getConnection().mongoManager.getRepository(User).findOneById(stats[i].player)).name;
