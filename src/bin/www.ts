@@ -77,7 +77,7 @@ createConnection(ormOptions).then(async connection => {
       status: TRACK_STATUS_AWAITING,
       '$and': [
         {latestActivity: {'$ne': 0}},
-        {latestActivity: {'$gt': Date.now() - 1000 * 60}}
+        {latestActivity: {'$lt': Date.now() - 1000 * 60}}
       ]
     }});
 
