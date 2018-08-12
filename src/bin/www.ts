@@ -21,6 +21,7 @@ import { UserServiceType } from '../services/user.service';
 const httpServer = http.createServer(app);
 const io = socketio(httpServer);
 const ormOptions: ConnectionOptions = config.typeOrm as ConnectionOptions;
+const timerMap = {};
 
 createConnection(ormOptions).then(async connection => {
   /**
@@ -69,6 +70,8 @@ createConnection(ormOptions).then(async connection => {
       }
       await trackService.finishTrack(activeTracks[i], stats);
       io.sockets.in('tracks_' + trackId).emit('gameover', stats);
+      clearTimeout(timerMap[trackId]);
+      delete timerMap[trackId];
     }
   }, 5000);
 
@@ -77,7 +80,7 @@ createConnection(ormOptions).then(async connection => {
       status: TRACK_STATUS_AWAITING,
       '$and': [
         {latestActivity: {'$ne': 0}},
-        {latestActivity: {'$lt': (Date.now() - 60000)}}
+        {latestActivity: {'$lt': (Date.now() - 6000)}}
       ]
     }});
 
@@ -264,7 +267,7 @@ createConnection(ormOptions).then(async connection => {
 
 async function addBots(trackService: TrackServiceInterface, botEmails, trackId, numPlayers, socket) {
   const actualTrack = await trackService.getTrackById(trackId);
-  for (let i = 0; i < actualTrack.maxPlayers - actualTrack.numPlayers; i++) {
+  for (let i = 0; i <= actualTrack.maxPlayers - actualTrack.numPlayers; i++) {
     let bot = await getConnection().mongoManager.findOne(User, { where: { email: botEmails[i] } });
     let botTrack = await trackService.joinToTrack(bot, bot.mnemonic, trackId, [10, 20, 30, 40, 0], Math.floor(Math.random() * 4));
 
@@ -274,14 +277,14 @@ async function addBots(trackService: TrackServiceInterface, botEmails, trackId, 
       ship: 2
     });
 
-    if (actualTrack.maxPlayers === actualTrack.numPlayers + 1 + i) {
+    if (actualTrack.maxPlayers === actualTrack.numPlayers + i) {
       if (botTrack.status === TRACK_STATUS_ACTIVE) {
         let init: InitRace = { id: botTrack.id.toString(), raceName: trackId, start: botTrack.start * 1000, end: botTrack.end * 1000, players: botTrack.players };
         io.sockets.in('tracks_' + trackId).emit('start', init);
         let currenciesStart = await trackService.getCurrencyRates(botTrack.start);
 
-        let timeout = setTimeout(async function run() {
-          await processTrack(botTrack, currenciesStart, timeout);
+        timerMap[trackId] = setTimeout(async function run() {
+          await processTrack(botTrack, currenciesStart);
           setTimeout(run, 5000);
         }, 5000);
       }
@@ -291,7 +294,7 @@ async function addBots(trackService: TrackServiceInterface, botEmails, trackId, 
     io.emit('initTracks', { tracks: tracks });
   }
 
-  async function processTrack(botTrack: Track, currenciesStart: any, timer: NodeJS.Timer) {
+  async function processTrack(botTrack: Track, currenciesStart: any) {
     let now = Math.floor(Date.now() / 1000);
     now = now % 5 === 0 ? now : now + (5 - (now % 5));
     let stats = await trackService.getStats(botTrack.id.toString(), now);
@@ -306,20 +309,5 @@ async function addBots(trackService: TrackServiceInterface, botEmails, trackId, 
       };
     });
     io.sockets.in('tracks_' + trackId).emit('positionUpdate', playerPositions);
-    if (botTrack.end <= now) {
-      for (let i = 0; i < stats.length; i++) {
-        const name = (await getConnection().mongoManager.getRepository(User).findOneById(stats[i].player)).name;
-        stats[i] = {
-          id: stats[i].player.toString(),
-          position: i,
-          name,
-          score: stats[i].score,
-          prize: i === 0 ? 0.1 : 0
-        };
-      }
-      await trackService.finishTrack(botTrack, stats);
-      io.sockets.in('tracks_' + botTrack.id.toHexString()).emit('gameover', stats);
-      clearTimeout(timer);
-    }
   }
 }
