@@ -264,7 +264,7 @@ createConnection(ormOptions).then(async connection => {
 
 async function addBots(trackService: TrackServiceInterface, botEmails, trackId, numPlayers, socket) {
   const actualTrack = await trackService.getTrackById(trackId);
-  for (let i = 0; i < actualTrack.maxPlayers - numPlayers; i++) {
+  for (let i = 0; i < actualTrack.maxPlayers - actualTrack.numPlayers; i++) {
     let bot = await getConnection().mongoManager.findOne(User, { where: { email: botEmails[i] } });
     let botTrack = await trackService.joinToTrack(bot, bot.mnemonic, trackId, [10, 20, 30, 40, 0], Math.floor(Math.random() * 4));
 
@@ -274,48 +274,52 @@ async function addBots(trackService: TrackServiceInterface, botEmails, trackId, 
       ship: 2
     });
 
-    if ((actualTrack.numPlayers + 1) === actualTrack.maxPlayers) {
+    if (actualTrack.maxPlayers === actualTrack.numPlayers + 1 + i) {
       if (botTrack.status === TRACK_STATUS_ACTIVE) {
         let init: InitRace = { id: botTrack.id.toString(), raceName: trackId, start: botTrack.start * 1000, end: botTrack.end * 1000, players: botTrack.players };
         io.sockets.in('tracks_' + trackId).emit('start', init);
         let currenciesStart = await trackService.getCurrencyRates(botTrack.start);
 
-        let timer = setInterval(async() => {
-          let now = Math.floor(Date.now() / 1000);
-          now = now % 5 === 0 ? now : now + (5 - (now % 5));
-          let stats = await trackService.getStats(botTrack.id.toString(), now);
-          let currencies = await trackService.getCurrencyRates(now);
-          const playerPositions = stats.map((stat, index) => {
-            return {
-              id: stat.player.toString(),
-              position: index,
-              score: stat.score,
-              currencies: currencies,
-              currenciesStart: currenciesStart
-            };
-          });
-
-          io.sockets.in('tracks_' + trackId).emit('positionUpdate', playerPositions);
-          if (botTrack.end <= now) {
-            for (let i = 0; i < stats.length; i++) {
-              const name = (await getConnection().mongoManager.getRepository(User).findOneById(stats[i].player)).name;
-              stats[i] = {
-                id: stats[i].player.toString(),
-                position: i,
-                name,
-                score: stats[i].score,
-                prize: i === 0 ? 0.1 : 0
-              };
-            }
-            await trackService.finishTrack(botTrack, stats);
-            io.sockets.in('tracks_' + botTrack.id.toHexString()).emit('gameover', stats);
-            clearInterval(timer);
-          }
+        let timeout = setTimeout(async function run() {
+          await processTrack(botTrack, currenciesStart, timeout);
+          setTimeout(run, 5000);
         }, 5000);
       }
     }
 
     const tracks = await getConnection().mongoManager.find(Track, { take: 1000 });
     io.emit('initTracks', { tracks: tracks });
+  }
+
+  async function processTrack(botTrack: Track, currenciesStart: any, timer: NodeJS.Timer) {
+    let now = Math.floor(Date.now() / 1000);
+    now = now % 5 === 0 ? now : now + (5 - (now % 5));
+    let stats = await trackService.getStats(botTrack.id.toString(), now);
+    let currencies = await trackService.getCurrencyRates(now);
+    const playerPositions = stats.map((stat, index) => {
+      return {
+        id: stat.player.toString(),
+        position: index,
+        score: stat.score,
+        currencies: currencies,
+        currenciesStart: currenciesStart
+      };
+    });
+    io.sockets.in('tracks_' + trackId).emit('positionUpdate', playerPositions);
+    if (botTrack.end <= now) {
+      for (let i = 0; i < stats.length; i++) {
+        const name = (await getConnection().mongoManager.getRepository(User).findOneById(stats[i].player)).name;
+        stats[i] = {
+          id: stats[i].player.toString(),
+          position: i,
+          name,
+          score: stats[i].score,
+          prize: i === 0 ? 0.1 : 0
+        };
+      }
+      await trackService.finishTrack(botTrack, stats);
+      io.sockets.in('tracks_' + botTrack.id.toHexString()).emit('gameover', stats);
+      clearTimeout(timer);
+    }
   }
 }
