@@ -277,7 +277,7 @@ async function addBots(trackService: TrackServiceInterface, botEmails, trackId, 
       ship: 2
     });
 
-    if (actualTrack.maxPlayers === actualTrack.numPlayers + i) {
+    if (actualTrack.maxPlayers === actualTrack.numPlayers + i + 1) {
       if (botTrack.status === TRACK_STATUS_ACTIVE) {
         let init: InitRace = { id: botTrack.id.toString(), raceName: trackId, start: botTrack.start * 1000, end: botTrack.end * 1000, players: botTrack.players };
         io.sockets.in('tracks_' + trackId).emit('start', init);
