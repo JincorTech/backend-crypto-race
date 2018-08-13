@@ -301,7 +301,7 @@ async function addBots(trackService: TrackServiceInterface, botEmails, trackId, 
         //   setTimeout(run, 5000);
         // }, 100);
 
-        schedule.scheduleJob({start: new Date(botTrack.start * 1000), end: new Date(botTrack.end * 1000), second: 5}, function(botTrack, currenciesStart) {
+        schedule.scheduleJob({start: new Date(botTrack.start * 1000), end: new Date(botTrack.end * 1000), rule: '*/5 * * * * *'}, function(botTrack, currenciesStart) {
           processTrack(botTrack, currenciesStart);
         }.bind(null, botTrack, currenciesStart));
 
