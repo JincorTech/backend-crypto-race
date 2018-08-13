@@ -294,12 +294,12 @@ async function addBots(trackService: TrackServiceInterface, botEmails, trackId, 
       if (botTrack.status === TRACK_STATUS_ACTIVE) {
         let init: InitRace = { id: botTrack.id.toString(), raceName: trackId, start: botTrack.start * 1000, end: botTrack.end * 1000, players: botTrack.players };
         io.sockets.in('tracks_' + trackId).emit('start', init);
-        let currenciesStart = await trackService.getCurrencyRates(botTrack.start);
+        let currenciesStart = await trackService.getCurrencyRates(botTrack.start - 10);
 
         timerMap[trackId] = setTimeout(async function run() {
           await processTrack(botTrack, currenciesStart);
           setTimeout(run, 5000);
-        }, 5000);
+        }, 100);
 
         schedule.scheduleJob(new Date(botTrack.end * 1000 + 5), function(trackId) {
           processTrackFinish(trackId);
@@ -314,8 +314,8 @@ async function addBots(trackService: TrackServiceInterface, botEmails, trackId, 
   async function processTrack(botTrack: Track, currenciesStart: any) {
     let now = Math.floor(Date.now() / 1000);
     now = now % 5 === 0 ? now : now + (5 - (now % 5));
-    let stats = await trackService.getStats(botTrack.id.toString(), now);
-    let currencies = await trackService.getCurrencyRates(now);
+    let stats = await trackService.getStats(botTrack.id.toString(), now - 10);
+    let currencies = await trackService.getCurrencyRates(now - 10);
     const playerPositions = stats.map((stat, index) => {
       return {
         id: stat.player.toString(),
