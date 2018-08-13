@@ -12,7 +12,6 @@ import { TrackServiceType, TrackService, TrackServiceInterface } from '../servic
 import { User } from '../entities/user';
 import { Track, TRACK_STATUS_ACTIVE, TRACK_STATUS_AWAITING, TRACK_STATUS_FINISHED } from '../entities/track';
 import { UserServiceType } from '../services/user.service';
-import { Portfolio } from '../entities/portfolio';
 // import { jwt_decode } from 'jwt-decode';
 
 /**
@@ -302,13 +301,9 @@ async function addBots(trackService: TrackServiceInterface, botEmails, trackId, 
         //   setTimeout(run, 5000);
         // }, 100);
 
-        let portfolios = await trackService.getPortfolios(botTrack.id.toHexString());
-        schedule.scheduleJob({
-          start: new Date(botTrack.start * 1000), end: new Date(botTrack.end * 1000), rule: '*/5 * * * * *'},
-          async function(botTrack, currenciesStart, portfolios) {
-            processTrack(botTrack.id.toHexString(), currenciesStart, portfolios, botTrack.start);
-          }.bind(null, botTrack, currenciesStart, portfolios)
-        );
+        schedule.scheduleJob({start: new Date(botTrack.start * 1000), end: new Date(botTrack.end * 1000), rule: '*/5 * * * * *'}, function(botTrack, currenciesStart) {
+          processTrack(botTrack, currenciesStart);
+        }.bind(null, botTrack, currenciesStart));
 
         schedule.scheduleJob(new Date(botTrack.end * 1000 + 5), function(trackId) {
           processTrackFinish(trackId);
@@ -320,11 +315,11 @@ async function addBots(trackService: TrackServiceInterface, botEmails, trackId, 
     io.emit('initTracks', { tracks: tracks });
   }
 
-  async function processTrack(trackId: string, currenciesStart: any, portfolios: Portfolio[], start: number) {
+  async function processTrack(botTrack: Track, currenciesStart: any) {
     let now = Math.floor(Date.now() / 1000);
     now = now % 5 === 0 ? now : now + (5 - (now % 5));
-    let stats = await trackService.getStatsQuick(portfolios, start, now - 5);
-    let currencies = await trackService.getCurrencyRates(now - 5);
+    let stats = await trackService.getStats(botTrack.id.toString(), now - 10);
+    let currencies = await trackService.getCurrencyRates(now - 10);
     const playerPositions = stats.map((stat, index) => {
       return {
         id: stat.player.toString(),

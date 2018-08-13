@@ -19,7 +19,6 @@ export interface TrackServiceInterface {
     portfolio: Array<Asset>
   ): Promise<any>;
   getPortfolio(user: User, id: string): Promise<Portfolio>;
-  getPortfolios(id: string): Promise<Array<Portfolio>>;
   getAllTracks(): Promise<Array<Track>>;
   getTrackById(name: string): Promise<Track>;
   getTracksByUser(user: User): Promise<Array<Track>>;
@@ -31,7 +30,6 @@ export interface TrackServiceInterface {
   startTrack(id: string, start: number): Promise<boolean>;
   isReady(id: string): Promise<boolean>;
   getStats(id: string, end?: number): Promise<any>;
-  getStatsQuick(portfolios: Portfolio[], start: number, end: number): Promise<any>;
   getWinners(id: string): Promise<any>;
   finishTrack(track: Track, winners: any);
   getRewards(user: User, mnemonic: string, id: string): Promise<any>;
@@ -221,24 +219,6 @@ export class TrackService implements TrackServiceInterface {
     return playersStats.sort((a, b) => { return b.score - a.score; });
   }
 
-  async getStatsQuick(portfolios: Portfolio[], start: number, end: number): Promise<any> {
-    const ratios = this.getRatios(
-      await this.getCurrencyRates(start),
-      await this.getCurrencyRates(end)
-    );
-
-    const playersStats = [];
-
-    for (let i = 0; i < portfolios.length; i++) {
-      playersStats.push({
-        player: portfolios[i].user,
-        score: this.calculateScore(portfolios[i], ratios)
-      });
-    }
-
-    return playersStats.sort((a, b) => { return b.score - a.score; });
-  }
-
   async getWinners(id: string): Promise<any> {
     const stats = await this.getStats(id);
     const winners = [stats[0]];
@@ -255,12 +235,8 @@ export class TrackService implements TrackServiceInterface {
   }
 
   async getCurrencyRates(timestamp: number): Promise<any> {
-    const results = await Promise.all([
-      getConnection().mongoManager.find(Currency, {where: {timestamp: { $lte: timestamp }}, order: {timestamp: -1}, take: 5}),
-      getConnection().mongoManager.find(Currency, {where: {timestamp: { $gt: timestamp }}, order: {timestamp: 1}, take: 5})
-    ]);
-    const lte = results[0];
-    const gt = results[1];
+    const lte = await getConnection().mongoManager.find(Currency, {where: {timestamp: { $lte: timestamp }}, order: {timestamp: -1}, take: 5});
+    const gt = await getConnection().mongoManager.find(Currency, {where: {timestamp: { $gt: timestamp }}, order: {timestamp: 1}, take: 5});
     const gtTimestampDiff = gt.length > 0 ? gt[0].timestamp - timestamp : timestamp;
     const ltTimestampDiff = timestamp - lte[0].timestamp;
     let rates = [];
