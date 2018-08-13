@@ -293,7 +293,9 @@ async function addBots(trackService: TrackServiceInterface, botEmails, trackId, 
           setTimeout(run, 5000);
         }, 5000);
 
-        schedule.scheduleJob(new Date(botTrack.end * 1000 + 5), trackId => { processTrackFinish(trackId); }).bind(null, botTrack.id.toHexString());
+        schedule.scheduleJob(new Date(botTrack.end * 1000 + 5), function(trackId) {
+          processTrackFinish(trackId);
+        }.bind(null, botTrack.id.toHexString()));
       }
     }
 
