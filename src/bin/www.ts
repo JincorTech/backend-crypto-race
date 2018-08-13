@@ -11,7 +11,6 @@ import { AuthClientType } from '../services/auth.client';
 import { TrackServiceType, TrackService, TrackServiceInterface } from '../services/track.service';
 import { User } from '../entities/user';
 import { Track, TRACK_STATUS_ACTIVE, TRACK_STATUS_AWAITING, TRACK_STATUS_FINISHED } from '../entities/track';
-import { ancestorWhere } from 'tslint';
 import { UserServiceType } from '../services/user.service';
 // import { jwt_decode } from 'jwt-decode';
 
@@ -50,29 +49,29 @@ createConnection(ormOptions).then(async connection => {
   const userService: UserServiceInterface = container.get(UserServiceType);
 
   setInterval(async() => {
-    const activeTracks = await getConnection().mongoManager.find(Track, {where: {
+    getConnection().mongoManager.find(Track, {where: {
       status: TRACK_STATUS_ACTIVE,
       end: {'$lt': Math.floor(Date.now() / 1000)}
-    }});
-
-    for (let i = 0; i < activeTracks.length; i++) {
-      let trackId = activeTracks[i].id.toHexString();
-      let stats = await trackService.getStats(trackId);
-      for (let i = 0; i < stats.length; i++) {
-        const name = (await getConnection().mongoManager.getRepository(User).findOneById(stats[i].player)).name;
-        stats[i] = {
-          id: stats[i].player.toString(),
-          position: i,
-          name,
-          score: stats[i].score,
-          prize: i === 0 ? 0.1 : 0
-        };
+    }}).then(async(activeTracks) => {
+      for (let i = 0; i < activeTracks.length; i++) {
+        let trackId = activeTracks[i].id.toHexString();
+        let stats = await trackService.getStats(trackId);
+        for (let i = 0; i < stats.length; i++) {
+          const name = (await getConnection().mongoManager.getRepository(User).findOneById(stats[i].player)).name;
+          stats[i] = {
+            id: stats[i].player.toString(),
+            position: i,
+            name,
+            score: stats[i].score,
+            prize: i === 0 ? 0.1 : 0
+          };
+        }
+        await trackService.finishTrack(activeTracks[i], stats);
+        io.sockets.in('tracks_' + trackId).emit('gameover', stats);
+        clearTimeout(timerMap[trackId]);
+        delete timerMap[trackId];
       }
-      await trackService.finishTrack(activeTracks[i], stats);
-      io.sockets.in('tracks_' + trackId).emit('gameover', stats);
-      clearTimeout(timerMap[trackId]);
-      delete timerMap[trackId];
-    }
+    });
   }, 5000);
 
   setInterval(async() => {
