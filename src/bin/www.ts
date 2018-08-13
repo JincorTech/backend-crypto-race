@@ -296,10 +296,14 @@ async function addBots(trackService: TrackServiceInterface, botEmails, trackId, 
         io.sockets.in('tracks_' + trackId).emit('start', init);
         let currenciesStart = await trackService.getCurrencyRates(botTrack.start - 10);
 
-        timerMap[trackId] = setTimeout(async function run() {
-          await processTrack(botTrack, currenciesStart);
-          setTimeout(run, 5000);
-        }, 100);
+        // timerMap[trackId] = setTimeout(async function run() {
+        //   await processTrack(botTrack, currenciesStart);
+        //   setTimeout(run, 5000);
+        // }, 100);
+
+        schedule.scheduleJob({start: new Date(botTrack.start * 1000), end: new Date(botTrack.end * 1000), second: 5}, function(botTrack, currenciesStart) {
+          processTrack(botTrack, currenciesStart);
+        }.bind(null, botTrack, currenciesStart));
 
         schedule.scheduleJob(new Date(botTrack.end * 1000 + 5), function(trackId) {
           processTrackFinish(trackId);
