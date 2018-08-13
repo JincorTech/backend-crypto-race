@@ -255,8 +255,12 @@ export class TrackService implements TrackServiceInterface {
   }
 
   async getCurrencyRates(timestamp: number): Promise<any> {
-    const lte = await getConnection().mongoManager.find(Currency, {where: {timestamp: { $lte: timestamp }}, order: {timestamp: -1}, take: 5});
-    const gt = await getConnection().mongoManager.find(Currency, {where: {timestamp: { $gt: timestamp }}, order: {timestamp: 1}, take: 5});
+    const results = await Promise.all([
+      getConnection().mongoManager.find(Currency, {where: {timestamp: { $lte: timestamp }}, order: {timestamp: -1}, take: 5}),
+      getConnection().mongoManager.find(Currency, {where: {timestamp: { $gt: timestamp }}, order: {timestamp: 1}, take: 5})
+    ]);
+    const lte = results[0];
+    const gt = results[1];
     const gtTimestampDiff = gt.length > 0 ? gt[0].timestamp - timestamp : timestamp;
     const ltTimestampDiff = timestamp - lte[0].timestamp;
     let rates = [];
