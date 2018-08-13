@@ -75,19 +75,19 @@ createConnection(ormOptions).then(async connection => {
   //   }
   // }, 5000);
 
-  setInterval(async() => {
-    const awaitingTracks = await getConnection().mongoManager.find(Track, {where: {
-      status: TRACK_STATUS_AWAITING,
-      '$and': [
-        {latestActivity: {'$ne': 0}},
-        {latestActivity: {'$lt': (Date.now() - 6000)}}
-      ]
-    }});
+  // setInterval(async() => {
+  //   const awaitingTracks = await getConnection().mongoManager.find(Track, {where: {
+  //     status: TRACK_STATUS_AWAITING,
+  //     '$and': [
+  //       {latestActivity: {'$ne': 0}},
+  //       {latestActivity: {'$lt': (Date.now() - 6000)}}
+  //     ]
+  //   }});
 
-    for (let i = 0; i < awaitingTracks.length; i++) {
-      addBots(trackService, botEmails, awaitingTracks[i].id.toHexString(), awaitingTracks[i].numPlayers, io);
-    }
-  }, 5000);
+  //   for (let i = 0; i < awaitingTracks.length; i++) {
+  //     addBots(trackService, botEmails, awaitingTracks[i].id.toHexString(), awaitingTracks[i].latestActivity);
+  //   }
+  // }, 5000);
 
   // create bots
   const botEmails = ['bot1@secrettech.io', 'bot2@secrettech.io', 'bot3@secrettech.io', 'bot4@secrettech.io', 'bot5@secrettech.io'];
@@ -170,6 +170,10 @@ createConnection(ormOptions).then(async connection => {
       if (!track) {
         io.sockets.in(socket.id).emit('error', {message: 'Can not join track'});
       }
+
+      schedule.scheduleJob(new Date(Date.now() + 6000), function(track) {
+        addBots(trackService, botEmails, track.id.toHexString(), track.latestActivity);
+      }.bind(null, track));
 
       socket.join('tracks_' + joinData.trackId, async() => {
         io.sockets.in('tracks_' + joinData.trackId).emit('joinedTrack', joinData);
@@ -265,8 +269,12 @@ createConnection(ormOptions).then(async connection => {
 
 }).catch(error => console.log('TypeORM connection error: ', error));
 
-async function addBots(trackService: TrackServiceInterface, botEmails, trackId, numPlayers, socket) {
+async function addBots(trackService: TrackServiceInterface, botEmails, trackId, latestActivity) {
   const actualTrack = await trackService.getTrackById(trackId);
+
+  if (actualTrack.latestActivity !== latestActivity) {
+    return;
+  }
 
   if (actualTrack.status !== TRACK_STATUS_AWAITING) {
     return;
