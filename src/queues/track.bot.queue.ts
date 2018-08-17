@@ -13,6 +13,7 @@ const botEmails = ['bot1@secrettech.io', 'bot2@secrettech.io', 'bot3@secrettech.
 
 export interface TrackBotQueueInterface {
   addJob(data: any);
+  setSocket(io: any);
 }
 
 @injectable()
@@ -20,11 +21,12 @@ export class TrackBotQueue implements TrackBotQueueInterface {
   private queueWrapper: Bull.Queue;
   private bots: User[];
   private logger = Logger.getInstance('TRACK_BOT_QUEUE');
+  private io: any;
 
   constructor(@inject(TrackServiceType) private trackService: TrackServiceInterface) {
     this.queueWrapper = new Bull('track_bot_queue', config.redis.url);
     this.queueWrapper.empty();
-    this.queueWrapper.process(job => {
+    this.queueWrapper.process((job) => {
       return this.process(job);
     });
 
@@ -36,13 +38,16 @@ export class TrackBotQueue implements TrackBotQueueInterface {
     this.logger.debug(`Added new job: trackId: ${data.trackId}`);
   }
 
+  setSocket(io: any) {
+    this.io = io;
+  }
+
   private async process(job: Bull.Job): Promise<boolean> {
     this.logger.debug(`Before procees: ${job.data.trackId}`);
     const track = await getConnection().mongoManager.findOneById(Track, new ObjectID(job.data.trackId));
     if (track.numPlayers !== job.data.numPlayers) {
       this.addBots(
-        job.data.trackId,
-        job.data.io
+        job.data.trackId
       );
     }
     return true;
@@ -55,7 +60,7 @@ export class TrackBotQueue implements TrackBotQueueInterface {
     return this.bots;
   }
 
-  private async addBots(trackId, io: SocketIO.Server) {
+  private async addBots(trackId) {
     const track = await this.trackService.getTrackById(trackId);
     const neededBots = track.maxPlayers - track.numPlayers;
     const bots = await this.getBots();
@@ -63,7 +68,7 @@ export class TrackBotQueue implements TrackBotQueueInterface {
     for (let i = 0; i <= neededBots; i++) {
       let botTrack = await this.trackService.joinToTrack(bots[i], bots[i].mnemonic, trackId, [10, 20, 30, 40, 0].sort((a,b) => Math.random() - 0.5), Math.floor(Math.random() * 4));
 
-      io.sockets.in('tracks_' + trackId).emit('joinedTrack', {
+      this.io.sockets.in('tracks_' + trackId).emit('joinedTrack', {
         trackId: trackId,
         fuel: (await this.trackService.getPortfolio(bots[i], botTrack.id.toHexString())).assets,
         ship: 2
@@ -71,7 +76,7 @@ export class TrackBotQueue implements TrackBotQueueInterface {
 
       if (botTrack.status === TRACK_STATUS_ACTIVE) {
         let init: InitRace = { id: botTrack.id.toString(), raceName: trackId, start: botTrack.start * 1000, end: botTrack.end * 1000, players: botTrack.players };
-        io.sockets.in('tracks_' + trackId).emit('start', init);
+        this.io.sockets.in('tracks_' + trackId).emit('start', init);
         let currenciesStart = await this.trackService.getCurrencyRates(botTrack.start - 10);
 
         setTimeout(async function run() {
@@ -85,7 +90,7 @@ export class TrackBotQueue implements TrackBotQueueInterface {
       }
 
       const tracks = await getConnection().mongoManager.find(Track, { take: 1000 });
-      io.emit('initTracks', { tracks: tracks });
+      this.io.emit('initTracks', { tracks: tracks });
     }
   }
 

@@ -51,6 +51,8 @@ createConnection(ormOptions).then(async connection => {
   const userService: UserServiceInterface = container.get(UserServiceType);
   const trackBotQueue: TrackBotQueueInterface = container.get(TrackBotQueueType);
 
+  trackBotQueue.setSocket(io);
+
   // setInterval(async() => {
   //   const activeTracks = await getConnection().mongoManager.find(Track, {where: {
   //     status: TRACK_STATUS_ACTIVE,
@@ -175,7 +177,6 @@ createConnection(ormOptions).then(async connection => {
 
       trackBotQueue.addJob({
         trackId: track.id.toHexString(),
-        io: io,
         numPlayers: track.numPlayers
       });
 
