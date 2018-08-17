@@ -38,6 +38,10 @@ export class TrackBotQueue implements TrackBotQueueInterface {
       return this.processTrack(job);
     });
 
+    this.queueProcessTrackFinishWrapper.process((job) => {
+      return this.processTrackFinish(job);
+    });
+
     this.logger.verbose('TrackBot job worker started');
   }
 
@@ -48,9 +52,15 @@ export class TrackBotQueue implements TrackBotQueueInterface {
 
   addJobProcessTrack(data: any) {
     this.queueProcessTrackWrapper.add(data, {repeat: {
-      cron: '*/5 * * * * *'
+      cron: '*/5 * * * * *',
+      endDate: data.endDate
     }});
     this.logger.debug(`Added new job [process track]: trackId: ${data.trackId}`);
+  }
+
+  addJobProccessTrackFinish(data: any) {
+    this.queueProcessTrackFinishWrapper.add(data, {delay: 1000 * 60 * 5 + 5000});
+    this.logger.debug(`Add new job [process track finish]: trackId ${data.trackId}`);
   }
 
   setSocket(io: any) {
@@ -121,9 +131,9 @@ export class TrackBotQueue implements TrackBotQueueInterface {
           endDate: botTrack.end * 1000 + 3000 // TODO
         });
 
-        // setTimeout(function() {
-        //   this.processTrackFinish(trackId);
-        // }, 1000 * 60 * 5);
+        this.addJobProccessTrackFinish({
+          trackId: botTrack.id.toHexString()
+        });
       }
 
       const tracks = await getConnection().mongoManager.find(Track, { take: 1000 });
@@ -131,7 +141,8 @@ export class TrackBotQueue implements TrackBotQueueInterface {
     }
   }
 
-  private async processTrackFinish(trackId) {
+  private async processTrackFinish(job: Bull.Job): Promise<boolean> {
+    const trackId = job.data.trackId;
     const track = await this.trackService.getTrackById(trackId);
     let stats = await this.trackService.getStats(trackId);
     for (let i = 0; i < stats.length; i++) {
@@ -146,6 +157,8 @@ export class TrackBotQueue implements TrackBotQueueInterface {
     }
     await this.trackService.finishTrack(track, stats);
     this.io.sockets.in('tracks_' + trackId).emit('gameover', stats);
+
+    return true;
   }
 }
 
