@@ -32,8 +32,8 @@ export class TrackBotQueue implements TrackBotQueueInterface {
   }
 
   addJob(data: any) {
-    this.logger.debug(`Added new job: trackId: ${data.trackId}`);
     this.queueWrapper.add(data, {delay: 5000});
+    this.logger.debug(`Added new job: trackId: ${data.trackId}`);
   }
 
   private async process(job: Bull.Job): Promise<boolean> {
