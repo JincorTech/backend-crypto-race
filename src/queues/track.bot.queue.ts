@@ -19,7 +19,7 @@ export interface TrackBotQueueInterface {
 @injectable()
 export class TrackBotQueue implements TrackBotQueueInterface {
   private queueWrapper: Bull.Queue;
-  private bots: User[];
+  private bots: User[] = [];
   private logger = Logger.getInstance('TRACK_BOT_QUEUE');
   private io: any;
 
@@ -45,7 +45,7 @@ export class TrackBotQueue implements TrackBotQueueInterface {
   private async process(job: Bull.Job): Promise<boolean> {
     this.logger.debug(`Before procees: ${job.data.trackId}`);
     const track = await getConnection().mongoManager.findOneById(Track, new ObjectID(job.data.trackId));
-    if (track.numPlayers !== job.data.numPlayers) {
+    if (track.numPlayers === job.data.numPlayers) {
       this.addBots(
         job.data.trackId
       );
