@@ -24,33 +24,7 @@ export class CryptoCurrencyHandler implements CryptoCurrencyHandlerInterface {
           BCH: rate.BCHUSD
         };
 
-        client.setex(now.toString(), 60 * 15, JSON.stringify(rates));
-
-        getConnection().mongoManager.save(Currency, Currency.createCurrency({
-          timestamp: currentTime,
-          name: 'LTC',
-          usd: rate.LTCUSD
-        }));
-        getConnection().mongoManager.save(Currency, Currency.createCurrency({
-          timestamp: currentTime,
-          name: 'ETH',
-          usd: rate.ETHUSD
-        }));
-        getConnection().mongoManager.save(Currency, Currency.createCurrency({
-          timestamp: currentTime,
-          name: 'BTC',
-          usd: rate.BTCUSD
-        }));
-        getConnection().mongoManager.save(Currency, Currency.createCurrency({
-          timestamp: currentTime,
-          name: 'XRP',
-          usd: rate.XRPUSD
-        }));
-        getConnection().mongoManager.save(Currency, Currency.createCurrency({
-          timestamp: currentTime,
-          name: 'BCH',
-          usd: rate.BCHUSD
-        }));
+        client.setex(currentTime.toString(), 60 * 15, JSON.stringify(rates));
       },
       5000
     );
