@@ -19,6 +19,7 @@ import { LandingServiceType, LandingService } from './services/landing.service';
 import { GameController } from './controllers/game.controller';
 import { TrackServiceInterface, TrackService, TrackServiceType } from './services/track.service';
 import { CryptoCurrencyHandlerInterface, CryptoCurrencyHandlerType, CryptoCurrencyHandler } from './handlers/crypto.currency.handler';
+import { TrackBotQueueInterface, TrackBotQueueType, TrackBotQueue } from './queues/track.bot.queue';
 
 let container = new Container();
 
@@ -30,6 +31,7 @@ if (process.env.MAIL_DRIVER === 'mailjet') {
 }
 
 container.bind<EmailQueueInterface>(EmailQueueType).to(EmailQueue).inSingletonScope();
+container.bind<TrackBotQueueInterface>(TrackBotQueueType).to(TrackBotQueue).inSingletonScope();
 container.bind<Web3ClientInterface>(Web3ClientType).to(Web3Client).inSingletonScope();
 container.bind<CryptoCurrencyHandlerInterface>(CryptoCurrencyHandlerType).toConstantValue(new CryptoCurrencyHandler());
 
