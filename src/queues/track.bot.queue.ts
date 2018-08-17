@@ -46,7 +46,7 @@ export class TrackBotQueue implements TrackBotQueueInterface {
     this.logger.debug(`Before procees: ${job.data.trackId}`);
     const track = await getConnection().mongoManager.findOneById(Track, new ObjectID(job.data.trackId));
     if (track.numPlayers === job.data.numPlayers) {
-      this.addBots(
+      await this.addBots(
         job.data.trackId
       );
     }
@@ -55,7 +55,7 @@ export class TrackBotQueue implements TrackBotQueueInterface {
 
   private async getBots(): Promise<User[]> {
     if (this.bots.length === 0) {
-      this.bots = await getConnection().mongoManager.count(User, {email: {'$in': botEmails}});
+      this.bots = await getConnection().mongoManager.find(User, {where: {email: {'$in': botEmails}}});
     }
     return this.bots;
   }
