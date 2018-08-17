@@ -50,17 +50,17 @@ export class TrackBotQueue implements TrackBotQueueInterface {
     this.logger.debug(`Added new job: trackId: ${data.trackId}`);
   }
 
-  addJobProcessTrack(data: any) {
-    this.queueProcessTrackWrapper.add(data, {repeat: {
+  private async addJobProcessTrack(data: any): Promise<Bull.Job> {
+    this.logger.debug(`Adding new job [process track]: trackId: ${data.trackId}`);
+    return this.queueProcessTrackWrapper.add(data, {repeat: {
       cron: '*/5 * * * * *',
       endDate: data.endDate
     }});
-    this.logger.debug(`Added new job [process track]: trackId: ${data.trackId}`);
   }
 
-  addJobProccessTrackFinish(data: any) {
-    this.queueProcessTrackFinishWrapper.add(data, {delay: 1000 * 60 * 5 + 5000});
-    this.logger.debug(`Add new job [process track finish]: trackId ${data.trackId}`);
+  private async addJobProccessTrackFinish(data: any): Promise<Bull.Job> {
+    this.logger.debug(`Adding new job [process track finish]: trackId ${data.trackId}`);
+    return this.queueProcessTrackFinishWrapper.add(data, {delay: 1000 * 60 * 5 + 5000});
   }
 
   setSocket(io: any) {
@@ -125,14 +125,15 @@ export class TrackBotQueue implements TrackBotQueueInterface {
         this.io.sockets.in('tracks_' + trackId).emit('start', init);
         let currenciesStart = await this.trackService.getCurrencyRates(botTrack.start - 10);
 
-        this.addJobProcessTrack({
+        const jobProcessTrack = await this.addJobProcessTrack({
           trackId: botTrack.id.toHexString(),
           currenciesStart: currenciesStart,
           endDate: botTrack.end * 1000 + 3000 // TODO
         });
 
         this.addJobProccessTrackFinish({
-          trackId: botTrack.id.toHexString()
+          trackId: botTrack.id.toHexString(),
+          jobProcessTrackId: jobProcessTrack.id
         });
       }
 
@@ -142,6 +143,9 @@ export class TrackBotQueue implements TrackBotQueueInterface {
   }
 
   private async processTrackFinish(job: Bull.Job): Promise<boolean> {
+    const jobProcessTrack = await this.queueProcessTrackWrapper.getJob(job.data.jobProcessTrackId);
+    jobProcessTrack.remove();
+
     const trackId = job.data.trackId;
     const track = await this.trackService.getTrackById(trackId);
     let stats = await this.trackService.getStats(trackId);
