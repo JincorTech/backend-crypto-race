@@ -81,12 +81,12 @@ export class TrackBotQueue implements TrackBotQueueInterface {
         let currenciesStart = await this.trackService.getCurrencyRates(botTrack.start - 10);
 
         setTimeout(async function run() {
-          await this.processTrack(botTrack, currenciesStart, io);
+          await this.processTrack(botTrack, currenciesStart);
           setTimeout(run, 5000);
         }, 100);
 
         schedule.scheduleJob(new Date(botTrack.end * 1000 + 5), function(trackId) {
-          this.processTrackFinish(trackId, io);
+          this.processTrackFinish(trackId);
         }.bind(null, botTrack.id.toHexString()));
       }
 
@@ -95,7 +95,7 @@ export class TrackBotQueue implements TrackBotQueueInterface {
     }
   }
 
-  private async processTrack(botTrack: Track, currenciesStart: any, io: SocketIO.Server) {
+  private async processTrack(botTrack: Track, currenciesStart: any) {
     let now = Math.floor(Date.now() / 1000);
     now = now % 5 === 0 ? now : now + (5 - (now % 5));
     let stats = await this.trackService.getStats(botTrack.id.toString(), now - 10);
@@ -109,10 +109,10 @@ export class TrackBotQueue implements TrackBotQueueInterface {
         currenciesStart: currenciesStart
       };
     });
-    io.sockets.in('tracks_' + botTrack.id.toHexString()).emit('positionUpdate', playerPositions);
+    this.io.sockets.in('tracks_' + botTrack.id.toHexString()).emit('positionUpdate', playerPositions);
   }
 
-  private async processTrackFinish(trackId, io) {
+  private async processTrackFinish(trackId) {
     const track = await this.trackService.getTrackById(trackId);
     let stats = await this.trackService.getStats(trackId);
     for (let i = 0; i < stats.length; i++) {
@@ -126,7 +126,7 @@ export class TrackBotQueue implements TrackBotQueueInterface {
       };
     }
     await this.trackService.finishTrack(track, stats);
-    io.sockets.in('tracks_' + trackId).emit('gameover', stats);
+    this.io.sockets.in('tracks_' + trackId).emit('gameover', stats);
   }
 }
 
