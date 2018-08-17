@@ -102,7 +102,7 @@ export class TrackBotQueue implements TrackBotQueueInterface {
     const neededBots = track.maxPlayers - track.numPlayers;
     const bots = await this.getBots();
 
-    for (let i = 0; i <= neededBots; i++) {
+    for (let i = 0; i < neededBots; i++) {
       let botTrack = await this.trackService.joinToTrack(bots[i], bots[i].mnemonic, trackId, [10, 20, 30, 40, 0].sort((a,b) => Math.random() - 0.5), Math.floor(Math.random() * 4));
 
       this.io.sockets.in('tracks_' + trackId).emit('joinedTrack', {
@@ -122,9 +122,9 @@ export class TrackBotQueue implements TrackBotQueueInterface {
           endDate: botTrack.end * 1000 + 3000 // TODO
         });
 
-        schedule.scheduleJob(new Date(botTrack.end * 1000 + 5), function(trackId) {
+        setTimeout(function() {
           this.processTrackFinish(trackId);
-        }.bind(null, botTrack.id.toHexString()));
+        }, 1000 * 60 * 5);
       }
 
       const tracks = await getConnection().mongoManager.find(Track, { take: 1000 });
