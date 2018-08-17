@@ -6,6 +6,7 @@ import { getConnection } from 'typeorm';
 import { Track, TRACK_STATUS_ACTIVE } from '../entities/track';
 import { User } from '../entities/user';
 import { TrackServiceType, TrackServiceInterface } from '../services/track.service';
+import { Logger } from '../logger';
 
 const schedule = require('node-schedule');
 const botEmails = ['bot1@secrettech.io', 'bot2@secrettech.io', 'bot3@secrettech.io', 'bot4@secrettech.io', 'bot5@secrettech.io'];
@@ -18,6 +19,7 @@ export interface TrackBotQueueInterface {
 export class TrackBotQueue implements TrackBotQueueInterface {
   private queueWrapper: Bull.Queue;
   private bots: User[];
+  private logger = Logger.getInstance('TRACK_BOT_QUEUE');
 
   constructor(@inject(TrackServiceType) private trackService: TrackServiceInterface) {
     this.queueWrapper = new Bull('track_bot_queue', config.redis.url);
@@ -25,13 +27,17 @@ export class TrackBotQueue implements TrackBotQueueInterface {
     this.queueWrapper.process(job => {
       return this.process(job);
     });
+
+    this.logger.verbose('TrackBot job worker started');
   }
 
   addJob(data: any) {
+    this.logger.debug(`Added new job: trackId: ${data.trackId}`);
     this.queueWrapper.add(data, {delay: 5000});
   }
 
   private async process(job: Bull.Job): Promise<boolean> {
+    this.logger.debug(`Before procees: ${job.data.trackId}`);
     const track = await getConnection().mongoManager.findOneById(Track, new ObjectID(job.data.trackId));
     if (track.numPlayers !== job.data.numPlayers) {
       this.addBots(
