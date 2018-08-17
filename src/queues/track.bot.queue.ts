@@ -48,8 +48,7 @@ export class TrackBotQueue implements TrackBotQueueInterface {
 
   addJobProcessTrack(data: any) {
     this.queueProcessTrackWrapper.add(data, {repeat: {
-      cron: '*/5 * * * * *',
-      endDate: data.endDate
+      cron: '*/5 * * * * *'
     }});
     this.logger.debug(`Added new job [process track]: trackId: ${data.trackId}`);
   }
@@ -122,9 +121,9 @@ export class TrackBotQueue implements TrackBotQueueInterface {
           endDate: botTrack.end * 1000 + 3000 // TODO
         });
 
-        setTimeout(function() {
-          this.processTrackFinish(trackId);
-        }, 1000 * 60 * 5);
+        // setTimeout(function() {
+        //   this.processTrackFinish(trackId);
+        // }, 1000 * 60 * 5);
       }
 
       const tracks = await getConnection().mongoManager.find(Track, { take: 1000 });
