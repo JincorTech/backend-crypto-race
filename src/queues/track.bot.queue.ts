@@ -19,15 +19,23 @@ export interface TrackBotQueueInterface {
 @injectable()
 export class TrackBotQueue implements TrackBotQueueInterface {
   private queueWrapper: Bull.Queue;
+  private queueProcessTrackWrapper: Bull.Queue;
+  private queueProcessTrackFinishWrapper: Bull.Queue;
   private bots: User[] = [];
   private logger = Logger.getInstance('TRACK_BOT_QUEUE');
   private io: any;
 
   constructor(@inject(TrackServiceType) private trackService: TrackServiceInterface) {
     this.queueWrapper = new Bull('track_bot_queue', config.redis.url);
-    this.queueWrapper.empty();
+    this.queueProcessTrackWrapper = new Bull('process_track_queue');
+    this.queueProcessTrackFinishWrapper = new Bull('process_track_finish_queue');
+
     this.queueWrapper.process((job) => {
-      return this.process(job);
+      return this.processAddBot(job);
+    });
+
+    this.queueProcessTrackWrapper.process((job) => {
+      return this.processTrack(job);
     });
 
     this.logger.verbose('TrackBot job worker started');
@@ -38,11 +46,18 @@ export class TrackBotQueue implements TrackBotQueueInterface {
     this.logger.debug(`Added new job: trackId: ${data.trackId}`);
   }
 
+  addJobProcessTrack(data: any) {
+    this.queueProcessTrackWrapper.add(data, {repeat: {
+      cron: '*/5 * * * * *',
+      endDate: data.endDate
+    }});
+  }
+
   setSocket(io: any) {
     this.io = io;
   }
 
-  private async process(job: Bull.Job): Promise<boolean> {
+  private async processAddBot(job: Bull.Job): Promise<boolean> {
     this.logger.debug(`Before procees: ${job.data.trackId}`);
     const track = await getConnection().mongoManager.findOneById(Track, new ObjectID(job.data.trackId));
     if (track.numPlayers === job.data.numPlayers) {
@@ -50,6 +65,24 @@ export class TrackBotQueue implements TrackBotQueueInterface {
         job.data.trackId
       );
     }
+    return true;
+  }
+
+  private async processTrack(job: Bull.Job): Promise<boolean> {
+    let now = Math.floor(Date.now() / 1000);
+    now = now % 5 === 0 ? now : now + (5 - (now % 5));
+    let stats = await this.trackService.getStats(job.data.trackId, now - 10);
+    let currencies = await this.trackService.getCurrencyRates(now - 10);
+    const playerPositions = stats.map((stat, index) => {
+      return {
+        id: stat.player.toString(),
+        position: index,
+        score: stat.score,
+        currencies: currencies,
+        currenciesStart: job.data.currenciesStart
+      };
+    });
+    this.io.sockets.in('tracks_' + job.data.trackId).emit('positionUpdate', playerPositions);
     return true;
   }
 
@@ -80,10 +113,11 @@ export class TrackBotQueue implements TrackBotQueueInterface {
         this.io.sockets.in('tracks_' + trackId).emit('start', init);
         let currenciesStart = await this.trackService.getCurrencyRates(botTrack.start - 10);
 
-        setTimeout(async function run() {
-          await this.processTrack(botTrack, currenciesStart);
-          setTimeout(run, 5000);
-        }, 100);
+        this.addJobProcessTrack({
+          trackId: botTrack.id.toHexString(),
+          currenciesStart: currenciesStart,
+          endDate: botTrack.end * 1000 + 3000 // TODO
+        });
 
         schedule.scheduleJob(new Date(botTrack.end * 1000 + 5), function(trackId) {
           this.processTrackFinish(trackId);
@@ -93,23 +127,6 @@ export class TrackBotQueue implements TrackBotQueueInterface {
       const tracks = await getConnection().mongoManager.find(Track, { take: 1000 });
       this.io.emit('initTracks', { tracks: tracks });
     }
-  }
-
-  private async processTrack(botTrack: Track, currenciesStart: any) {
-    let now = Math.floor(Date.now() / 1000);
-    now = now % 5 === 0 ? now : now + (5 - (now % 5));
-    let stats = await this.trackService.getStats(botTrack.id.toString(), now - 10);
-    let currencies = await this.trackService.getCurrencyRates(now - 10);
-    const playerPositions = stats.map((stat, index) => {
-      return {
-        id: stat.player.toString(),
-        position: index,
-        score: stat.score,
-        currencies: currencies,
-        currenciesStart: currenciesStart
-      };
-    });
-    this.io.sockets.in('tracks_' + botTrack.id.toHexString()).emit('positionUpdate', playerPositions);
   }
 
   private async processTrackFinish(trackId) {
