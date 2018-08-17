@@ -27,8 +27,8 @@ export class TrackBotQueue implements TrackBotQueueInterface {
 
   constructor(@inject(TrackServiceType) private trackService: TrackServiceInterface) {
     this.queueWrapper = new Bull('track_bot_queue', config.redis.url);
-    this.queueProcessTrackWrapper = new Bull('process_track_queue');
-    this.queueProcessTrackFinishWrapper = new Bull('process_track_finish_queue');
+    this.queueProcessTrackWrapper = new Bull('process_track_queue', config.redis.url);
+    this.queueProcessTrackFinishWrapper = new Bull('process_track_finish_queue', config.redis.url);
 
     this.queueWrapper.process((job) => {
       return this.processAddBot(job);
