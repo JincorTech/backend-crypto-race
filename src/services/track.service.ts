@@ -260,7 +260,7 @@ export class TrackService implements TrackServiceInterface {
     //   result[rates[i].name] = rates[i].usd;
     // }
 
-    return await redisGetAsync(timestamp);
+    return JSON.parse(await redisGetAsync(timestamp));
   }
 
   async getRewards(user: User, mnemonic: string, id: string): Promise<string> {
