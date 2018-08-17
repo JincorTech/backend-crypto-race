@@ -31,7 +31,6 @@ if (process.env.MAIL_DRIVER === 'mailjet') {
 }
 
 container.bind<EmailQueueInterface>(EmailQueueType).to(EmailQueue).inSingletonScope();
-container.bind<TrackBotQueueInterface>(TrackBotQueueType).to(TrackBotQueue).inSingletonScope();
 container.bind<Web3ClientInterface>(Web3ClientType).to(Web3Client).inSingletonScope();
 container.bind<CryptoCurrencyHandlerInterface>(CryptoCurrencyHandlerType).toConstantValue(new CryptoCurrencyHandler());
 
@@ -42,6 +41,7 @@ container.bind<UserServiceInterface>(UserServiceType).to(UserService).inSingleto
 container.bind<EmailTemplateServiceInterface>(EmailTemplateServiceType).to(EmailTemplateService).inSingletonScope();
 container.bind<LandingServiceInterface>(LandingServiceType).to(LandingService).inSingletonScope();
 container.bind<TrackServiceInterface>(TrackServiceType).to(TrackService).inSingletonScope();
+container.bind<TrackBotQueueInterface>(TrackBotQueueType).to(TrackBotQueue).inSingletonScope();
 
 const auth = new Auth(container.get<AuthClientInterface>(AuthClientType));
 // middlewares
