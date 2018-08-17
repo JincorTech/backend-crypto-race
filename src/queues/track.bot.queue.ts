@@ -61,6 +61,7 @@ export class TrackBotQueue implements TrackBotQueueInterface {
   }
 
   private async addBots(trackId) {
+    this.logger.debug('Adding bots');
     const track = await this.trackService.getTrackById(trackId);
     const neededBots = track.maxPlayers - track.numPlayers;
     const bots = await this.getBots();
