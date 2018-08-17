@@ -69,6 +69,7 @@ export class TrackBotQueue implements TrackBotQueueInterface {
   }
 
   private async processTrack(job: Bull.Job): Promise<boolean> {
+    this.logger.debug(`Before process track: ${job.data.trackId}`);
     let now = Math.floor(Date.now() / 1000);
     now = now % 5 === 0 ? now : now + (5 - (now % 5));
     let stats = await this.trackService.getStats(job.data.trackId, now - 10);
@@ -83,6 +84,7 @@ export class TrackBotQueue implements TrackBotQueueInterface {
       };
     });
     this.io.sockets.in('tracks_' + job.data.trackId).emit('positionUpdate', playerPositions);
+    this.logger.debug(`End process track: ${job.data.trackId}`);
     return true;
   }
 
