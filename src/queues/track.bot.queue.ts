@@ -51,6 +51,7 @@ export class TrackBotQueue implements TrackBotQueueInterface {
       cron: '*/5 * * * * *',
       endDate: data.endDate
     }});
+    this.logger.debug(`Added new job [process track]: trackId: ${data.trackId}`);
   }
 
   setSocket(io: any) {
