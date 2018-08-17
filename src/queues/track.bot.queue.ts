@@ -20,7 +20,8 @@ export class TrackBotQueue implements TrackBotQueueInterface {
   private bots: User[];
 
   constructor(@inject(TrackServiceType) private trackService: TrackServiceInterface) {
-    this.queueWrapper = new Bull('email_queue', config.redis.url);
+    this.queueWrapper = new Bull('track_bot_queue', config.redis.url);
+    this.queueWrapper.empty();
     this.queueWrapper.process(job => {
       return this.process(job);
     });
