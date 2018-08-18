@@ -1,5 +1,3 @@
-import { Currency } from '../entities/currency';
-import { getConnection } from 'typeorm';
 import * as Redis from 'redis';
 import config from '../config';
 

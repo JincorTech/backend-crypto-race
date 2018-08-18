@@ -53,46 +53,6 @@ createConnection(ormOptions).then(async connection => {
 
   trackBotQueue.setSocket(io);
 
-  // setInterval(async() => {
-  //   const activeTracks = await getConnection().mongoManager.find(Track, {where: {
-  //     status: TRACK_STATUS_ACTIVE,
-  //     end: {'$lt': Math.floor(Date.now() / 1000)}
-  //   }});
-
-  //   for (let i = 0; i < activeTracks.length; i++) {
-  //     let trackId = activeTracks[i].id.toHexString();
-  //     let stats = await trackService.getStats(trackId);
-  //     for (let i = 0; i < stats.length; i++) {
-  //       const name = (await getConnection().mongoManager.getRepository(User).findOneById(stats[i].player)).name;
-  //       stats[i] = {
-  //         id: stats[i].player.toString(),
-  //         position: i,
-  //         name,
-  //         score: stats[i].score,
-  //         prize: i === 0 ? 0.1 : 0
-  //       };
-  //     }
-  //     await trackService.finishTrack(activeTracks[i], stats);
-  //     io.sockets.in('tracks_' + trackId).emit('gameover', stats);
-  //     clearTimeout(timerMap[trackId]);
-  //     delete timerMap[trackId];
-  //   }
-  // }, 5000);
-
-  // setInterval(async() => {
-  //   const awaitingTracks = await getConnection().mongoManager.find(Track, {where: {
-  //     status: TRACK_STATUS_AWAITING,
-  //     '$and': [
-  //       {latestActivity: {'$ne': 0}},
-  //       {latestActivity: {'$lt': (Date.now() - 6000)}}
-  //     ]
-  //   }});
-
-  //   for (let i = 0; i < awaitingTracks.length; i++) {
-  //     addBots(trackService, botEmails, awaitingTracks[i].id.toHexString(), awaitingTracks[i].latestActivity);
-  //   }
-  // }, 5000);
-
   // create bots
   const botEmails = ['bot1@secrettech.io', 'bot2@secrettech.io', 'bot3@secrettech.io', 'bot4@secrettech.io', 'bot5@secrettech.io'];
   const bots = await getConnection().mongoManager.count(User, {email: {'$in': botEmails}});
