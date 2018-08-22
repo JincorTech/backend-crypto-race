@@ -9,20 +9,24 @@ export interface CryptoCurrencyHandlerInterface { }
 export class CryptoCurrencyHandler implements CryptoCurrencyHandlerInterface {
   constructor() {
     setInterval(
-      async function() {
-        cryptoSocket.start('bittrex',['LTCUSD','BTCUSD', 'XRPUSD', 'ETHUSD', 'BCHUSD']);
-        const now = Math.floor(Date.now() / 1000);
-        let currentTime = now % 5 === 0 ? now : now + (5 - (now % 5));
-        let rate = cryptoSocket.Exchanges['bittrex'];
-        let rates = {
-          LTC: rate.LTCUSD,
-          ETH: rate.ETHUSD,
-          BTC: rate.BTCUSD,
-          XRP: rate.XRPUSD,
-          BCH: rate.BCHUSD
-        };
+      function() {
+        try {
+          cryptoSocket.start('bittrex',['LTCUSD','BTCUSD', 'XRPUSD', 'ETHUSD', 'BCHUSD']);
+          const now = Math.floor(Date.now() / 1000);
+          let currentTime = now % 5 === 0 ? now : now + (5 - (now % 5));
+          let rate = cryptoSocket.Exchanges['bittrex'];
+          let rates = {
+            LTC: rate.LTCUSD,
+            ETH: rate.ETHUSD,
+            BTC: rate.BTCUSD,
+            XRP: rate.XRPUSD,
+            BCH: rate.BCHUSD
+          };
 
-        client.setex(currentTime.toString(), 60 * 15, JSON.stringify(rates));
+          client.setex(currentTime.toString(), 60 * 15, JSON.stringify(rates));
+        } catch (error) {
+          //
+        }
       },
       5000
     );
