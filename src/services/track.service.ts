@@ -281,11 +281,11 @@ export class TrackService implements TrackServiceInterface {
 
   private getRatios(startRates, endRates): any {
     const tickers = ['LTC','BTC', 'XRP', 'ETH', 'BCH'];
-    const result = {};
+    const ratios = {};
     for (let i = 0; i < tickers.length; i++) {
-      result[tickers[i]] = endRates[tickers[i]] / startRates[tickers[i]];
+      ratios[tickers[i]] = endRates[tickers[i]] / startRates[tickers[i]];
     }
-    return result;
+    return ratios;
   }
 
   private assetsFromFuel(fuel: Array<string>): Asset[] {
