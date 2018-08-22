@@ -152,4 +152,12 @@ export class Track {
   getPlayerStartingPosition(numPlayers: number) {
     return numPlayers - 1;
   }
+
+  getTypeShipByUser(id: string): number {
+    for (const player of this.players) {
+      if (player.id === id) {
+        return player.ship.type;
+      }
+    }
+  }
 }

@@ -82,8 +82,8 @@ export class TrackBotQueue implements TrackBotQueueInterface {
     this.logger.debug(`Before process track: ${job.data.trackId}`);
     let now = Math.floor(Date.now() / 1000);
     now = now % 5 === 0 ? now : now + (5 - (now % 5));
-    let stats = await this.trackService.getStats(job.data.trackId, now - 10);
-    let currencies = await this.trackService.getCurrencyRates(now - 10);
+    let stats = await this.trackService.getStats(job.data.trackId, now - 5);
+    let currencies = await this.trackService.getCurrencyRates(now - 5);
     const playerPositions = stats.map((stat, index) => {
       return {
         id: stat.player.toString(),
@@ -123,7 +123,7 @@ export class TrackBotQueue implements TrackBotQueueInterface {
       if (botTrack.status === TRACK_STATUS_ACTIVE) {
         let init: InitRace = { id: botTrack.id.toString(), raceName: trackId, start: botTrack.start * 1000, end: botTrack.end * 1000, players: botTrack.players };
         this.io.sockets.in('tracks_' + trackId).emit('start', init);
-        let currenciesStart = await this.trackService.getCurrencyRates(botTrack.start - 10);
+        let currenciesStart = await this.trackService.getCurrencyRates(botTrack.start - 5);
 
         const jobProcessTrack = await this.addJobProcessTrack({
           trackId: botTrack.id.toHexString(),
@@ -156,7 +156,8 @@ export class TrackBotQueue implements TrackBotQueueInterface {
         position: i,
         name,
         score: stats[i].score,
-        prize: i === 0 ? 0.1 : 0
+        prize: i === 0 ? 0.1 : 0,
+        ship: track.getTypeShipByUser(stats[i].player.toString())
       };
     }
     await this.trackService.finishTrack(track, stats);
