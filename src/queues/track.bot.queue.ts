@@ -60,7 +60,7 @@ export class TrackBotQueue implements TrackBotQueueInterface {
 
   private async addJobProccessTrackFinish(data: any): Promise<Bull.Job> {
     this.logger.debug(`Adding new job [process track finish]: trackId ${data.trackId}`);
-    return this.queueProcessTrackFinishWrapper.add(data, {delay: 1000 * 60 * 5});
+    return this.queueProcessTrackFinishWrapper.add(data, {delay: 1000 * 60 * 5 + 5000});
   }
 
   setSocket(io: any) {
