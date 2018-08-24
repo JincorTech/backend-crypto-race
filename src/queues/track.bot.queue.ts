@@ -156,6 +156,7 @@ export class TrackBotQueue implements TrackBotQueueInterface {
         position: i,
         name,
         score: stats[i].score,
+        result: stats[i].score > 100 ? stats[i].score - 100 : -(100 - stats[i].score),
         prize: i === 0 ? 0.1 : 0,
         ship: track.getTypeShipByUser(stats[i].player.toString())
       };
