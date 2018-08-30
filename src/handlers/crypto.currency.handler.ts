@@ -1,7 +1,7 @@
 import * as Redis from 'redis';
 import config from '../config';
+import * as request from 'web-request';
 
-const cryptoSocket = require('crypto-socket');
 const client = Redis.createClient(config.redis.url);
 
 export interface CryptoCurrencyHandlerInterface { }
@@ -9,24 +9,23 @@ export interface CryptoCurrencyHandlerInterface { }
 export class CryptoCurrencyHandler implements CryptoCurrencyHandlerInterface {
   constructor() {
     setInterval(
-      function() {
-        try {
-          cryptoSocket.start('bittrex',['LTCUSD','BTCUSD', 'XRPUSD', 'ETHUSD', 'BCHUSD']);
-          const now = Math.floor(Date.now() / 1000);
-          let currentTime = now % 5 === 0 ? now : now + (5 - (now % 5));
-          let rate = cryptoSocket.Exchanges['bittrex'];
-          let rates = {
-            LTC: rate.LTCUSD,
-            ETH: rate.ETHUSD,
-            BTC: rate.BTCUSD,
-            XRP: rate.XRPUSD,
-            BCH: rate.BCHUSD
-          };
-
-          client.setex(currentTime.toString(), 60 * 15, JSON.stringify(rates));
-        } catch (error) {
-          //
+      async() => {
+        const now = Math.floor(Date.now() / 1000);
+        const currentTime = now % 5 === 0 ? now : now + (5 - (now % 5));
+        const data = await request.json<any>('/data/pricemulti?fsyms=BTC,ETH,LTC,XRP,BCD&tsyms=USD', {
+          baseUrl: 'https://min-api.cryptocompare.com',
+          method: 'GET'
+        });
+        const rates = {
+          'BTC': data.BTC.USD,
+          'ETH': data.ETH.USD,
+          'LTC': data.LTC.USD,
+          'XRP': data.XRP.USD,
+          'BCH': data.BCH.USD
         }
+
+        client.setex(currentTime.toString(), 60 * 15, JSON.stringify(rates));
+
       },
       5000
     );
@@ -34,4 +33,4 @@ export class CryptoCurrencyHandler implements CryptoCurrencyHandlerInterface {
 }
 
 const CryptoCurrencyHandlerType = Symbol('CryptoCurrencyHandlerInterface');
-export {CryptoCurrencyHandlerType};
+export { CryptoCurrencyHandlerType };
