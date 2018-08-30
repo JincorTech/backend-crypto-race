@@ -16,7 +16,7 @@ export class CryptoCurrencyHandler implements CryptoCurrencyHandlerInterface {
         const now = Math.floor(Date.now() / 1000);
         const currentTime = now % 5 === 0 ? now : now + (5 - (now % 5));
         try {
-          const data = await request.json<any>('/data/pricemulti?fsyms=BTC,ETH,LTC,XRP,BCD&tsyms=USD', {
+          const data = await request.json<any>('/data/pricemulti?fsyms=BTC,ETH,LTC,XRP,BCH&tsyms=USD', {
             baseUrl: 'https://min-api.cryptocompare.com',
             method: 'GET'
           });
