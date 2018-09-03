@@ -6,14 +6,13 @@ import * as socketio from 'socket.io';
 import * as fs from 'fs';
 import config from '../config';
 import 'reflect-metadata';
-import { createConnection, ConnectionOptions, getConnection, getMongoManager, ObjectID } from 'typeorm';
+import { createConnection, ConnectionOptions, getConnection } from 'typeorm';
 import { AuthClientType } from '../services/auth.client';
 import { TrackServiceType, TrackService, TrackServiceInterface } from '../services/track.service';
 import { User } from '../entities/user';
-import { Track, TRACK_STATUS_ACTIVE, TRACK_STATUS_AWAITING, TRACK_STATUS_FINISHED } from '../entities/track';
+import { Track, TRACK_STATUS_ACTIVE, TRACK_STATUS_AWAITING } from '../entities/track';
 import { UserServiceType } from '../services/user.service';
 import { TrackBotQueueInterface, TrackBotQueueType } from '../queues/track.bot.queue';
-// import { jwt_decode } from 'jwt-decode';
 
 /**
  * Create HTTP server.
@@ -21,8 +20,6 @@ import { TrackBotQueueInterface, TrackBotQueueType } from '../queues/track.bot.q
 const httpServer = http.createServer(app);
 const io = socketio(httpServer);
 const ormOptions: ConnectionOptions = config.typeOrm as ConnectionOptions;
-const timerMap = {};
-const schedule = require('node-schedule');
 
 createConnection(ormOptions).then(async connection => {
   /**
@@ -135,7 +132,7 @@ createConnection(ormOptions).then(async connection => {
         io.sockets.in(socket.id).emit('error', {message: 'Can not join track'});
       }
 
-      trackBotQueue.addJob({
+      trackBotQueue.addJobWaitNewUsers({
         trackId: track.id.toHexString(),
         numPlayers: track.numPlayers
       });

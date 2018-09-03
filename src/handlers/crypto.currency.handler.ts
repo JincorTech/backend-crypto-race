@@ -2,6 +2,7 @@ import * as Redis from 'redis';
 import config from '../config';
 import * as request from 'web-request';
 import { Logger } from '../logger';
+import { getUnixtimeMultiplesOfFive } from '../helpers/helpers';
 
 const client = Redis.createClient(config.redis.url);
 
@@ -13,8 +14,7 @@ export class CryptoCurrencyHandler implements CryptoCurrencyHandlerInterface {
   constructor() {
     setInterval(
       async() => {
-        const now = Math.floor(Date.now() / 1000);
-        const currentTime = now % 5 === 0 ? now : now + (5 - (now % 5));
+        const currentTime = getUnixtimeMultiplesOfFive();
         try {
           const data = await request.json<any>('/data/pricemulti?fsyms=BTC,ETH,LTC,XRP,BCH&tsyms=USD', {
             baseUrl: 'https://min-api.cryptocompare.com',

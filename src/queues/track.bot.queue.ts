@@ -7,12 +7,12 @@ import { Track, TRACK_STATUS_ACTIVE } from '../entities/track';
 import { User } from '../entities/user';
 import { TrackServiceType, TrackServiceInterface } from '../services/track.service';
 import { Logger } from '../logger';
+import { getUnixtimeMultiplesOfFive } from '../helpers/helpers';
 
-const schedule = require('node-schedule');
 const botEmails = ['bot1@secrettech.io', 'bot2@secrettech.io', 'bot3@secrettech.io', 'bot4@secrettech.io', 'bot5@secrettech.io'];
 
 export interface TrackBotQueueInterface {
-  addJob(data: any);
+  addJobWaitNewUsers(data: any);
   setSocket(io: any);
 }
 
@@ -45,9 +45,9 @@ export class TrackBotQueue implements TrackBotQueueInterface {
     this.logger.verbose('TrackBot job worker started');
   }
 
-  addJob(data: any) {
+  addJobWaitNewUsers(data: any) {
     this.queueWrapper.add(data, {delay: 5000});
-    this.logger.debug(`Added new job: trackId: ${data.trackId}`);
+    this.logger.debug(`Added new job [wait for new users]: trackId: ${data.trackId}`);
   }
 
   private async addJobProcessTrack(data: any): Promise<Bull.Job> {
@@ -80,8 +80,7 @@ export class TrackBotQueue implements TrackBotQueueInterface {
 
   private async processTrack(job: Bull.Job): Promise<boolean> {
     this.logger.debug(`Before process track: ${job.data.trackId}`);
-    let now = Math.floor(Date.now() / 1000);
-    now = now % 5 === 0 ? now : now + (5 - (now % 5));
+    const now = getUnixtimeMultiplesOfFive();
     let stats = await this.trackService.getStats(job.data.trackId, now - 5);
     let currencies = await this.trackService.getCurrencyRates(now - 5);
     const playerPositions = stats.map((stat, index) => {
