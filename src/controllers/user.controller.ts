@@ -2,7 +2,7 @@ import config from '../config';
 import { Response, Request, NextFunction } from 'express';
 import { UserServiceType } from '../services/user.service';
 import { inject, injectable } from 'inversify';
-import { controller, httpPost, httpGet, httpMethod } from 'inversify-express-utils';
+import { controller, httpPost, httpGet, httpMethod, all } from 'inversify-express-utils';
 import 'reflect-metadata';
 import { AuthorizedRequest } from '../requests/authorized.request';
 import * as passport from 'passport';
@@ -171,15 +171,10 @@ export class UserController {
     res.json(await this.userService.resendVerification(req.body));
   }
 
-  @httpGet(
+  @all(
     '/auth/facebook/token'
   )
   async authFacebookTokenGetsMethod(req: Request, res: Response, next: NextFunction): Promise<void> {
-    this.authByFacebookAccessToken(res, req, next);
-  }
-
-  @httpMethod('OPTIONS', '/auth/facebook/token')
-  async authFacebookTokenOptionsMethod(req: Request, res: Response, next: NextFunction): Promise<void> {
     this.authByFacebookAccessToken(res, req, next);
   }
 
