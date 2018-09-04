@@ -2,7 +2,7 @@ import config from '../config';
 import { Response, Request, NextFunction } from 'express';
 import { UserServiceType } from '../services/user.service';
 import { inject, injectable } from 'inversify';
-import { controller, httpPost, httpGet } from 'inversify-express-utils';
+import { controller, httpPost, httpGet, httpMethod } from 'inversify-express-utils';
 import 'reflect-metadata';
 import { AuthorizedRequest } from '../requests/authorized.request';
 import * as passport from 'passport';
@@ -174,17 +174,28 @@ export class UserController {
   @httpGet(
     '/auth/facebook/token'
   )
-  async authFacebookToken(req: Request, res: Response, next: NextFunction): Promise<void> {
-    (function(userService) {
-      passport.authenticate('facebook-token', {session: false}, async function(err, user, info) {
+  async authFacebookTokenGetsMethod(req: Request, res: Response, next: NextFunction): Promise<void> {
+    this.authByFacebookAccessToken(res, req, next);
+  }
+
+  @httpMethod('OPTIONS', '/auth/facebook/token')
+  async authFacebookTokenOptionsMethod(req: Request, res: Response, next: NextFunction): Promise<void> {
+    this.authByFacebookAccessToken(res, req, next);
+  }
+
+  private authByFacebookAccessToken(res: Response, req: Request, next: NextFunction) {
+    (function (userService) {
+      passport.authenticate('facebook-token', { session: false }, async function (err, user, info) {
         if (err) {
           if (err.oauthError) {
             const oauthError = JSON.parse(err.oauthError.data);
             return res.status(401).send(oauthError.error.message);
-          } else {
+          }
+          else {
             return res.send(err);
           }
-        } else {
+        }
+        else {
           const result = await userService.createActivatedUser({
             agreeTos: true,
             email: user.email,
