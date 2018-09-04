@@ -18,27 +18,27 @@ export interface TrackBotQueueInterface {
 
 @injectable()
 export class TrackBotQueue implements TrackBotQueueInterface {
-  private queueWrapper: Bull.Queue;
-  private queueProcessTrackWrapper: Bull.Queue;
-  private queueProcessTrackFinishWrapper: Bull.Queue;
+  private queueWrapperAddBots: Bull.Queue;
+  private queueWrapperProcessTrack: Bull.Queue;
+  private queueWrapperProcessTrackFinish: Bull.Queue;
   private bots: User[] = [];
   private logger = Logger.getInstance('TRACK_BOT_QUEUE');
   private io: any;
 
   constructor(@inject(TrackServiceType) private trackService: TrackServiceInterface) {
-    this.queueWrapper = new Bull('track_bot_queue', config.redis.url);
-    this.queueProcessTrackWrapper = new Bull('process_track_queue', config.redis.url);
-    this.queueProcessTrackFinishWrapper = new Bull('process_track_finish_queue', config.redis.url);
+    this.queueWrapperAddBots = new Bull('track_bot_queue', config.redis.url);
+    this.queueWrapperProcessTrack = new Bull('process_track_queue', config.redis.url);
+    this.queueWrapperProcessTrackFinish = new Bull('process_track_finish_queue', config.redis.url);
 
-    this.queueWrapper.process((job) => {
-      return this.processAddBot(job);
+    this.queueWrapperAddBots.process((job) => {
+      return this.processAddBots(job);
     });
 
-    this.queueProcessTrackWrapper.process((job) => {
+    this.queueWrapperProcessTrack.process((job) => {
       return this.processTrack(job);
     });
 
-    this.queueProcessTrackFinishWrapper.process((job) => {
+    this.queueWrapperProcessTrackFinish.process((job) => {
       return this.processTrackFinish(job);
     });
 
@@ -46,13 +46,13 @@ export class TrackBotQueue implements TrackBotQueueInterface {
   }
 
   addJobWaitNewUsers(data: any) {
-    this.queueWrapper.add(data, {delay: 5000});
+    this.queueWrapperAddBots.add(data, {delay: 5000});
     this.logger.debug(`Added new job [wait for new users]: trackId: ${data.trackId}`);
   }
 
   private async addJobProcessTrack(data: any): Promise<Bull.Job> {
     this.logger.debug(`Adding new job [process track]: trackId: ${data.trackId}`);
-    return this.queueProcessTrackWrapper.add(data, {repeat: {
+    return this.queueWrapperProcessTrack.add(data, {repeat: {
       cron: '*/5 * * * * *',
       endDate: data.endDate
     }});
@@ -60,15 +60,15 @@ export class TrackBotQueue implements TrackBotQueueInterface {
 
   private async addJobProccessTrackFinish(data: any): Promise<Bull.Job> {
     this.logger.debug(`Adding new job [process track finish]: trackId ${data.trackId}`);
-    return this.queueProcessTrackFinishWrapper.add(data, {delay: 1000 * 60 * 5 + 5000});
+    return this.queueWrapperProcessTrackFinish.add(data, {delay: 1000 * 60 * 5 + 5000});
   }
 
   setSocket(io: any) {
     this.io = io;
   }
 
-  private async processAddBot(job: Bull.Job): Promise<boolean> {
-    this.logger.debug(`Before procees: ${job.data.trackId}`);
+  private async processAddBots(job: Bull.Job): Promise<boolean> {
+    this.logger.debug(`Init process: ${job.data.trackId}`);
     const track = await getConnection().mongoManager.findOneById(Track, new ObjectID(job.data.trackId));
     if (track.numPlayers === job.data.numPlayers) {
       await this.addBots(
@@ -79,7 +79,7 @@ export class TrackBotQueue implements TrackBotQueueInterface {
   }
 
   private async processTrack(job: Bull.Job): Promise<boolean> {
-    this.logger.debug(`Before process track: ${job.data.trackId}`);
+    this.logger.debug(`Init process track: ${job.data.trackId}`);
     const now = getUnixtimeMultiplesOfFive();
     let stats = await this.trackService.getStats(job.data.trackId, now - 5);
     let currencies = await this.trackService.getCurrencyRates(now - 5);
@@ -93,7 +93,6 @@ export class TrackBotQueue implements TrackBotQueueInterface {
       };
     });
     this.io.sockets.in('tracks_' + job.data.trackId).emit('positionUpdate', playerPositions);
-    this.logger.debug(`End process track: ${job.data.trackId}`);
     return true;
   }
 
@@ -105,7 +104,7 @@ export class TrackBotQueue implements TrackBotQueueInterface {
   }
 
   private async addBots(trackId) {
-    this.logger.debug('Adding bots');
+    this.logger.debug(`Adding bots to track: ${trackId}`);
     const track = await this.trackService.getTrackById(trackId);
     const neededBots = track.maxPlayers - track.numPlayers;
     const bots = await this.getBots();
@@ -142,7 +141,7 @@ export class TrackBotQueue implements TrackBotQueueInterface {
   }
 
   private async processTrackFinish(job: Bull.Job): Promise<boolean> {
-    const jobProcessTrack = await this.queueProcessTrackWrapper.getJob(job.data.jobProcessTrackId);
+    const jobProcessTrack = await this.queueWrapperProcessTrack.getJob(job.data.jobProcessTrackId);
     jobProcessTrack.remove();
 
     const trackId = job.data.trackId;
