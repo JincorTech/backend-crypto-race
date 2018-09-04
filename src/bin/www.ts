@@ -70,9 +70,13 @@ createConnection(ormOptions).then(async connection => {
 
   sock.use(async(socket, next) => {
     let handshake = socket.handshake;
-    const result = await authClient.verifyUserToken(handshake.query.token);
-    socket.handshake.query.email = result.login;
-    next();
+    if (handshake.query.token) {
+      const result = await authClient.verifyUserToken(handshake.query.token);
+      socket.handshake.query.email = result.login;
+      next();
+    } else {
+      next(new Error('Authentication error'));
+    }
   });
 
   sock.on('connect', async socket => {
