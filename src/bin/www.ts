@@ -13,6 +13,7 @@ import { User } from '../entities/user';
 import { Track, TRACK_STATUS_ACTIVE, TRACK_STATUS_AWAITING } from '../entities/track';
 import { UserServiceType } from '../services/user.service';
 import { TrackBotQueueInterface, TrackBotQueueType } from '../queues/track.bot.queue';
+import { getUnixtimeMultiplesOfFive } from '../helpers/helpers';
 
 /**
  * Create HTTP server.
@@ -20,6 +21,11 @@ import { TrackBotQueueInterface, TrackBotQueueType } from '../queues/track.bot.q
 const httpServer = http.createServer(app);
 const io = socketio(httpServer);
 const ormOptions: ConnectionOptions = config.typeOrm as ConnectionOptions;
+const messages = {};
+const authClient: AuthClientInterface = container.get(AuthClientType);
+const trackService: TrackServiceInterface = container.get(TrackServiceType);
+const userService: UserServiceInterface = container.get(UserServiceType);
+const trackBotQueue: TrackBotQueueInterface = container.get(TrackBotQueueType);
 
 createConnection(ormOptions).then(async connection => {
   /**
@@ -42,29 +48,11 @@ createConnection(ormOptions).then(async connection => {
     httpsServer.listen(config.app.httpsPort);
   }
 
-  const messages = {};
-  const authClient: AuthClientInterface = container.get(AuthClientType);
-  const trackService: TrackServiceInterface = container.get(TrackServiceType);
-  const userService: UserServiceInterface = container.get(UserServiceType);
-  const trackBotQueue: TrackBotQueueInterface = container.get(TrackBotQueueType);
-
   trackBotQueue.setSocket(io);
 
   // create bots
   const botEmails = ['bot1@secrettech.io', 'bot2@secrettech.io', 'bot3@secrettech.io', 'bot4@secrettech.io', 'bot5@secrettech.io'];
-  const bots = await getConnection().mongoManager.count(User, {email: {'$in': botEmails}});
-  if (bots === 0) {
-    for (let i = 0; i < botEmails.length; i++) {
-      await userService.createActivatedUser({
-        agreeTos: true,
-        email: botEmails[i],
-        name: `Bot_${i}`,
-        picture: '', // TODO: set picture
-        password: 'Stub',
-        passwordHash: 'Stub'
-      });
-    }
-  }
+  await createBots(botEmails);
 
   const sock = io.of('/');
 
@@ -102,20 +90,10 @@ createConnection(ormOptions).then(async connection => {
      */
     socket.on('getTracks', async() => {
       let tracks = await getConnection().mongoManager.find(Track, {take: 1000});
-      if (tracks.filter((track) => { return track.status === 'awaiting' && track.maxPlayers === 2; }).length === 0) {
-        tracks.push(await trackService.internalCreateTrack('0', 2));
-      }
-      if (tracks.filter((track) => { return track.status === 'awaiting' && track.maxPlayers === 3; }).length === 0) {
-        tracks.push(await trackService.internalCreateTrack('0', 3));
-      }
-      if (tracks.filter((track) => { return track.status === 'awaiting' && track.maxPlayers === 4; }).length === 0) {
-        tracks.push(await trackService.internalCreateTrack('0', 4));
-      }
-      if (tracks.filter((track) => { return track.status === 'awaiting' && track.maxPlayers === 5; }).length === 0) {
-        tracks.push(await trackService.internalCreateTrack('0', 5));
-      }
-      if (tracks.filter((track) => { return track.status === 'awaiting' && track.maxPlayers === 6; }).length === 0) {
-        tracks.push(await trackService.internalCreateTrack('0', 6));
+      for (let i = 1; i <= 6; i++) {
+        if (tracks.filter((track) => { return track.status === 'awaiting' && track.maxPlayers === i; }).length === 0) {
+          tracks.push(await trackService.internalCreateTrack('0', i));
+        }
       }
       socket.emit('initTracks', {tracks: tracks});
       socket.broadcast.emit('initTracks', {tracks: tracks});
@@ -127,7 +105,7 @@ createConnection(ormOptions).then(async connection => {
         io.sockets.in(socket.id).emit('error', {message: 'Track not found'});
         return;
       }
-      if (track.status !== TRACK_STATUS_AWAITING) {
+      if (track.isAwaiting()) {
         io.sockets.in(socket.id).emit('error', {message: 'Track is already active'});
         return;
       }
@@ -148,8 +126,7 @@ createConnection(ormOptions).then(async connection => {
           io.sockets.in('tracks_' + joinData.trackId).emit('start', init);
           let currenciesStart = await trackService.getCurrencyRates(track.start);
           let timer = setInterval(async() => {
-            let now = Math.floor(Date.now() / 1000);
-            now = now % 5 === 0 ? now : now + (5 - (now % 5));
+            let now = getUnixtimeMultiplesOfFive();
             let stats = await trackService.getStats(track.id.toString(), now);
             let currencies = await trackService.getCurrencyRates(now);
             const playerPositions = stats.map((stat, index) => {
@@ -234,3 +211,20 @@ createConnection(ormOptions).then(async connection => {
   });
 
 }).catch(error => console.log('TypeORM connection error: ', error));
+
+async function createBots(botEmails: string[]) {
+  const bots = await getConnection().mongoManager.count(User, { email: { '$in': botEmails } });
+  if (bots === 0) {
+    for (let i = 0; i < botEmails.length; i++) {
+      await userService.createActivatedUser({
+        agreeTos: true,
+        email: botEmails[i],
+        name: `Bot_${i}`,
+        picture: '',
+        password: 'Stub',
+        passwordHash: 'Stub'
+      });
+    }
+  }
+}
+

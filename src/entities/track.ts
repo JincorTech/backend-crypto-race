@@ -160,4 +160,12 @@ export class Track {
       }
     }
   }
+
+  isAwaiting(): boolean {
+    return this.status === TRACK_STATUS_AWAITING;
+  }
+
+  isStarting(): boolean {
+    return this.status === TRACK_STATUS_STARTING;
+  }
 }
