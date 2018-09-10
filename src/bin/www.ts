@@ -25,7 +25,7 @@ const messages = {};
 const authClient: AuthClientInterface = container.get(AuthClientType);
 const trackService: TrackServiceInterface = container.get(TrackServiceType);
 const userService: UserServiceInterface = container.get(UserServiceType);
-const trackBotQueue: TrackQueueInterface = container.get(TrackQueueType);
+const trackQueue: TrackQueueInterface = container.get(TrackQueueType);
 
 createConnection(ormOptions).then(async connection => {
   /**
@@ -48,7 +48,7 @@ createConnection(ormOptions).then(async connection => {
     httpsServer.listen(config.app.httpsPort);
   }
 
-  trackBotQueue.setSocket(io);
+  trackQueue.setSocket(io);
 
   // create bots
   const botEmails = ['bot1@secrettech.io', 'bot2@secrettech.io', 'bot3@secrettech.io', 'bot4@secrettech.io', 'bot5@secrettech.io'];
@@ -114,7 +114,7 @@ createConnection(ormOptions).then(async connection => {
         io.sockets.in(socket.id).emit('error', {message: 'Can not join track'});
       }
 
-      trackBotQueue.addJobWaitNewUsers({
+      trackQueue.addJobWaitNewUsers({
         trackId: track.id.toHexString(),
         numPlayers: track.numPlayers
       });
@@ -125,38 +125,16 @@ createConnection(ormOptions).then(async connection => {
           let init: InitRace = { id: track.id.toString(), raceName: track.id.toHexString(), start: track.start * 1000, end: track.end * 1000, players: track.players};
           io.sockets.in('tracks_' + joinData.trackId).emit('start', init);
           let currenciesStart = await trackService.getCurrencyRates(track.start);
-          let timer = setInterval(async() => {
-            let now = getUnixtimeMultiplesOfFive();
-            let stats = await trackService.getStats(track.id.toString(), now);
-            let currencies = await trackService.getCurrencyRates(now);
-            const playerPositions = stats.map((stat, index) => {
-              return {
-                id: stat.player.toString(),
-                position: index,
-                score: stat.score,
-                currencies: currencies,
-                currenciesStart: currenciesStart
-              };
-            });
+          const jobProcessTrack = await trackQueue.addJobProcessTrack({
+            trackId: track.id.toHexString(),
+            currenciesStart: currenciesStart,
+            endDate: track.end * 1000 + 3000 // TODO
+          });
 
-            console.log(playerPositions);
-            io.sockets.in('tracks_' + joinData.trackId).emit('positionUpdate', playerPositions);
-            if (track.end <= now) {
-              for (let i = 0; i < stats.length; i++) {
-                const name = (await getConnection().mongoManager.getRepository(User).findOneById(stats[i].player)).name;
-                stats[i] = {
-                  id: stats[i].player.toString(),
-                  position: i,
-                  name,
-                  score: stats[i].score,
-                  prize: i === 0 ? 0.1 : 0
-                };
-              }
-              await trackService.finishTrack(track, stats);
-              io.sockets.in('tracks_' + joinData.trackId).emit('gameover', stats);
-              clearInterval(timer);
-            }
-          }, 5000);
+          trackQueue.addJobProccessTrackFinish({
+            trackId: track.id.toHexString(),
+            jobProcessTrackId: jobProcessTrack.id
+          });
         }
       });
 

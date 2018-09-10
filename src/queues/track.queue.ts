@@ -13,6 +13,8 @@ const botEmails = ['bot1@secrettech.io', 'bot2@secrettech.io', 'bot3@secrettech.
 
 export interface TrackQueueInterface {
   addJobWaitNewUsers(data: any);
+  addJobProcessTrack(data: any);
+  addJobProccessTrackFinish(data: any);
   setSocket(io: any);
 }
 
@@ -50,7 +52,7 @@ export class TrackQueue implements TrackQueueInterface {
     this.logger.debug(`Added new job [wait for new users]: trackId: ${data.trackId}`);
   }
 
-  private async addJobProcessTrack(data: any): Promise<Bull.Job> {
+  async addJobProcessTrack(data: any): Promise<Bull.Job> {
     this.logger.debug(`Adding new job [process track]: trackId: ${data.trackId}`);
     return this.queueWrapperProcessTrack.add(data, {repeat: {
       cron: '*/5 * * * * *',
@@ -58,7 +60,7 @@ export class TrackQueue implements TrackQueueInterface {
     }});
   }
 
-  private async addJobProccessTrackFinish(data: any): Promise<Bull.Job> {
+  async addJobProccessTrackFinish(data: any): Promise<Bull.Job> {
     this.logger.debug(`Adding new job [process track finish]: trackId ${data.trackId}`);
     return this.queueWrapperProcessTrackFinish.add(data, {delay: 1000 * 60 * 5 + 5000});
   }
