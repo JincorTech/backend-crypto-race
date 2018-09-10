@@ -11,13 +11,13 @@ import { getUnixtimeMultiplesOfFive } from '../helpers/helpers';
 
 const botEmails = ['bot1@secrettech.io', 'bot2@secrettech.io', 'bot3@secrettech.io', 'bot4@secrettech.io', 'bot5@secrettech.io'];
 
-export interface TrackBotQueueInterface {
+export interface TrackQueueInterface {
   addJobWaitNewUsers(data: any);
   setSocket(io: any);
 }
 
 @injectable()
-export class TrackBotQueue implements TrackBotQueueInterface {
+export class TrackQueue implements TrackQueueInterface {
   private queueWrapperAddBots: Bull.Queue;
   private queueWrapperProcessTrack: Bull.Queue;
   private queueWrapperProcessTrackFinish: Bull.Queue;
@@ -166,5 +166,5 @@ export class TrackBotQueue implements TrackBotQueueInterface {
   }
 }
 
-const TrackBotQueueType = Symbol('TrackBotQueueInterface');
-export { TrackBotQueueType };
+const TrackQueueType = Symbol('TrackQueueInterface');
+export { TrackQueueType };

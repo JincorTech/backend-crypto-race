@@ -12,7 +12,7 @@ import { TrackServiceType, TrackService, TrackServiceInterface } from '../servic
 import { User } from '../entities/user';
 import { Track, TRACK_STATUS_ACTIVE, TRACK_STATUS_AWAITING } from '../entities/track';
 import { UserServiceType } from '../services/user.service';
-import { TrackBotQueueInterface, TrackBotQueueType } from '../queues/track.bot.queue';
+import { TrackQueueInterface, TrackQueueType } from '../queues/track.bot.queue';
 import { getUnixtimeMultiplesOfFive } from '../helpers/helpers';
 
 /**
@@ -25,7 +25,7 @@ const messages = {};
 const authClient: AuthClientInterface = container.get(AuthClientType);
 const trackService: TrackServiceInterface = container.get(TrackServiceType);
 const userService: UserServiceInterface = container.get(UserServiceType);
-const trackBotQueue: TrackBotQueueInterface = container.get(TrackBotQueueType);
+const trackBotQueue: TrackQueueInterface = container.get(TrackQueueType);
 
 createConnection(ormOptions).then(async connection => {
   /**
