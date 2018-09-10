@@ -12,7 +12,7 @@ import { TrackServiceType, TrackService, TrackServiceInterface } from '../servic
 import { User } from '../entities/user';
 import { Track, TRACK_STATUS_ACTIVE, TRACK_STATUS_AWAITING } from '../entities/track';
 import { UserServiceType } from '../services/user.service';
-import { TrackQueueInterface, TrackQueueType } from '../queues/track.bot.queue';
+import { TrackQueueInterface, TrackQueueType } from '../queues/track.queue';
 import { getUnixtimeMultiplesOfFive } from '../helpers/helpers';
 
 /**

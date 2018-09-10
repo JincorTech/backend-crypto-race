@@ -19,7 +19,7 @@ import { LandingServiceType, LandingService } from './services/landing.service';
 import { GameController } from './controllers/game.controller';
 import { TrackServiceInterface, TrackService, TrackServiceType } from './services/track.service';
 import { CryptoCurrencyHandlerInterface, CryptoCurrencyHandlerType, CryptoCurrencyHandler } from './handlers/crypto.currency.handler';
-import { TrackQueueInterface, TrackQueueType, TrackQueue } from './queues/track.bot.queue';
+import { TrackQueueInterface, TrackQueueType, TrackQueue } from './queues/track.queue';
 
 let container = new Container();
 
