@@ -122,7 +122,7 @@ createConnection(ormOptions).then(async connection => {
         io.sockets.in(socket.id).emit('error', {message: 'Track not found'});
         return;
       }
-      if (track.isAwaiting()) {
+      if (track.isActive) {
         io.sockets.in(socket.id).emit('error', {message: 'Track is already active'});
         return;
       }
