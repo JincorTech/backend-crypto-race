@@ -22,10 +22,6 @@ const httpServer = http.createServer(app);
 const io = socketio(httpServer);
 const ormOptions: ConnectionOptions = config.typeOrm as ConnectionOptions;
 const messages = {};
-const authClient: AuthClientInterface = container.get(AuthClientType);
-const trackService: TrackServiceInterface = container.get(TrackServiceType);
-const userService: UserServiceInterface = container.get(UserServiceType);
-const trackQueue: TrackQueueInterface = container.get(TrackQueueType);
 
 createConnection(ormOptions).then(async connection => {
   /**
@@ -47,6 +43,27 @@ createConnection(ormOptions).then(async connection => {
     const httpsServer = https.createServer(httpsOptions, app);
     httpsServer.listen(config.app.httpsPort);
   }
+
+  const authClient: AuthClientInterface = container.get(AuthClientType);
+  const trackService: TrackServiceInterface = container.get(TrackServiceType);
+  const userService: UserServiceInterface = container.get(UserServiceType);
+  const trackQueue: TrackQueueInterface = container.get(TrackQueueType);
+
+  const createBots = async function(botEmails: string[]) {
+    const bots = await getConnection().mongoManager.count(User, { email: { '$in': botEmails } });
+    if (bots === 0) {
+      for (let i = 0; i < botEmails.length; i++) {
+        await userService.createActivatedUser({
+          agreeTos: true,
+          email: botEmails[i],
+          name: `Bot_${i}`,
+          picture: '',
+          password: 'Stub',
+          passwordHash: 'Stub'
+        });
+      }
+    }
+  };
 
   trackQueue.setSocket(io);
 
@@ -189,20 +206,3 @@ createConnection(ormOptions).then(async connection => {
   });
 
 }).catch(error => console.log('TypeORM connection error: ', error));
-
-async function createBots(botEmails: string[]) {
-  const bots = await getConnection().mongoManager.count(User, { email: { '$in': botEmails } });
-  if (bots === 0) {
-    for (let i = 0; i < botEmails.length; i++) {
-      await userService.createActivatedUser({
-        agreeTos: true,
-        email: botEmails[i],
-        name: `Bot_${i}`,
-        picture: '',
-        password: 'Stub',
-        passwordHash: 'Stub'
-      });
-    }
-  }
-}
-
