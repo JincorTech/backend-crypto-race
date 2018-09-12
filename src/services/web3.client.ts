@@ -423,7 +423,7 @@ export class Web3Client implements Web3ClientInterface {
 
   private async getNonce(addressAccount: string, addressContract: string): Promise<number> {
     const storedNonce = await redisGetAsync(`${addressAccount}.nonce`);
-    const ethNonce = await this.web3.eth.getTransactionCount(addressContract, 'pending');
+    const ethNonce = await this.web3.eth.getTransactionCount(addressAccount, 'pending');
     if (storedNonce && storedNonce >= ethNonce) {
       return storedNonce;
     }
