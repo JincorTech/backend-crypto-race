@@ -71,7 +71,11 @@ export class TrackService implements TrackServiceInterface {
       const rates = await this.getCurrencyRates(track.end);
       const names = Object.keys(rates);
       const amounts = Object.keys(rates).map(key => rates[key]);
-      this.web3Client.setRates(track.end, names, amounts);
+      this.web3Client.setRates({
+        amounts: amounts,
+        names: names,
+        timestamp: track.end
+      });
     }, 6000);
 
     return await this.trackRepo.save(track);
@@ -88,7 +92,12 @@ export class TrackService implements TrackServiceInterface {
     track.status = TRACK_STATUS_AWAITING;
     await getConnection().mongoManager.getRepository(Track).save(track);
 
-    await this.web3Client.createTrackFromBackend(track.id.toHexString(), betAmount, maxPlayers, 300);
+    await this.web3Client.createTrackFromBackend({
+      id: track.id.toHexString(),
+      betAmount: betAmount,
+      maxPlayers: maxPlayers,
+      duration: 300
+    });
 
     return track;
   }
@@ -108,14 +117,22 @@ export class TrackService implements TrackServiceInterface {
     await this.addPlayerToTrack(track, user, assets, ship);
     await this.setPortfolio(user, mnemonic, track.id.toString(), assets);
 
-    this.web3Client.joinToTrack(account, id, assets).then(r => {
+    this.web3Client.joinToTrack({
+      account: account,
+      assets: assets,
+      id: track.id.toHexString()
+    }).then(r => {
       if (track.numPlayers === track.maxPlayers) {
         this.startTrack(track.id.toHexString(), track.start);
         setTimeout(async() => {
           const rates = await this.getCurrencyRates(track.start);
           const names = Object.keys(rates);
           const amounts = Object.keys(rates).map(key => rates[key]);
-          this.web3Client.setRates(track.start, names, amounts);
+          this.web3Client.setRates({
+            amounts: amounts,
+            names: names,
+            timestamp: track.start
+          });
         }, 6000);
       }
     });
@@ -146,7 +163,11 @@ export class TrackService implements TrackServiceInterface {
     await getConnection().mongoManager.save(Portfolio, portfolioEntity);
 
     const account = this.web3Client.getAccountByMnemonicAndSalt(mnemonic, user.ethWallet.salt);
-    this.web3Client.setPortfolio(account, id, portfolio);
+    this.web3Client.setPortfolio({
+      account: account,
+      id: track.id.toHexString(),
+      portfolio: portfolio
+    });
 
     return portfolioEntity;
   }
@@ -189,7 +210,10 @@ export class TrackService implements TrackServiceInterface {
 
     await this.trackRepo.save(track);
 
-    this.web3Client.startTrack(track.id.toHexString(), track.start);
+    this.web3Client.startTrack({
+      id: track.id.toHexString(),
+      start: start
+    });
 
     return true;
   }
@@ -248,7 +272,10 @@ export class TrackService implements TrackServiceInterface {
 
   async getRewards(user: User, mnemonic: string, id: string): Promise<string> {
     const account = this.web3Client.getAccountByMnemonicAndSalt(mnemonic, user.ethWallet.salt);
-    this.web3Client.withdrawRewards(account, id);
+    this.web3Client.withdrawRewards({
+      account: account,
+      id: id
+    });
 
     return '0'; // TODO: change to an actual reward
   }
