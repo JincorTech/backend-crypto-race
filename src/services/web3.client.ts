@@ -173,18 +173,7 @@ export class Web3Client implements Web3ClientInterface {
         ).encodeABI()
       };
 
-      account.signTransaction(params).then(transaction => {
-        this.web3.eth.sendSignedTransaction(transaction.rawTransaction)
-          .on('transactionHash', transactionHash => {
-            resolve(transactionHash);
-          })
-          .on('error', (error) => {
-            reject(error);
-          })
-          .catch((error) => {
-            reject(error);
-          });
-      }).catch(error => { console.log(error); });
+      this.signAndSendTransaction(account, params, resolve, reject);
     });
   }
 
@@ -233,18 +222,7 @@ export class Web3Client implements Web3ClientInterface {
         data: this.raceBase.methods.withdrawRewards(nameBytes32).encodeABI()
       };
 
-      data.account.signTransaction(params).then(transaction => {
-        this.web3.eth.sendSignedTransaction(transaction.rawTransaction)
-          .on('transactionHash', transactionHash => {
-            resolve(transactionHash);
-          })
-          .on('error', (error) => {
-            reject(error);
-          })
-          .catch((error) => {
-            reject(error);
-          });
-      });
+      this.signAndSendTransaction(data.account, params, resolve, reject);
     });
   }
 
@@ -294,18 +272,7 @@ export class Web3Client implements Web3ClientInterface {
         data: this.raceBase.methods.joinToTrack(nameBytes32, names, amounts).encodeABI()
       };
 
-      data.account.signTransaction(params).then(transaction => {
-        this.web3.eth.sendSignedTransaction(transaction.rawTransaction)
-          .on('transactionHash', transactionHash => {
-            resolve(transactionHash);
-          })
-          .on('error', (error) => {
-            reject(error);
-          })
-          .catch((error) => {
-            reject(error);
-          });
-      });
+      this.signAndSendTransaction(data.account, params, resolve, reject);
     });
   }
 
@@ -323,23 +290,12 @@ export class Web3Client implements Web3ClientInterface {
       const params = {
         value: '0',
         to: this.raceBase.options.address,
-        gas: 2000000,
+        gas: '2000000',
         nonce: await this.web3.eth.getTransactionCount(data.account.address, 'pending'),
         data: this.raceBase.methods.setPortfolio(nameBytes32, names, amounts).encodeABI()
       };
 
-      data.account.signTransaction(params).then(transaction => {
-        this.web3.eth.sendSignedTransaction(transaction.rawTransaction)
-          .on('transactionHash', transactionHash => {
-            resolve(transactionHash);
-          })
-          .on('error', (error) => {
-            reject(error);
-          })
-          .catch((error) => {
-            reject(error);
-          });
-      });
+      this.signAndSendTransaction(data.account, params, resolve, reject);
     });
   }
 
@@ -357,23 +313,12 @@ export class Web3Client implements Web3ClientInterface {
       const params = {
         value: '0',
         to: this.rate.options.address,
-        gas: 2000000,
+        gas: '2000000',
         nonce: await this.web3.eth.getTransactionCount(account.address, 'pending'),
         data: this.rate.methods.setRates(this.web3.utils.toBN(data.timestamp), preparedNames, preparedAmounts).encodeABI()
       };
 
-      account.signTransaction(params).then(transaction => {
-        this.web3.eth.sendSignedTransaction(transaction.rawTransaction)
-          .on('transactionHash', transactionHash => {
-            resolve(transactionHash);
-          })
-          .on('error', (error) => {
-            reject(error);
-          })
-          .catch((error) => {
-            reject(error);
-          });
-      });
+      this.signAndSendTransaction(account, params, resolve, reject);
     });
   }
 
@@ -446,6 +391,26 @@ export class Web3Client implements Web3ClientInterface {
 
   toHexSha3(value: string): string {
     return this.web3.utils.toHex(this.web3.utils.sha3(value));
+  }
+
+  private signAndSendTransaction(
+    account: any,
+    params: { value: string; to: any; gas: string; nonce?: any; data: any; },
+    resolve: (value?: {} | PromiseLike<{}> | void | PromiseLike<void>) => void | {},
+    reject: (reason?: any) => void
+  ) {
+    account.signTransaction(params).then(transaction => {
+      this.web3.eth.sendSignedTransaction(transaction.rawTransaction)
+        .on('transactionHash', transactionHash => {
+          resolve(transactionHash);
+        })
+        .on('error', (error) => {
+          reject(error);
+        })
+        .catch((error) => {
+          reject(error);
+        });
+    });
   }
 }
 
