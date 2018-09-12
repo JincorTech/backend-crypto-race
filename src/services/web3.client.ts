@@ -8,6 +8,13 @@ const hdkey = require('ethereumjs-wallet/hdkey');
 import config from '../config';
 import 'reflect-metadata';
 import { Logger } from '../logger';
+import * as Redis from 'redis';
+import { promisify } from 'util';
+
+const client = Redis.createClient(config.redis.url);
+const redisGetAsync = promisify(client.get).bind(client);
+const redisSetAsync = promisify(client.set).bind(client);
+const redisIncrAsync = promisify(client.incr).bind(client);
 
 export interface Web3ClientInterface {
   sendTransactionByMnemonic(input: TransactionInput, mnemonic: string, salt: string): Promise<string>;
@@ -164,7 +171,7 @@ export class Web3Client implements Web3ClientInterface {
         value: '0',
         to: this.raceBase.options.address,
         gas: '2000000',
-        nonce: await this.web3.eth.getTransactionCount(account.address, 'pending'),
+        nonce: await this.getNonce(account.address, this.raceBase.options.address),
         data: this.raceBase.methods.createTrackFromBack(
           nameBates32,
           this.web3.utils.toWei(data.betAmount, 'ether'),
@@ -401,7 +408,8 @@ export class Web3Client implements Web3ClientInterface {
   ) {
     account.signTransaction(params).then(transaction => {
       this.web3.eth.sendSignedTransaction(transaction.rawTransaction)
-        .on('transactionHash', transactionHash => {
+        .once('transactionHash', async(transactionHash) => {
+          await this.incrNonce(account.address);
           resolve(transactionHash);
         })
         .on('error', (error) => {
@@ -411,6 +419,22 @@ export class Web3Client implements Web3ClientInterface {
           reject(error);
         });
     });
+  }
+
+  private async getNonce(addressAccount: string, addressContract: string): Promise<number> {
+    const storedNonce = await redisGetAsync(`${addressAccount}.nonce`);
+    const ethNonce = await this.web3.eth.getTransactionCount(addressContract, 'pending');
+    if (storedNonce && storedNonce >= ethNonce) {
+      return storedNonce;
+    }
+
+    await redisSetAsync(`${addressAccount}.nonce`, ethNonce);
+
+    return ethNonce;
+  }
+
+  private async incrNonce(addressAccount: string): Promise<void> {
+    await redisIncrAsync(`${addressAccount}.nonce`);
   }
 }
 
