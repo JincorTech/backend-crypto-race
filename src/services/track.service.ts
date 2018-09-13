@@ -121,21 +121,7 @@ export class TrackService implements TrackServiceInterface {
       account: account,
       assets: assets,
       id: track.id.toHexString()
-    }).then(r => {
-      if (track.numPlayers === track.maxPlayers) {
-        this.startTrack(track.id.toHexString(), track.start);
-        setTimeout(async() => {
-          const rates = await this.getCurrencyRates(track.start);
-          const names = Object.keys(rates);
-          const amounts = Object.keys(rates).map(key => rates[key]);
-          this.web3Client.setRates({
-            amounts: amounts,
-            names: names,
-            timestamp: track.start
-          });
-        }, 6000);
-      }
-    });
+    }).then();
     return track;
   }
 
