@@ -162,13 +162,6 @@ export class TrackService implements TrackServiceInterface {
     if (exists.length > 0) return false;
     await getConnection().mongoManager.save(Portfolio, portfolioEntity);
 
-    const account = this.web3Client.getAccountByMnemonicAndSalt(mnemonic, user.ethWallet.salt);
-    this.web3Client.setPortfolio({
-      account: account,
-      id: track.id.toHexString(),
-      portfolio: portfolio
-    });
-
     return portfolioEntity;
   }
 

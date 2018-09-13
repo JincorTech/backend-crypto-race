@@ -171,7 +171,7 @@ export class Web3Client implements Web3ClientInterface {
         value: '0',
         to: this.raceBase.options.address,
         gas: '2000000',
-        nonce: await this.getNonce(account.address, this.raceBase.options.address),
+        nonce: await this.getNonce(account.address),
         data: this.raceBase.methods.createTrackFromBack(
           nameBates32,
           this.web3.utils.toWei(data.betAmount, 'ether'),
@@ -421,7 +421,7 @@ export class Web3Client implements Web3ClientInterface {
     });
   }
 
-  private async getNonce(addressAccount: string, addressContract: string): Promise<number> {
+  private async getNonce(addressAccount: string): Promise<number> {
     const storedNonce = await redisGetAsync(`${addressAccount}.nonce`);
     const ethNonce = await this.web3.eth.getTransactionCount(addressAccount, 'pending');
     if (storedNonce && storedNonce >= ethNonce) {
