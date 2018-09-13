@@ -78,6 +78,8 @@ export class TrackService implements TrackServiceInterface {
     track.type = TRACK_TYPE_BACKEND;
     track.timestamp = Math.floor(Date.now() / 1000);
     track.status = TRACK_STATUS_AWAITING;
+    track.start = 0;
+    track.end = 0;
     await getConnection().mongoManager.getRepository(Track).save(track);
 
     await this.web3Client.createTrack({

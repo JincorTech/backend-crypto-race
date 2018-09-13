@@ -21,11 +21,11 @@ export class CryptoCurrencyHandler implements CryptoCurrencyHandlerInterface {
             method: 'GET'
           });
           const rates = {
-            'BTC': data.BTC.USD,
-            'ETH': data.ETH.USD,
-            'LTC': data.LTC.USD,
-            'XRP': data.XRP.USD,
-            'BCH': data.BCH.USD
+            'btc': data.BTC.USD,
+            'eth': data.ETH.USD,
+            'ltc': data.LTC.USD,
+            'xrp': data.XRP.USD,
+            'bch': data.BCH.USD
           };
 
           client.setex(currentTime.toString(), 60 * 15, JSON.stringify(rates));

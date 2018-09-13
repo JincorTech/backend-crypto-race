@@ -183,6 +183,8 @@ export class Web3Client implements Web3ClientInterface {
     const nameBytes32 = this.web3.utils.toHex(this.web3.utils.sha3(data.id));
     const names = new Array<string>();
     const amounts = new Array<string>();
+    const start = this.web3.utils.toBN(data.start ? data.start : 0);
+    const betAmount = this.web3.utils.toBN(data.betAmount);
 
     for (let i = 0; i < data.assets.length; i++) {
       names.push(this.web3.utils.toHex(data.assets[i].name));
@@ -191,11 +193,11 @@ export class Web3Client implements Web3ClientInterface {
 
     return new Promise(async(resolve, reject) => {
       const params = {
-        value: data.betAmount,
+        value: betAmount,
         to: this.raceBase.options.address,
         gas: '2000000',
         nonce: await this.web3.eth.getTransactionCount(data.account.address, 'pending'),
-        data: this.raceBase.methods.joinToTrack(nameBytes32, names, amounts, data.start).encodeABI()
+        data: this.raceBase.methods.joinToTrack(nameBytes32, names, amounts, start).encodeABI()
       };
 
       this.signAndSendTransaction(data.account, params, resolve, reject);
@@ -205,13 +207,24 @@ export class Web3Client implements Web3ClientInterface {
   async finishTrack(data: FinishTrackData): Promise<any> {
     const idBytes32 = this.web3.utils.toHex(this.web3.utils.sha3(data.id));
     const account = this.web3.eth.accounts.privateKeyToAccount(config.contracts.raceBase.ownerPk);
+
+    const names = new Array<string>();
+    const startRates = new Array<string>();
+    const endRates = new Array<string>();
+
+    for (let i = 0; i < data.names.length; i++) {
+      names.push(this.web3.utils.toHex(data.names[i]));
+      startRates.push(this.web3.utils.toBN(Math.floor(data.startRates[i] * 100)));
+      endRates.push(this.web3.utils.toBN(Math.floor(data.endRates[i] * 100)));
+    }
+
     return new Promise(async(resolve, reject) => {
       const params = {
         value: '0',
         to: this.raceBase.options.address,
-        gas: '2000000',
+        gas: '4000000',
         nonce: await this.getNonce(account.address),
-        data: this.raceBase.methods.finishTrack(idBytes32, data.names, data.startRates, data.endRates).encodeABI()
+        data: this.raceBase.methods.finishTrack(idBytes32, names, startRates, endRates).encodeABI()
       };
 
       this.signAndSendTransaction(account, params, resolve, reject);
