@@ -463,6 +463,8 @@ declare interface JoinToTrackData {
   account: any;
   id: string;
   assets: any;
+  start: number;
+  betAmount: string;
 }
 
 declare interface SetPorfolioData {
@@ -485,4 +487,11 @@ declare interface SetRatesData {
   timestamp: number;
   names: string[];
   amounts: number[];
+}
+
+declare interface FinishTrackData {
+  id: string;
+  names: string[];
+  startRates: number[];
+  endRates: number[];
 }

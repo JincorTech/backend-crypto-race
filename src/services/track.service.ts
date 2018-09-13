@@ -30,15 +30,12 @@ export interface TrackServiceInterface {
   getTracksByUser(user: User): Promise<Array<Track>>;
   activeTracks(): Promise<Array<Track>>;
   awaitingTracks(): Promise<Array<Track>>;
-  createTrack(user: User, mnemonic: string, betAmount: string): Promise<Track>;
   internalCreateTrack(betAmount: string, players: number): Promise<Track>;
   getPlayers(id: string): Promise<Array<string>>;
-  startTrack(id: string, start: number): Promise<boolean>;
   isReady(id: string): Promise<boolean>;
   getStats(id: string, end?: number): Promise<any>;
   getWinners(id: string): Promise<any>;
   finishTrack(track: Track, winners: any);
-  getRewards(user: User, mnemonic: string, id: string): Promise<any>;
   getCurrencyRates(timestamp: number): Promise<any>;
 }
 
@@ -52,31 +49,22 @@ export class TrackService implements TrackServiceInterface {
     this.userRepo = getConnection().mongoManager.getMongoRepository(User);
   }
 
-  async createTrack(user: User, mnemonic: string, betAmount: string): Promise<Track> {
-    const track = Track.createTrack(betAmount, TRACK_TYPE_USER);
-    track.creator = user.id;
-    await this.trackRepo.save(track);
-
-    const account = this.web3Client.getAccountByMnemonicAndSalt(mnemonic, user.ethWallet.salt);
-    this.web3Client.createTrackFromUserAccount(account, track.id.toHexString(), betAmount);
-
-    return track;
-  }
-
   public async finishTrack(track: Track, winners) {
     track.status = TRACK_STATUS_FINISHED;
     track.winners = winners;
 
-    setTimeout(async() => {
-      const rates = await this.getCurrencyRates(track.end);
-      const names = Object.keys(rates);
-      const amounts = Object.keys(rates).map(key => rates[key]);
-      this.web3Client.setRates({
-        amounts: amounts,
-        names: names,
-        timestamp: track.end
-      });
-    }, 6000);
+    const startRates = await this.getCurrencyRates(track.start);
+    const endRates = await this.getCurrencyRates(track.end);
+    const names = Object.keys(startRates);
+    const startValues = Object.keys(startRates).map(key => startRates[key]);
+    const endValues = Object.keys(startRates).map(key => endRates[key]);
+
+    this.web3Client.finishTrack({
+      id: track.id.toHexString(),
+      names: names,
+      startRates: startValues,
+      endRates: endValues
+    });
 
     return await this.trackRepo.save(track);
   }
@@ -92,7 +80,7 @@ export class TrackService implements TrackServiceInterface {
     track.status = TRACK_STATUS_AWAITING;
     await getConnection().mongoManager.getRepository(Track).save(track);
 
-    await this.web3Client.createTrackFromBackend({
+    await this.web3Client.createTrack({
       id: track.id.toHexString(),
       betAmount: betAmount,
       maxPlayers: maxPlayers,
@@ -120,7 +108,9 @@ export class TrackService implements TrackServiceInterface {
     this.web3Client.joinToTrack({
       account: account,
       assets: assets,
-      id: track.id.toHexString()
+      id: track.id.toHexString(),
+      betAmount: track.betAmount,
+      start: track.start
     }).then();
     return track;
   }
@@ -177,26 +167,6 @@ export class TrackService implements TrackServiceInterface {
     return track.users;
   }
 
-  async startTrack(id: string, start: number): Promise<boolean> {
-    if (!(await this.isReady(id))) {
-      throw new Error(`Track #${id} is not ready`);
-    }
-
-    const track = await this.getTrackById(id);
-    track.status = TRACK_STATUS_ACTIVE;
-    track.start = start;
-    track.end = track.start + track.duration;
-
-    await this.trackRepo.save(track);
-
-    this.web3Client.startTrack({
-      id: track.id.toHexString(),
-      start: start
-    });
-
-    return true;
-  }
-
   async isReady(id: string): Promise<boolean> {
     const track = await this.getTrackById(id);
     if ((await getConnection().mongoManager.count(Portfolio, {track: new ObjectID(id)})) === track.maxPlayers) {
@@ -247,16 +217,6 @@ export class TrackService implements TrackServiceInterface {
 
   async getCurrencyRates(timestamp: number): Promise<any> {
     return JSON.parse(await redisGetAsync(timestamp));
-  }
-
-  async getRewards(user: User, mnemonic: string, id: string): Promise<string> {
-    const account = this.web3Client.getAccountByMnemonicAndSalt(mnemonic, user.ethWallet.salt);
-    this.web3Client.withdrawRewards({
-      account: account,
-      id: id
-    });
-
-    return '0'; // TODO: change to an actual reward
   }
 
   private async addPlayerToTrack(track: Track, player: User, fuel: Asset[], ship: number): Promise<boolean> {
