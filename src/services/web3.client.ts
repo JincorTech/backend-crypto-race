@@ -167,7 +167,7 @@ export class Web3Client implements Web3ClientInterface {
         to: this.raceBase.options.address,
         gas: '2000000',
         nonce: await this.getNonce(account.address),
-        data: this.raceBase.methods.createTrackFromBack(
+        data: this.raceBase.methods.createTrack(
           nameBates32,
           this.web3.utils.toWei(data.betAmount, 'ether'),
           this.web3.utils.toBN(data.maxPlayers),
