@@ -184,7 +184,7 @@ export class Web3Client implements Web3ClientInterface {
     const names = new Array<string>();
     const amounts = new Array<string>();
     const start = this.web3.utils.toBN(data.start ? data.start : 0);
-    const betAmount = this.web3.utils.toBN(data.betAmount);
+    const betAmount = this.web3.utils.toWei(data.betAmount, 'ether');
 
     for (let i = 0; i < data.assets.length; i++) {
       names.push(this.web3.utils.toHex(data.assets[i].name.toLowerCase()));
