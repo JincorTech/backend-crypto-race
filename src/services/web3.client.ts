@@ -187,7 +187,7 @@ export class Web3Client implements Web3ClientInterface {
     const betAmount = this.web3.utils.toBN(data.betAmount);
 
     for (let i = 0; i < data.assets.length; i++) {
-      names.push(this.web3.utils.toHex(data.assets[i].name));
+      names.push(this.web3.utils.toHex(data.assets[i].name.toLowerCase()));
       amounts.push(this.web3.utils.toBN(data.assets[i].value));
     }
 
@@ -213,7 +213,7 @@ export class Web3Client implements Web3ClientInterface {
     const endRates = new Array<string>();
 
     for (let i = 0; i < data.names.length; i++) {
-      names.push(this.web3.utils.toHex(data.names[i]));
+      names.push(this.web3.utils.toHex(data.names[i].toLowerCase()));
       startRates.push(this.web3.utils.toBN(Math.floor(data.startRates[i] * 100)));
       endRates.push(this.web3.utils.toBN(Math.floor(data.endRates[i] * 100)));
     }
