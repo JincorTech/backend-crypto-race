@@ -9,7 +9,12 @@ import { Web3ClientInterface, Web3ClientType } from './web3.client';
 import { getConnection, MongoRepository } from 'typeorm';
 import { ObjectID } from 'mongodb';
 import { Currency } from '../entities/currency';
-import { stat } from 'fs';
+import * as Redis from 'redis';
+import config from '../config';
+import { promisify } from 'util';
+
+const client = Redis.createClient(config.redis.url);
+const redisGetAsync = promisify(client.get).bind(client);
 
 export interface TrackServiceInterface {
   joinToTrack(user: User, mnemonic: string, id: string, fuel: Array<any>, ship: number): Promise<Track>;
@@ -19,20 +24,19 @@ export interface TrackServiceInterface {
     nameTrack: string,
     portfolio: Array<Asset>
   ): Promise<any>;
-  getPortfolio(user: User, id: string);
+  getPortfolio(user: User, id: string): Promise<Portfolio>;
   getAllTracks(): Promise<Array<Track>>;
   getTrackById(name: string): Promise<Track>;
   getTracksByUser(user: User): Promise<Array<Track>>;
   activeTracks(): Promise<Array<Track>>;
   awaitingTracks(): Promise<Array<Track>>;
-  createTrack(user: User, mnemonic: string, betAmount: string): Promise<Track>;
   internalCreateTrack(betAmount: string, players: number): Promise<Track>;
   getPlayers(id: string): Promise<Array<string>>;
-  startTrack(id: string, start: number): Promise<boolean>;
   isReady(id: string): Promise<boolean>;
   getStats(id: string, end?: number): Promise<any>;
   getWinners(id: string): Promise<any>;
   finishTrack(track: Track, winners: any);
+  getCurrencyRates(timestamp: number): Promise<any>;
 }
 
 @injectable()
@@ -45,37 +49,45 @@ export class TrackService implements TrackServiceInterface {
     this.userRepo = getConnection().mongoManager.getMongoRepository(User);
   }
 
-  async createTrack(user: User, mnemonic: string, betAmount: string): Promise<Track> {
-    const track = Track.createTrack(betAmount, TRACK_TYPE_USER);
-    track.creator = user.id;
-    await this.trackRepo.save(track);
-
-    const account = this.web3Client.getAccountByMnemonicAndSalt(mnemonic, user.ethWallet.salt);
-    this.web3Client.createTrackFromUserAccount(account, track.id.toHexString(), betAmount);
-
-    // await this.addPlayerToTrack(track, user);
-
-    return track;
-  }
-
   public async finishTrack(track: Track, winners) {
     track.status = TRACK_STATUS_FINISHED;
     track.winners = winners;
+
+    const startRates = await this.getCurrencyRates(track.start);
+    const endRates = await this.getCurrencyRates(track.end);
+    const names = Object.keys(startRates);
+    const startValues = Object.keys(startRates).map(key => startRates[key]);
+    const endValues = Object.keys(startRates).map(key => endRates[key]);
+
+    this.web3Client.finishTrack({
+      id: track.id.toHexString(),
+      names: names,
+      startRates: startValues,
+      endRates: endValues
+    });
+
     return await this.trackRepo.save(track);
   }
 
-  async internalCreateTrack(betAmount: string, players: number): Promise<Track> {
+  async internalCreateTrack(betAmount: string, maxPlayers: number): Promise<Track> {
     const track = new Track();
     track.betAmount = betAmount;
-    track.maxPlayers = players; // TODO
+    track.maxPlayers = maxPlayers;
     track.numPlayers = 0;
-    track.duration = 300000;
+    track.duration = 300;
     track.type = TRACK_TYPE_BACKEND;
-    track.timestamp = Date.now();
+    track.timestamp = Math.floor(Date.now() / 1000);
     track.status = TRACK_STATUS_AWAITING;
+    track.start = 0;
+    track.end = 0;
     await getConnection().mongoManager.getRepository(Track).save(track);
 
-    this.web3Client.createTrackFromBackend(track.id.toHexString(), betAmount);
+    await this.web3Client.createTrack({
+      id: track.id.toHexString(),
+      betAmount: betAmount,
+      maxPlayers: maxPlayers,
+      duration: 300
+    });
 
     return track;
   }
@@ -89,18 +101,20 @@ export class TrackService implements TrackServiceInterface {
   }
 
   async joinToTrack(user: User, mnemonic: string, id: string, fuel: Array<any>, ship: number): Promise<Track> {
-    // try {
     const account = this.web3Client.getAccountByMnemonicAndSalt(mnemonic, user.ethWallet.salt);
-      // this.web3Client.joinToTrack(account, id);
     const track = await this.getTrackById(id);
     const assets = this.assetsFromFuel(fuel);
     await this.addPlayerToTrack(track, user, assets, ship);
     await this.setPortfolio(user, mnemonic, track.id.toString(), assets);
+
+    this.web3Client.joinToTrack({
+      account: account,
+      assets: assets,
+      id: track.id.toHexString(),
+      betAmount: track.betAmount,
+      start: track.start
+    }).then();
     return track;
-      // }
-    // } catch (error) {
-    //   throw(error);
-    // }
   }
 
   async setPortfolio(
@@ -113,8 +127,6 @@ export class TrackService implements TrackServiceInterface {
     portfolioEntity.assets = portfolio;
     portfolioEntity.track = new ObjectID(id);
     portfolioEntity.user = user.id;
-    const account = this.web3Client.getAccountByMnemonicAndSalt(mnemonic, user.ethWallet.salt);
-    // this.web3Client.setPortfolio(account, id, portfolio);
     const track = await this.getTrackById(id);
     if (!track) {
       return false;
@@ -157,21 +169,6 @@ export class TrackService implements TrackServiceInterface {
     return track.users;
   }
 
-  async startTrack(id: string, start: number): Promise<boolean> {
-    if (!(await this.isReady(id))) {
-      throw new Error(`Track #${id} is not ready`);
-    }
-
-    const track = await this.getTrackById(id);
-    track.status = TRACK_STATUS_ACTIVE;
-    track.start = start;
-    track.end = track.start + track.duration;
-
-    await this.trackRepo.save(track);
-
-    return true;
-  }
-
   async isReady(id: string): Promise<boolean> {
     const track = await this.getTrackById(id);
     if ((await getConnection().mongoManager.count(Portfolio, {track: new ObjectID(id)})) === track.maxPlayers) {
@@ -183,13 +180,15 @@ export class TrackService implements TrackServiceInterface {
   async getStats(id: string, end?: number): Promise<any> {
     const portfolios = await this.getPortfolios(id);
     const track = await this.getTrackById(id);
-    if(!end) {
+    if (!end) {
       end = track.end;
     }
-    const ratios = this.getRatios(
+    const values = await Promise.all([
       await this.getCurrencyRates(track.start),
       await this.getCurrencyRates(end)
-    );
+    ]);
+
+    const ratios = this.getRatios(values[0], values[1]);
 
     const playersStats = [];
 
@@ -219,26 +218,14 @@ export class TrackService implements TrackServiceInterface {
   }
 
   async getCurrencyRates(timestamp: number): Promise<any> {
-    const lte = await getConnection().mongoManager.find(Currency, {where: {timestamp: { $lte: timestamp }}, order: {timestamp: -1}, take: 5});
-    const gt = await getConnection().mongoManager.find(Currency, {where: {timestamp: { $gt: timestamp }}, order: {timestamp: 1}, take: 5});
-    const gtTimestampDiff = gt.length > 0 ? gt[0].timestamp - timestamp : timestamp;
-    const ltTimestampDiff = timestamp - lte[0].timestamp;
-    let rates = [];
-    //select the nearest stamp
-    if(gtTimestampDiff < ltTimestampDiff) rates = gt;
-    else rates = lte;
-    const result = {};
-    for (let i = 0; i < rates.length; i++) {
-      result[rates[i].name] = rates[i].usd;
-    }
-    return result;
+    return JSON.parse(await redisGetAsync(timestamp));
   }
 
   private async addPlayerToTrack(track: Track, player: User, fuel: Asset[], ship: number): Promise<boolean> {
     const exists = await getConnection().mongoManager.find(Track, {
       where: {
         users: { $in: [ player.id.toString() ] },
-        status: TRACK_STATUS_AWAITING,
+        status: TRACK_STATUS_AWAITING
       }
     });
     if (exists.length > 0) {
@@ -246,6 +233,7 @@ export class TrackService implements TrackServiceInterface {
     }
     track.addPlayer(player, ship, fuel);
     await this.trackRepo.save(track);
+
     return true;
   }
 
@@ -261,52 +249,52 @@ export class TrackService implements TrackServiceInterface {
 
   private getRatios(startRates, endRates): any {
     const tickers = ['LTC','BTC', 'XRP', 'ETH', 'BCH'];
-    const result = {};
+    const ratios = {};
     for (let i = 0; i < tickers.length; i++) {
-      result[tickers[i]] = endRates[tickers[i]] / startRates[tickers[i]];
+      ratios[tickers[i]] = endRates[tickers[i]] / startRates[tickers[i]];
+    }
+    return ratios;
+  }
+
+  private assetsFromFuel(fuel: Array<string>): Asset[] {
+    let result = [];
+    for (let i = 0; i < fuel.length; i++) {
+      if (i === 5) {
+        const name = this.getAssetNameByIndex(Math.floor(Math.random() * 4));
+        const found = result.findIndex((elem) => {
+          return elem.name === name;
+        });
+        if (found !== -1) {
+          result[found].value += fuel[i];
+        } else {
+          result.push({
+            name: name,
+            value: fuel[i]
+          });
+        }
+      } else {
+        result.push({
+          name: this.getAssetNameByIndex(i),
+          value: fuel[i]
+        });
+      }
     }
     return result;
   }
 
-  private assetsFromFuel(fuel: Array<string>): Asset[] {
-      let result = [];
-      for (let i = 0; i < fuel.length; i++) {
-        if (i === 5) {
-          const name = this.getAssetNameByIndex(Math.floor(Math.random() * 4));
-          const found = result.findIndex((elem) => {
-            return elem.name === name;
-          });
-          if (found !== -1) {
-            result[found].value += fuel[i];
-          } else {
-            result.push({
-              name: name,
-              value: fuel[i]
-            });
-          }
-        } else {
-          result.push({
-            name: this.getAssetNameByIndex(i),
-            value: fuel[i]
-          });
-        }
-      }
-      return result;
-  }
-
   private getAssetNameByIndex(index: number): string {
-      switch (index){
-        case 0:
-          return "btc";
-        case 1:
-          return "eth";
-        case 2:
-          return "xrp";
-        case 3:
-          return "bch";
-        case 4:
-          return "ltc";
-      }
+    switch (index) {
+      case 0:
+        return 'btc';
+      case 1:
+        return 'eth';
+      case 2:
+        return 'xrp';
+      case 3:
+        return 'bch';
+      case 4:
+        return 'ltc';
+    }
   }
 }
 

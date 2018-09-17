@@ -8,36 +8,30 @@ const hdkey = require('ethereumjs-wallet/hdkey');
 import config from '../config';
 import 'reflect-metadata';
 import { Logger } from '../logger';
+import * as Redis from 'redis';
+import { promisify } from 'util';
+
+const client = Redis.createClient(config.redis.url);
+const redisGetAsync = promisify(client.get).bind(client);
+const redisSetAsync = promisify(client.set).bind(client);
+const redisIncrAsync = promisify(client.incr).bind(client);
 
 export interface Web3ClientInterface {
   sendTransactionByMnemonic(input: TransactionInput, mnemonic: string, salt: string): Promise<string>;
-
   sendTransactionByPrivateKey(input: TransactionInput, privateKey: string): Promise<string>;
-
   generateMnemonic(): string;
-
   getAccountByMnemonicAndSalt(mnemonic: string, salt: string): any;
-
   getEthBalance(address: string): Promise<string>;
   sufficientBalance(input: TransactionInput): Promise<boolean>;
-
   getCurrentGasPrice(): Promise<string>;
-
   investmentFee(): Promise<any>;
 
   // game
-  createTrackFromBackend(id: string, betAmount: string): Promise<any>;
-
-  createTrackFromUserAccount(account: any, id: string, betAmount: string): Promise<any>;
-
-  joinToTrack(account: any, id: string): Promise<any>;
-
-  getBetAmount(id: string): Promise<string>;
-
-  setPortfolio(account: any, id: string, portfolio: any): Promise<any>;
+  createTrack(data: CreateTrackData): Promise<any>;
+  joinToTrack(data: JoinToTrackData): Promise<any>;
+  finishTrack(data: FinishTrackData): Promise<any>;
 
   isHex(key: any): boolean;
-
   toHexSha3(value: string): string;
 }
 
@@ -162,8 +156,9 @@ export class Web3Client implements Web3ClientInterface {
     return '0x' + wallet.getPrivateKey().toString('hex');
   }
 
-  async createTrackFromBackend(id: string, betAmount: string): Promise<any> {
-    const nameBates32 = this.web3.utils.toHex(this.web3.utils.sha3(id));
+  // game section
+  async createTrack(data: CreateTrackData): Promise<any> {
+    const nameBates32 = this.web3.utils.toHex(this.web3.utils.sha3(data.id));
 
     return new Promise(async(resolve, reject) => {
       const account = this.web3.eth.accounts.privateKeyToAccount(config.contracts.raceBase.ownerPk);
@@ -171,116 +166,69 @@ export class Web3Client implements Web3ClientInterface {
         value: '0',
         to: this.raceBase.options.address,
         gas: '2000000',
-        nonce: await this.web3.eth.getTransactionCount(account.address, 'pending'),
-        data: this.raceBase.methods.createTrackFromBack(nameBates32, this.web3.utils.toWei(betAmount, 'ether')).encodeABI()
+        nonce: await this.getNonce(account.address),
+        data: this.raceBase.methods.createTrack(
+          nameBates32,
+          this.web3.utils.toBN(data.maxPlayers),
+          this.web3.utils.toWei(data.betAmount, 'ether'),
+          this.web3.utils.toBN(data.duration)
+        ).encodeABI()
       };
 
-      account.signTransaction(params).then(transaction => {
-        this.web3.eth.sendSignedTransaction(transaction.rawTransaction)
-          .on('transactionHash', transactionHash => {
-            resolve(transactionHash);
-          })
-          .on('error', (error) => {
-            reject(error);
-          })
-          .catch((error) => {
-            reject(error);
-          });
-      });
+      this.signAndSendTransaction(account, params, resolve, reject);
     });
   }
 
-  createTrackFromUserAccount(account: any, id: string, betAmount: string): Promise<any> {
-    const nameBates32 = this.web3.utils.toHex(this.web3.utils.sha3(id));
-
-    return new Promise(async(resolve, reject) => {
-      const params = {
-        value: this.web3.utils.toWei(betAmount),
-        to: this.raceBase.options.address,
-        gas: '2000000',
-        nonce: await this.web3.eth.getTransactionCount(account.address, 'pending'),
-        data: this.raceBase.methods.createTrack(nameBates32).encodeABI()
-      };
-
-      account.signTransaction(params).then(transaction => {
-        this.web3.eth.sendSignedTransaction(transaction.rawTransaction)
-          .on('transactionHash', transactionHash => {
-            resolve(transactionHash);
-          })
-          .on('error', (error) => {
-            reject(error);
-          })
-          .catch((error) => {
-            reject(error);
-          });
-      });
-    });
-  }
-
-  async joinToTrack(account: any, id: string): Promise<any> {
-    const nameBytes32 = this.web3.utils.toHex(this.web3.utils.sha3(id));
-
-    return new Promise(async(resolve, reject) => {
-      const params = {
-        value: await this.getBetAmount(id),
-        to: this.raceBase.options.address,
-        gas: '2000000',
-        nonce: await this.web3.eth.getTransactionCount(account.address, 'pending'),
-        data: this.raceBase.methods.joinToTrack(nameBytes32).encodeABI()
-      };
-
-      account.signTransaction(params).then(transaction => {
-        this.web3.eth.sendSignedTransaction(transaction.rawTransaction)
-          .on('transactionHash', transactionHash => {
-            resolve(transactionHash);
-          })
-          .on('error', (error) => {
-            reject(error);
-          })
-          .catch((error) => {
-            reject(error);
-          });
-      });
-    });
-  }
-
-  async setPortfolio(account: any, id: string, portfolio: Array<Asset>): Promise<any> {
-    const nameBytes32 = this.web3.utils.toHex(this.web3.utils.sha3(id));
+  async joinToTrack(data: JoinToTrackData): Promise<any> {
+    const nameBytes32 = this.web3.utils.toHex(this.web3.utils.sha3(data.id));
     const names = new Array<string>();
     const amounts = new Array<string>();
+    const start = this.web3.utils.toBN(data.start ? data.start : 0);
+    const betAmount = this.web3.utils.toWei(data.betAmount, 'ether');
 
-    for (let i = 0; i < portfolio.length; i++) {
-      names.push(this.web3.utils.toHex(portfolio[i].name));
-      amounts.push(this.web3.utils.toBN(portfolio[i].value));
+    for (let i = 0; i < data.assets.length; i++) {
+      names.push(this.web3.utils.toHex(data.assets[i].name.toLowerCase()));
+      amounts.push(this.web3.utils.toBN(data.assets[i].value));
+    }
+
+    return new Promise(async(resolve, reject) => {
+      const params = {
+        value: betAmount,
+        to: this.raceBase.options.address,
+        gas: '2000000',
+        nonce: await this.web3.eth.getTransactionCount(data.account.address, 'pending'),
+        data: this.raceBase.methods.joinToTrack(nameBytes32, names, amounts, start).encodeABI()
+      };
+
+      this.signAndSendTransaction(data.account, params, resolve, reject);
+    });
+  }
+
+  async finishTrack(data: FinishTrackData): Promise<any> {
+    const idBytes32 = this.web3.utils.toHex(this.web3.utils.sha3(data.id));
+    const account = this.web3.eth.accounts.privateKeyToAccount(config.contracts.raceBase.ownerPk);
+
+    const names = new Array<string>();
+    const startRates = new Array<string>();
+    const endRates = new Array<string>();
+
+    for (let i = 0; i < data.names.length; i++) {
+      names.push(this.web3.utils.toHex(data.names[i].toLowerCase()));
+      startRates.push(this.web3.utils.toBN(Math.floor(data.startRates[i] * 100)));
+      endRates.push(this.web3.utils.toBN(Math.floor(data.endRates[i] * 100)));
     }
 
     return new Promise(async(resolve, reject) => {
       const params = {
         value: '0',
         to: this.raceBase.options.address,
-        gas: 2000000,
-        nonce: await this.web3.eth.getTransactionCount(account.address, 'pending'),
-        data: this.raceBase.methods.setPortfolio(nameBytes32, names, amounts).encodeABI()
+        gas: '4000000',
+        nonce: await this.getNonce(account.address),
+        data: this.raceBase.methods.finishTrack(idBytes32, names, startRates, endRates).encodeABI()
       };
 
-      account.signTransaction(params).then(transaction => {
-        this.web3.eth.sendSignedTransaction(transaction.rawTransaction)
-          .on('transactionHash', transactionHash => {
-            resolve(transactionHash);
-          })
-          .on('error', (error) => {
-            reject(error);
-          })
-          .catch((error) => {
-            reject(error);
-          });
-      });
+      this.signAndSendTransaction(account, params, resolve, reject);
     });
-  }
-
-  async getBetAmount(id: string): Promise<string> {
-    const nameBytes32 = this.web3.utils.toHex(this.web3.utils.sha3(id));
-    return await this.raceBase.methods.getBetAmount(nameBytes32).call();
   }
 
   async getEthBalance(address: string): Promise<string> {
@@ -347,6 +295,43 @@ export class Web3Client implements Web3ClientInterface {
 
   toHexSha3(value: string): string {
     return this.web3.utils.toHex(this.web3.utils.sha3(value));
+  }
+
+  private signAndSendTransaction(
+    account: any,
+    params: { value: string; to: any; gas: string; nonce?: any; data: any; },
+    resolve: (value?: {} | PromiseLike<{}> | void | PromiseLike<void>) => void | {},
+    reject: (reason?: any) => void
+  ) {
+    account.signTransaction(params).then(transaction => {
+      this.web3.eth.sendSignedTransaction(transaction.rawTransaction)
+        .once('transactionHash', async(transactionHash) => {
+          await this.incrNonce(account.address);
+          resolve(transactionHash);
+        })
+        .on('error', (error) => {
+          reject(error);
+        })
+        .catch((error) => {
+          reject(error);
+        });
+    });
+  }
+
+  private async getNonce(addressAccount: string): Promise<number> {
+    const storedNonce = await redisGetAsync(`${addressAccount}.nonce`);
+    const ethNonce = await this.web3.eth.getTransactionCount(addressAccount, 'pending');
+    if (storedNonce && storedNonce >= ethNonce) {
+      return storedNonce;
+    }
+
+    await redisSetAsync(`${addressAccount}.nonce`, ethNonce);
+
+    return ethNonce;
+  }
+
+  private async incrNonce(addressAccount: string): Promise<void> {
+    await redisIncrAsync(`${addressAccount}.nonce`);
   }
 }
 

@@ -451,3 +451,47 @@ declare interface PlayerYPosition {
   id: string;
   y: number;
 }
+
+declare interface CreateTrackData {
+  id: string;
+  betAmount: string;
+  maxPlayers: number;
+  duration: number
+}
+
+declare interface JoinToTrackData {
+  account: any;
+  id: string;
+  assets: any;
+  start: number;
+  betAmount: string;
+}
+
+declare interface SetPorfolioData {
+  account: any;
+  id: string;
+  portfolio: any;
+}
+
+declare interface StartTrackData {
+  id: string;
+  start: number;
+}
+
+declare interface WithdrawRewardsData {
+  account: any;
+  id: string;
+}
+
+declare interface SetRatesData {
+  timestamp: number;
+  names: string[];
+  amounts: number[];
+}
+
+declare interface FinishTrackData {
+  id: string;
+  names: string[];
+  startRates: number[];
+  endRates: number[];
+}

@@ -1,48 +1,43 @@
-import { Currency } from '../entities/currency';
-import { getConnection } from 'typeorm';
+import * as Redis from 'redis';
+import config from '../config';
+import * as request from 'web-request';
+import { Logger } from '../logger';
+import { getUnixtimeMultiplesOfFive } from '../helpers/helpers';
 
-const cryptoSocket = require('crypto-socket');
+const client = Redis.createClient(config.redis.url);
 
 export interface CryptoCurrencyHandlerInterface { }
 
 export class CryptoCurrencyHandler implements CryptoCurrencyHandlerInterface {
+  private logger = Logger.getInstance('CRYPTO_CURRENCY_HANDLER');
+
   constructor() {
     setInterval(
-      async function() {
-        cryptoSocket.start('bittrex',['LTCUSD','BTCUSD', 'XRPUSD', 'ETHUSD', 'BCHUSD']);
-        const now = Date.now();
-        let currentTime = now + (5 - (now % 5));
-        let rate = cryptoSocket.Exchanges['bittrex'];
-        getConnection().mongoManager.save(Currency, Currency.createCurrency({
-          timestamp: currentTime,
-          name: 'LTC',
-          usd: rate.LTCUSD
-        }));
-        getConnection().mongoManager.save(Currency, Currency.createCurrency({
-          timestamp: currentTime,
-          name: 'ETH',
-          usd: rate.ETHUSD
-        }));
-        getConnection().mongoManager.save(Currency, Currency.createCurrency({
-          timestamp: currentTime,
-          name: 'BTC',
-          usd: rate.BTCUSD
-        }));
-        getConnection().mongoManager.save(Currency, Currency.createCurrency({
-          timestamp: currentTime,
-          name: 'XRP',
-          usd: rate.XRPUSD
-        }));
-        getConnection().mongoManager.save(Currency, Currency.createCurrency({
-          timestamp: currentTime,
-          name: 'BCH',
-          usd: rate.BCHUSD
-        }));
+      async() => {
+        const currentTime = getUnixtimeMultiplesOfFive();
+        try {
+          const data = await request.json<any>('/data/pricemulti?fsyms=BTC,ETH,LTC,XRP,BCH&tsyms=USD', {
+            baseUrl: 'https://min-api.cryptocompare.com',
+            method: 'GET'
+          });
+          const rates = {
+            'BTC': data.BTC.USD,
+            'ETH': data.ETH.USD,
+            'LTC': data.LTC.USD,
+            'XRP': data.XRP.USD,
+            'BCH': data.BCH.USD
+          };
+
+          client.setex(currentTime.toString(), 60 * 15, JSON.stringify(rates));
+        } catch (error) {
+          this.logger.exception(error);
+        }
       },
       5000
     );
+    this.logger.verbose('CryptoCurrencyHandler started.');
   }
 }
 
 const CryptoCurrencyHandlerType = Symbol('CryptoCurrencyHandlerInterface');
-export {CryptoCurrencyHandlerType};
+export { CryptoCurrencyHandlerType };

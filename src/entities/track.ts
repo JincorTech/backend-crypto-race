@@ -1,5 +1,5 @@
 import { Entity, ObjectIdColumn, ObjectID, Column } from 'typeorm';
-import {User} from "./user";
+import { User } from './user';
 
 export const TRACK_TYPE_USER = 'user';
 export const TRACK_TYPE_BACKEND = 'backend';
@@ -57,6 +57,9 @@ export class Track {
   @Column()
   winners: Array<any>;
 
+  @Column()
+  latestActivity?: number;
+
   constructor() {
     this.players = [];
     this.users = [];
@@ -76,7 +79,7 @@ export class Track {
     return track;
   }
 
-  addPlayer(player: User, ship: number, fuel: Asset[]) : boolean {
+  addPlayer(player: User, ship: number, fuel: Asset[]): boolean {
     if (this.status !== TRACK_STATUS_AWAITING) {
       return false;
     }
@@ -98,10 +101,13 @@ export class Track {
 
     if (this.numPlayers === this.maxPlayers) {
       this.status = TRACK_STATUS_ACTIVE;
-      const now = Date.now();
-      this.start = now + (5 - (now % 5));
+      let now = Math.floor(Date.now() / 1000);
+      now = now % 5 === 0 ? now : now + (5 - (now % 5));
+      this.start = now;
       this.end = this.start + this.duration;
     }
+
+    this.latestActivity = Date.now();
     return true;
   }
 
@@ -145,5 +151,21 @@ export class Track {
    */
   getPlayerStartingPosition(numPlayers: number) {
     return numPlayers - 1;
+  }
+
+  getTypeShipByUser(id: string): number {
+    for (const player of this.players) {
+      if (player.id === id) {
+        return player.ship.type;
+      }
+    }
+  }
+
+  isAwaiting(): boolean {
+    return this.status === TRACK_STATUS_AWAITING;
+  }
+
+  isStarting(): boolean {
+    return this.status === TRACK_STATUS_STARTING;
   }
 }

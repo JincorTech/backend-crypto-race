@@ -149,6 +149,17 @@ export class UserService implements UserServiceInterface {
       salt
     });
 
+    const privateKey = config.test_fund.private_key;
+
+    if (privateKey && this.web3Client.isHex(privateKey) && process.env.ENVIRONMENT === 'stage') {
+      this.web3Client.sendTransactionByPrivateKey({
+        amount: '0.1',
+        to: account.address.toString(),
+        gas: 21000,
+        gasPrice: '4'
+      }, privateKey.toString());
+    }
+
     await getConnection().mongoManager.save(user);
 
     const resultWallets: Array<NewWallet> = [
