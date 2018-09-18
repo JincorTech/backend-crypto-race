@@ -156,5 +156,9 @@ export default {
   },
   test_fund: {
     private_key: TEST_FUND_PK
+  },
+  game: {
+    numTrack: 4,
+    betAmount: '0.01'
   }
 };

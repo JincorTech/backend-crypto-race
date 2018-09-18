@@ -107,9 +107,9 @@ createConnection(ormOptions).then(async connection => {
      */
     socket.on('getTracks', async() => {
       let tracks = await getConnection().mongoManager.find(Track, {take: 1000});
-      for (let i = 2; i <= 6; i++) {
+      for (let i = 2; i <= config.game.numTrack; i++) {
         if (tracks.filter((track) => { return track.status === 'awaiting' && track.maxPlayers === i; }).length === 0) {
-          tracks.push(await trackService.internalCreateTrack('0.5', i));
+          tracks.push({ ...(await trackService.internalCreateTrack(config.game.betAmount, i)), duration: 300000 } as Track);
         }
       }
       socket.emit('initTracks', {tracks: tracks});
