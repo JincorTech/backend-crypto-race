@@ -6,6 +6,7 @@ import { controller, httpPost, httpGet, httpMethod, all } from 'inversify-expres
 import 'reflect-metadata';
 import { AuthorizedRequest } from '../requests/authorized.request';
 import * as passport from 'passport';
+
 /**
  * UserController
  */
@@ -178,19 +179,49 @@ export class UserController {
     this.authByFacebookAccessToken(res, req, next);
   }
 
+  @all(
+    '/auth/google/token'
+  )
+  async authGoogleTokenGetsMethod(req: Request, res: Response, next: NextFunction): Promise<void> {
+    this.authByGoogleAccessToken(req, res, next);
+  }
+
   private authByFacebookAccessToken(res: Response, req: Request, next: NextFunction) {
-    (function (userService) {
-      passport.authenticate('facebook-token', { session: false }, async function (err, user, info) {
+    (function(userService) {
+      passport.authenticate('facebook-token', { session: false }, async function(err, user, info) {
         if (err) {
           if (err.oauthError) {
             const oauthError = JSON.parse(err.oauthError.data);
             return res.status(401).send(oauthError.error.message);
-          }
-          else {
+          } else {
             return res.send(err);
           }
+        } else {
+          const result = await userService.createActivatedUser({
+            agreeTos: true,
+            email: user.email,
+            name: user.name,
+            picture: user.picture,
+            password: 'Stub',
+            passwordHash: 'Stub'
+          });
+          return res.status(200).json(result);
         }
-        else {
+      })(req, res, next);
+    })(this.userService);
+  }
+
+  private authByGoogleAccessToken(req: Request, res: Response, next: NextFunction) {
+    (function(userService) {
+      passport.authenticate('google-token', { session: false }, async function(err, user, info) {
+        if (err) {
+          if (err.oauthError) {
+            const oauthError = JSON.parse(err.oauthError.data);
+            return res.status(401).send(oauthError.error.message);
+          } else {
+            return res.send(err);
+          }
+        } else {
           const result = await userService.createActivatedUser({
             agreeTos: true,
             email: user.email,

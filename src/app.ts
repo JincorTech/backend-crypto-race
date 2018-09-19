@@ -7,6 +7,7 @@ import config from './config';
 import handle from './middlewares/error.handler';
 
 const morgan = require('morgan');
+const googleToken = require('passport-google-token');
 
 import { InversifyExpressServer } from 'inversify-express-utils';
 import { container } from './ioc.container';
@@ -24,6 +25,24 @@ passport.use(new FacebookTokenStrategy({
     'picture': profile.photos ? profile.photos[0].value : null
   };
   return done(null, user); // the user object we just made gets passed to the route's controller as `req.user`
+}));
+
+passport.use(new googleToken.Strategy({
+  clientID: process.env.GOOGLE_ID,
+  clientSecret: process.env.GOOGLE_SECRET
+}, function(accessToken, refreshToken, profile, done) {
+  console.log(profile);
+  if (!profile.emails[0].value) {
+    throw new Error('Token error. User email is not defined.');
+  }
+  let user = {
+    'email': profile.emails[0].value,
+    'name': profile.name.givenName + ' ' + profile.name.familyName,
+    'id': profile.id,
+    'token': accessToken,
+    'picture': profile._json.picture ? profile._json.picture : null
+  };
+  return done(null, user);
 }));
 
 const app: Application = express();
