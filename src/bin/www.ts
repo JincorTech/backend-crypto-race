@@ -14,6 +14,7 @@ import { Track, TRACK_STATUS_ACTIVE, TRACK_STATUS_AWAITING } from '../entities/t
 import { UserServiceType } from '../services/user.service';
 import { TrackQueueInterface, TrackQueueType } from '../queues/track.queue';
 import { getUnixtimeMultiplesOfFive } from '../helpers/helpers';
+import { Web3ClientInterface, Web3ClientType } from '../services/web3.client';
 
 /**
  * Create HTTP server.
@@ -48,6 +49,7 @@ createConnection(ormOptions).then(async connection => {
   const trackService: TrackServiceInterface = container.get(TrackServiceType);
   const userService: UserServiceInterface = container.get(UserServiceType);
   const trackQueue: TrackQueueInterface = container.get(TrackQueueType);
+  const web3Client: Web3ClientInterface = container.get(Web3ClientType);
 
   const createBots = async function(botEmails: string[]) {
     const bots = await getConnection().mongoManager.count(User, { email: { '$in': botEmails } });
@@ -93,10 +95,10 @@ createConnection(ormOptions).then(async connection => {
       return false;
     }
 
-    socket.on('reqProfile', () => {
+    socket.on('reqProfile', async() => {
       io.sockets.in(socket.id).emit('resProfile', {
         picture: user.picture,
-        balance: user.ethWallet.balance,
+        balance: await web3Client.getEthBalance(user.ethWallet.address),
         address: user.ethWallet.address,
         name: user.name
       });
