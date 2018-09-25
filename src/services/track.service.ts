@@ -255,6 +255,7 @@ export class TrackService implements TrackServiceInterface {
 
   private assetsFromFuel(fuel: Array<string>): Asset[] {
     let result = [];
+    let total = 0;
     for (let i = 0; i < fuel.length; i++) {
       if (i === 5) {
         const name = this.getAssetNameByIndex(Math.floor(Math.random() * 4));
@@ -274,8 +275,37 @@ export class TrackService implements TrackServiceInterface {
           name: this.getAssetNameByIndex(i),
           value: fuel[i]
         });
+        total += parseInt(fuel[i], 10);
       }
     }
+
+    if (total === 0) {
+      const rands = this.makeRandomNumbers(100, 5);
+      for (let i = 0; i < rands.length; i++) {
+        result[i].value = rands[i];
+      }
+    }
+
+    return result;
+  }
+
+  private makeRandomNumbers(total: number, count: number): number[] {
+    const result = new Array<number>();
+
+    for (let i = 0; i < count; i++) {
+      if (i === count - 1) {
+        result.push(total);
+      }
+
+      if (total) {
+        const r = Math.floor(Math.random() * total) + 1;
+        result.push(r);
+        total -= r;
+      } else {
+        result.push(0);
+      }
+    }
+
     return result;
   }
 
