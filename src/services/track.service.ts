@@ -279,37 +279,6 @@ export class TrackService implements TrackServiceInterface {
       }
     }
 
-    if (total === 0) {
-      result = new Array<Asset>();
-      const rands = this.makeRandomNumbers(100, 5);
-      for (let i = 0; i < rands.length; i++) {
-        result.push({
-          name: this.getAssetNameByIndex(i),
-          value: rands[i]
-        });
-      }
-    }
-
-    return result;
-  }
-
-  private makeRandomNumbers(total: number, count: number): number[] {
-    const result = new Array<number>();
-
-    for (let i = 0; i < count; i++) {
-      if (i === count - 1) {
-        result.push(total);
-      }
-
-      if (total) {
-        const r = Math.floor(Math.random() * total) + 1;
-        result.push(r);
-        total -= r;
-      } else {
-        result.push(0);
-      }
-    }
-
     return result;
   }
 

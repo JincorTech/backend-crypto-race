@@ -133,6 +133,12 @@ createConnection(ormOptions).then(async connection => {
         io.sockets.in(socket.id).emit('error', {message: 'Track is already active'});
         return;
       }
+
+      if ((joinData.fuel as Array<number>).reduce((p, c) => p + c) === 0) {
+        io.sockets.in(socket.id).emit('error', {message: 'Fuel can not be empty'});
+        return;
+      }
+
       track = await trackService.joinToTrack(user, user.mnemonic, joinData.trackId, joinData.fuel, joinData.ship);
       if (!track) {
         io.sockets.in(socket.id).emit('error', {message: 'Can not join track'});
