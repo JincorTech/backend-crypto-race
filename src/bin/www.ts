@@ -8,12 +8,11 @@ import config from '../config';
 import 'reflect-metadata';
 import { createConnection, ConnectionOptions, getConnection } from 'typeorm';
 import { AuthClientType } from '../services/auth.client';
-import { TrackServiceType, TrackService, TrackServiceInterface } from '../services/track.service';
+import { TrackServiceType, TrackServiceInterface } from '../services/track.service';
 import { User } from '../entities/user';
-import { Track, TRACK_STATUS_ACTIVE, TRACK_STATUS_AWAITING } from '../entities/track';
+import { Track, TRACK_STATUS_ACTIVE } from '../entities/track';
 import { UserServiceType } from '../services/user.service';
 import { TrackQueueInterface, TrackQueueType } from '../queues/track.queue';
-import { getUnixtimeMultiplesOfFive } from '../helpers/helpers';
 import { Web3ClientInterface, Web3ClientType } from '../services/web3.client';
 
 /**
@@ -87,6 +86,12 @@ createConnection(ormOptions).then(async connection => {
   });
 
   sock.on('connect', async socket => {
+    if (!socket.handshake.query.email) {
+      io.sockets.in(socket.id).emit('error', {message: 'User not found'});
+      socket.disconnect(true);
+      return false;
+    }
+
     const user = await getConnection().mongoManager.findOne(User, {where: {email: socket.handshake.query.email}});
 
     if (!user) {
