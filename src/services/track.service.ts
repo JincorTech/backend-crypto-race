@@ -2,13 +2,12 @@ import { injectable, inject } from 'inversify';
 import { User } from '../entities/user';
 import { Portfolio } from '../entities/portfolio';
 import {
-  Track, TRACK_TYPE_BACKEND, TRACK_STATUS_AWAITING, TRACK_TYPE_USER, TRACK_STATUS_ACTIVE,
+  Track, TRACK_TYPE_BACKEND, TRACK_STATUS_AWAITING, TRACK_STATUS_ACTIVE,
   TRACK_STATUS_FINISHED
 } from '../entities/track';
 import { Web3ClientInterface, Web3ClientType } from './web3.client';
 import { getConnection, MongoRepository } from 'typeorm';
 import { ObjectID } from 'mongodb';
-import { Currency } from '../entities/currency';
 import * as Redis from 'redis';
 import config from '../config';
 import { promisify } from 'util';
@@ -42,11 +41,9 @@ export interface TrackServiceInterface {
 @injectable()
 export class TrackService implements TrackServiceInterface {
   private trackRepo: MongoRepository<Track>;
-  private userRepo: MongoRepository<User>;
 
   constructor(@inject(Web3ClientType) private web3Client: Web3ClientInterface) {
     this.trackRepo = getConnection().mongoManager.getMongoRepository(Track);
-    this.userRepo = getConnection().mongoManager.getMongoRepository(User);
   }
 
   public async finishTrack(track: Track, winners) {
