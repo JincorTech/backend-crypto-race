@@ -82,9 +82,11 @@ export class TrackQueue implements TrackQueueInterface {
 
   private async processTrack(job: Bull.Job): Promise<boolean> {
     this.logger.debug(`Init process track: ${job.data.trackId}`);
+
     const now = getUnixtimeMultiplesOfFive();
-    let stats = await this.trackService.getStats(job.data.trackId, now - 5);
-    let currencies = await this.trackService.getCurrencyRates(now - 5);
+
+    const stats = await this.trackService.getStats(job.data.trackId, now - 5);
+    const currencies = await this.trackService.getCurrencyRates(now - 5);
     const playerPositions = stats.map((stat, index) => {
       return {
         id: stat.player.toString(),
@@ -143,15 +145,17 @@ export class TrackQueue implements TrackQueueInterface {
   }
 
   private async processTrackFinish(job: Bull.Job): Promise<boolean> {
-    const jobProcessTrack = await this.queueWrapperProcessTrack.getJob(job.data.jobProcessTrackId);
-    jobProcessTrack.remove();
+    this.removeJobProcessTrackById(job.data.jobProcessTrackId);
 
     const trackId = job.data.trackId;
     const track = await this.trackService.getTrackById(trackId);
-    let stats = await this.trackService.getStats(trackId);
+
+    const stats = await this.trackService.getStats(trackId);
+    const usersStats = new Array<any>();
+
     for (let i = 0; i < stats.length; i++) {
       const name = (await getConnection().mongoManager.getRepository(User).findOneById(stats[i].player)).name;
-      stats[i] = {
+      usersStats[i] = {
         id: stats[i].player.toString(),
         position: i,
         name,
@@ -161,10 +165,18 @@ export class TrackQueue implements TrackQueueInterface {
         ship: track.getTypeShipByUser(stats[i].player.toString())
       };
     }
-    await this.trackService.finishTrack(track, stats);
-    this.io.sockets.in('tracks_' + trackId).emit('gameover', stats);
+    await this.trackService.finishTrack(track, usersStats);
+    this.io.sockets.in('tracks_' + trackId).emit('gameover', usersStats);
 
     return true;
+  }
+
+  private async removeJobProcessTrackById(jobId: any): Promise<boolean> {
+    const jobProcessTrack = await this.queueWrapperProcessTrack.getJob(jobId);
+    if (jobProcessTrack) {
+      return true;
+    }
+    return false;
   }
 }
 
