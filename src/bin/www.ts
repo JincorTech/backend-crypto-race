@@ -134,8 +134,8 @@ createConnection(ormOptions).then(async connection => {
         return;
       }
 
-      if ((joinData.fuel as Array<number>).reduce((p, c) => p + c) === 0) {
-        io.sockets.in(socket.id).emit('error', {message: 'Fuel can not be empty'});
+      if ((joinData.fuel as Array<number>).reduce((p, c) => p + c) !== 100) {
+        io.sockets.in(socket.id).emit('error', {message: 'Fuel total is not equal 100%'});
         return;
       }
 
