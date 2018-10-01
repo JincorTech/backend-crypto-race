@@ -53,8 +53,8 @@ export class TrackService implements TrackServiceInterface {
     const startRates = await this.getCurrencyRates(track.start);
     const endRates = await this.getCurrencyRates(track.end);
     const names = Object.keys(startRates);
-    const startValues = Object.keys(startRates).map(key => startRates[key]);
-    const endValues = Object.keys(startRates).map(key => endRates[key]);
+    const startValues = Object.keys(startRates).map(key => Math.round(startRates[key] * 1000));
+    const endValues = Object.keys(startRates).map(key => Math.round(endRates[key] * 1000));
 
     this.web3Client.finishTrack({
       id: track.id.toHexString(),
